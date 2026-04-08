@@ -1,0 +1,120 @@
+
+#include "parser.h"
+
+#include <cctype>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cctype>
+
+/*
+ * @brief
+ *   Returns whether a character can be used in an identifier (name).
+ * @param
+ *   c: a character
+ * @returns
+ *   true exactly if the character can be used in an identifier, 
+ *   that is, is alphanumeric or underscore.
+ */
+bool
+L1::
+isident( const char c )
+{
+	return std::isalnum( c ) || c=='_';
+}
+
+
+/*
+ * @brief
+ *   Returns whether a character is a parenthesis.
+ * @param
+ *   c: a character
+ * @returns
+ *   true exactly if the character is a parenthesis.
+ */
+bool
+L1::
+isparen( const char c )
+{
+	return c==L1::RW::LPAR[ 0 ] || c==L1::RW::RPAR[ 0 ];
+}
+
+
+L1::
+Parser::Parser( void )
+{
+	this->srcbuf.reserve( 1024 );
+	this->tok_base_idxs.reserve( 256 );
+}
+
+void
+L1::
+Parser::lex( std::istream &src_is )
+{
+	enum class State
+	{
+		IN_SPACE, IN_TOK,
+	};
+
+	static constexpr char NUL { '\0' };
+	int idx { -1 };
+	char prv { NUL }, cur {};
+	enum class State state { State::IN_SPACE };
+	bool cur_isspace { false };
+
+	while ( cur = src_is.get() )
+	{
+		// reflect idx of current char 
+		++idx;
+		cur_isspace = std::isspace( cur );
+		switch ( state )
+		{
+		case IN_SPACE:
+			if ( !cur_isspace )
+			{
+				// token begin
+				state = State::IN_TOK;
+				this->tok_base_idxs.emplace_back( idx );
+				this->srcbuf.push_back( cur );
+			}
+			break;
+		case IN_TOK:
+			if ( cur_isspace )
+			{
+				// token end
+				state = State:IN_SPACE;
+				this->srcbuf.push_back( NUL );
+				++idx;
+			}
+			else if (
+				( L1::isident( prv ) ^ L1::isident( cur ) )
+				|| ( L1::isparen( prv ) ^ L1::isparen( cur ) )
+			)
+			{
+				// token boundary without space
+				// ( one is identifier, one is not; alternatively, 
+				// both aren't identifiers, but one is a parenthesis
+				// and must be its own token )
+				this->srcbuf.push_back( NUL );
+				++idx;
+				this->tok_base_idxs.emplace_back( idx );
+				this->srcbuf.push_back( cur );
+			}
+			else
+			{
+				// same token
+				this->srcbuf.push_back( cur );
+			}
+			break;
+		default:
+			break;
+		}
+
+		// shift
+		prv = cur;
+	}
+	// register final token before EOF
+	this->srcbuf.push_back( NUL );
+	++idx; // only for consistency
+}
+
