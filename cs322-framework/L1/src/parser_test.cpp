@@ -1,0 +1,26 @@
+
+#include "parser.h"
+#include <iostream>
+#include <fstream>
+#include <cstdio>
+
+int
+main( int argc, char *argv[] )
+{
+	if ( argc < 2 )
+	{
+		std::fprintf( stderr, "Usage: parser_test <test_file_path>\n" );
+		return 2;
+	}
+	std::ifstream test_ifs { argv[ 1 ], std::ios_base::in };
+	if ( test_ifs.fail() )
+	{
+		std::fprintf( stderr, "Error: unable to open test file\n" );
+		return 2;
+	}
+
+	L1::Parser prsr {};
+	prsr.lex( test_ifs );
+	prsr.print_toks();
+}
+

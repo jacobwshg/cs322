@@ -59,32 +59,34 @@ Parser::lex( std::istream &src_is )
 	static constexpr char NUL { '\0' };
 	int idx { -1 };
 	char prv { NUL }, cur {};
-	enum class State state { State::IN_SPACE };
+	State state { State::IN_SPACE };
 	bool cur_isspace { false };
 
-	while ( cur = src_is.get() )
+	for ( cur=src_is.get(); src_is; cur=src_is.get() )
 	{
+		//std::printf( "%c\n", cur );
+
 		// reflect idx of current char 
 		++idx;
 		cur_isspace = std::isspace( cur );
 		switch ( state )
 		{
-		case IN_SPACE:
+		case State::IN_SPACE:
 			if ( !cur_isspace )
 			{
-				// token begin
+				// token begin, transition from space
 				state = State::IN_TOK;
 				this->tok_base_idxs.emplace_back( idx );
 				this->srcbuf.push_back( cur );
 			}
 			break;
-		case IN_TOK:
+		case State::IN_TOK:
 			if ( cur_isspace )
 			{
-				// token end
-				state = State:IN_SPACE;
+				// token end, transition to space
+				state = State::IN_SPACE;
 				this->srcbuf.push_back( NUL );
-				++idx;
+				//++idx;
 			}
 			else if (
 				( L1::isident( prv ) ^ L1::isident( cur ) )
@@ -96,7 +98,7 @@ Parser::lex( std::istream &src_is )
 				// both aren't identifiers, but one is a parenthesis
 				// and must be its own token )
 				this->srcbuf.push_back( NUL );
-				++idx;
+				//++idx;
 				this->tok_base_idxs.emplace_back( idx );
 				this->srcbuf.push_back( cur );
 			}
@@ -116,5 +118,16 @@ Parser::lex( std::istream &src_is )
 	// register final token before EOF
 	this->srcbuf.push_back( NUL );
 	++idx; // only for consistency
+}
+
+void
+L1::
+Parser::print_toks() const
+{
+	std::printf( "Tokens\n" );
+	for ( const int tokbase : this->tok_base_idxs )
+	{
+		std::printf( "\t%s\n", &this->srcbuf.data()[ tokbase ] );
+	}
 }
 
