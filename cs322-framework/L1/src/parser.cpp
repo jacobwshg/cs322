@@ -57,17 +57,15 @@ Parser::lex( std::istream &src_is )
 	};
 
 	static constexpr char NUL { '\0' };
-	int idx { -1 };
+	int idx { 0 };
 	char prv { NUL }, cur {};
 	State state { State::IN_SPACE };
 	bool cur_isspace { false };
 
 	for ( cur=src_is.get(); src_is; cur=src_is.get() )
 	{
-		//std::printf( "%c\n", cur );
+		std::printf( "%c\t\t", cur );
 
-		// reflect idx of current char 
-		++idx;
 		cur_isspace = std::isspace( cur );
 		switch ( state )
 		{
@@ -75,37 +73,48 @@ Parser::lex( std::istream &src_is )
 			if ( !cur_isspace )
 			{
 				// token begin, transition from space
+				std::printf( "token begin, transition from space, idx %0d\n", idx );
 				state = State::IN_TOK;
 				this->tok_base_idxs.emplace_back( idx );
 				this->srcbuf.push_back( cur );
+				++idx;
+			}
+			else
+			{
+				std::printf( "space\n" );
 			}
 			break;
 		case State::IN_TOK:
 			if ( cur_isspace )
 			{
 				// token end, transition to space
+				std::printf( "token end, transition to space\n" );
 				state = State::IN_SPACE;
 				this->srcbuf.push_back( NUL );
-				//++idx;
+				++idx;
 			}
 			else if (
 				( L1::isident( prv ) ^ L1::isident( cur ) )
 				|| ( L1::isparen( prv ) ^ L1::isparen( cur ) )
 			)
 			{
+				std::printf( "token boundary without space, idx %0d\n", idx );
 				// token boundary without space
 				// ( one is identifier, one is not; alternatively, 
 				// both aren't identifiers, but one is a parenthesis
 				// and must be its own token )
 				this->srcbuf.push_back( NUL );
-				//++idx;
+				++idx;
 				this->tok_base_idxs.emplace_back( idx );
 				this->srcbuf.push_back( cur );
+				++idx;
 			}
 			else
 			{
 				// same token
+				std::printf( "same token \n" );
 				this->srcbuf.push_back( cur );
+				++idx;
 			}
 			break;
 		default:
@@ -127,7 +136,7 @@ Parser::print_toks() const
 	std::printf( "Tokens\n" );
 	for ( const int tokbase : this->tok_base_idxs )
 	{
-		std::printf( "\t%s\n", &this->srcbuf.data()[ tokbase ] );
+		std::printf( "%0d\t%s\n", tokbase, &this->srcbuf.data()[ tokbase ] );
 	}
 }
 
