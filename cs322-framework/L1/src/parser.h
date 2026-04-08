@@ -6,6 +6,7 @@
 #include <array>
 #include <vector>
 #include <iostream>
+#include <regex>
 
 namespace L1
 {
@@ -17,14 +18,13 @@ namespace L1
 		static constexpr std::string_view
 			LPAR { "(" },
 			RPAR { ")" },
-
 			AT    { "@" },
 			COLON { ":" },
 
-			MEM { "mem" },
-
 			ADD { "+" },
 			SUB { "-" },
+			INCR { "++" },
+			DECR { "--" },
 			ASSIGN  { "<-" },
 			ADD_EQ  { "+=" },
 			SUB_EQ  { "-=" },
@@ -35,6 +35,8 @@ namespace L1
 			LT      { "<" },
 			LEQ     { "<=" },
 			EQ      { "=" },
+
+			MEM { "mem" },
 
 			CJUMP  { "cjump" },
 			GOTO   { "goto" },
@@ -47,9 +49,6 @@ namespace L1
 			TUPLE_ERROR { "tuple-error" },
 			TENSOR_ERROR { "tensor-error" },
 
-			INCR { "++" },
-			DECR { "--" },
-
 			RAX { "rax" },
 			RBX { "rbx" },
 			RCX { "rcx" },
@@ -58,7 +57,6 @@ namespace L1
 			RSI { "rsi" },
 			RBP { "rbp" },
 			RSP { "rsp" },
-
 			R8  { "r8" },
 			R9  { "r9" },
 			R10 { "r10" },
@@ -92,6 +90,76 @@ namespace L1
 			RW::RDI, RW::RSI, RW::RDX, RW::R8, RW::R9,
 		};
 	}
+
+	template< typename Handlers... >
+	struct NodeVisitor : Handlers...
+	{
+		using Handlers::operator()...;
+	}
+
+	struct LParNode {};
+	struct RParNode {};
+	struct AtNode {};
+	struct ColonNode {};
+
+	struct AddNode {};
+	struct SubNode {};
+	struct IncrNode {};
+	struct DecrNode {};
+	struct AssignNode {};
+	struct AddEqNode {};
+	struct SubEqNode {};
+	struct MulEqNode {};
+	struct BAndEqNode {};
+	struct LShEqNode {};
+	struct RShEqNode {};
+	struct LTNode {};
+	struct LEqNode {};
+	struct EqNode {};
+
+	struct MemNode {};
+	struct CJumpNode {};
+	struct GotoNode {};
+
+	struct CallNode {};
+	struct AllocateNode {};
+	struct TupleErrorNode {};
+	struct TensorErrorNode {};
+
+	struct RaxNode {};
+	struct RbxNode {};
+	struct RcxNode {};
+	struct RdxNode {};
+	struct RdiNode {};
+	struct RsiNode {};
+	struct RbpNode {};
+	struct RspNode {};	
+	struct R8Node  {};
+	struct R9Node  {};
+	struct R10Node {};
+	struct R11Node {};
+	struct R12Node {};
+	struct R13Node {};
+	struct R14Node {};
+	struct R15Node {};
+
+	struct _0Node {};
+	struct _1Node {};
+	struct _2Node {};
+	struct _3Node {};
+	struct _4Node {};
+	struct _8Node {};
+
+	using ANode = std::variant<
+		RdiNode, RsiNode, RdxNode, SxNode, R8Node, R9Node
+	>;
+
+	struct IAssignNode { WNode w; AssignNode assign; SNode s; };
+	struct ILoadNode { WNode w; AssignNode assign; MemNode mem; XNode x; MNode M; };
+	struct IStoreNode { MemNode mem; XNode x; MNode M; AssignNode assign; SNode s; };
+	struct IAOpNode { WNode w; AOpNode aop; TNode t; };
+	struct ISOpSxNode { WNode w; SOpNode sop; SxNode sx; };
+	struct ISOpNNode { WNode w; SOpNode sop; NNode N; };
 
  	/* 
  	 * @brief
