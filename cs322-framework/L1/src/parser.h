@@ -6,7 +6,7 @@
 #include <array>
 #include <vector>
 #include <iostream>
-#include <regex>
+#include <variant>
 
 namespace L1
 {
@@ -91,11 +91,11 @@ namespace L1
 		};
 	}
 
-	template< typename Handlers... >
+	template< typename ... Handlers >
 	struct NodeVisitor : Handlers...
 	{
 		using Handlers::operator()...;
-	}
+	};
 
 	struct LParNode {};
 	struct RParNode {};
@@ -113,7 +113,7 @@ namespace L1
 	struct BAndEqNode {};
 	struct LShEqNode {};
 	struct RShEqNode {};
-	struct LTNode {};
+	struct LtNode {};
 	struct LEqNode {};
 	struct EqNode {};
 
@@ -150,9 +150,26 @@ namespace L1
 	struct _4Node {};
 	struct _8Node {};
 
-	using ANode = std::variant<
-		RdiNode, RsiNode, RdxNode, SxNode, R8Node, R9Node
-	>;
+	struct NameNode { std::string_view name_re; };
+	struct LabelNode { ColonNode colon; NameNode name; };
+	struct LNode { AtNode at; NameNode name; };
+	struct NNode { std::string_view n_re; };
+	struct MNode { unsigned long M_val; };
+	struct FNode { unsigned long F_val; };
+	struct ENode { unsigned long E_val; };
+
+	using CmpNode = std::variant< LtNode, LEqNode, EqNode >;
+	using SOpNode = std::variant< LShEqNode, RShEqNode >;
+	using AOpNode = std::variant< AddEqNode, SubEqNode, MulEqNode, BAndEqNode >;
+
+	using SxNode = std::variant< RcxNode >;
+	using ANode = std::variant< RdiNode, RsiNode, SxNode, RdxNode, R8Node, R9Node >;
+	using WNode = std::variant< ANode, RaxNode, RbxNode, R10Node, R11Node, R12Node, R13Node, R14Node, R15Node >;
+
+	using XNode = std::variant< WNode, RspNode >;
+	using UNode = std::variant< WNode, LNode >;
+	using TNode = std::variant< XNode, NNode >;
+	using SNode = std::variant< TNode, LabelNode, LNode >;
 
 	struct IAssignNode { WNode w; AssignNode assign; SNode s; };
 	struct ILoadNode { WNode w; AssignNode assign; MemNode mem; XNode x; MNode M; };
