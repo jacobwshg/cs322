@@ -37,7 +37,7 @@ bool
 L1::
 isparen( const char c )
 {
-	return c==L1::RW::LPAR[ 0 ] || c==L1::RW::RPAR[ 0 ];
+	return c==L1::KW::LPAR[ 0 ] || c==L1::KW::RPAR[ 0 ];
 }
 
 

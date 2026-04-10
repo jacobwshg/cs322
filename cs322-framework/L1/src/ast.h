@@ -10,10 +10,13 @@
 
 namespace L1
 {
+
+	using sv_t = std::string_view;
+
 	/*
 	 * Reserved words
 	 */
-	namespace RW
+	namespace KW
 	{
 		static constexpr std::string_view
 			LPAR { "(" },
@@ -21,20 +24,20 @@ namespace L1
 			AT    { "@" },
 			COLON { ":" },
 
-			ADD { "+" },
-			SUB { "-" },
-			INCR { "++" },
-			DECR { "--" },
-			ASSIGN  { "<-" },
-			ADD_EQ  { "+=" },
-			SUB_EQ  { "-=" },
-			MUL_EQ  { "*=" },
-			BAND_EQ { "&=" },
-			LSH_EQ  { "<<=" },
-			RSH_EQ  { ">>=" },
-			LT      { "<" },
-			LEQ     { "<=" },
-			EQ      { "=" },
+			OP_ADD     { "+" },
+			OP_SUB     { "-" },
+			OP_INCR    { "++" },
+			OP_DECR    { "--" },
+			OP_ASSIGN  { "<-" },
+			OP_ADD_EQ  { "+=" },
+			OP_SUB_EQ  { "-=" },
+			OP_MUL_EQ  { "*=" },
+			OP_BAND_EQ { "&=" },
+			OP_LSH_EQ  { "<<=" },
+			OP_RSH_EQ  { ">>=" },
+			OP_LT      { "<" },
+			OP_LEQ     { "<=" },
+			OP_EQ      { "=" },
 
 			MEM { "mem" },
 
@@ -71,23 +74,23 @@ namespace L1
 		static constexpr std::array< std::string_view, LIBFUNC_CNT >
 			LIBFUNCS 
 		{
-			RW::PRINT, RW::INPUT, RW::ALLOCATE,
-			RW::TUPLE_ERROR, RW::TENSOR_ERROR,
+			KW::PRINT, KW::INPUT, KW::ALLOCATE,
+			KW::TUPLE_ERROR, KW::TENSOR_ERROR,
 		};
 
 		static constexpr int W_REG_CNT { 9 };
 		static constexpr std::array< std::string_view, W_REG_CNT >
 			W_REGS
 		{
-			RW::RAX, RW::RBX, RW::RBP,
-			RW::R10, RW::R11, RW::R12, RW::R13, RW::R14, RW::R15,
+			KW::RAX, KW::RBX, KW::RBP,
+			KW::R10, KW::R11, KW::R12, KW::R13, KW::R14, KW::R15,
 		};
 
 		static constexpr int A_REG_CNT { 5 };
 		static constexpr std::array< std::string_view, A_REG_CNT >
 			A_REGS
 		{
-			RW::RDI, RW::RSI, RW::RDX, RW::R8, RW::R9,
+			KW::RDI, KW::RSI, KW::RDX, KW::R8, KW::R9,
 		};
 	}
 
@@ -97,61 +100,61 @@ namespace L1
 		using Handlers::operator()...;
 	};
 
-	struct LParNode {};
-	struct RParNode {};
-	struct AtNode {};
-	struct ColonNode {};
+	struct LParNode  { static constexpr sv_t kw { KW::LPAR }; };
+	struct RParNode  { static constexpr sv_t kw { KW::RPAR }; };
+	struct AtNode    { static constexpr sv_t kw { KW::AT }; };
+	struct ColonNode { static constexpr sv_t kw { KW::COLON }; };
 
-	struct AddNode {};
-	struct SubNode {};
-	struct IncrNode {};
-	struct DecrNode {};
-	struct AssignNode {};
-	struct AddEqNode {};
-	struct SubEqNode {};
-	struct MulEqNode {};
-	struct BAndEqNode {};
-	struct LShEqNode {};
-	struct RShEqNode {};
-	struct LtNode {};
-	struct LEqNode {};
-	struct EqNode {};
+	struct AddNode    { static constexpr sv_t kw { KW::OP_ADD }; };
+	struct SubNode    { static constexpr sv_t kw { KW::OP_SUB }; };
+	struct IncrNode   { static constexpr sv_t kw { KW::OP_INCR }; };
+	struct DecrNode   { static constexpr sv_t kw { KW::OP_DECR }; };
+	struct AssignNode { static constexpr sv_t kw { KW::OP_ASSIGN }; };
+	struct AddEqNode  { static constexpr sv_t kw { KW::OP_ADD_EQ }; };
+	struct SubEqNode  { static constexpr sv_t kw { KW::OP_SUB_EQ }; };
+	struct MulEqNode  { static constexpr sv_t kw { KW::OP_MUL_EQ }; };
+	struct BAndEqNode { static constexpr sv_t kw { KW::OP_BAND_EQ }; };
+	struct LShEqNode  { static constexpr sv_t kw { KW::OP_LSH_EQ }; };
+	struct RShEqNode  { static constexpr sv_t kw { KW::OP_RSH_EQ }; };
+	struct LtNode     { static constexpr sv_t kw { KW::OP_LT }; };
+	struct LEqNode    { static constexpr sv_t kw { KW::OP_LEQ }; };
+	struct EqNode     { static constexpr sv_t kw { KW::OP_EQ }; };
 
-	struct MemNode {};
-	struct CJumpNode {};
-	struct GotoNode {};
-	struct CallNode {};
-	struct ReturnNode {};
+	struct MemNode    { static constexpr sv_t kw { KW::MEM }; };
+	struct CJumpNode  { static constexpr sv_t kw { KW::CJUMP }; };
+	struct GotoNode   { static constexpr sv_t kw { KW::GOTO }; };
+	struct CallNode   { static constexpr sv_t kw { KW::CALL }; };
+	struct ReturnNode { static constexpr sv_t kw { KW::RETURN }; };
 
-	struct PrintNode {};
-	struct InputNode {};
-	struct AllocateNode {};
-	struct TupleErrorNode {};
-	struct TensorErrorNode {};
+	struct PrintNode       { static constexpr sv_t kw { KW::PRINT }; };
+	struct InputNode       { static constexpr sv_t kw { KW::INPUT }; };
+	struct AllocateNode    { static constexpr sv_t kw { KW::ALLOCATE }; };
+	struct TupleErrorNode  { static constexpr sv_t kw { KW::TUPLE_ERROR }; };
+	struct TensorErrorNode { static constexpr sv_t kw { KW::TENSOR_ERROR }; };
 
-	struct RaxNode {};
-	struct RbxNode {};
-	struct RcxNode {};
-	struct RdxNode {};
-	struct RdiNode {};
-	struct RsiNode {};
-	struct RbpNode {};
-	struct RspNode {};	
-	struct R8Node  {};
-	struct R9Node  {};
-	struct R10Node {};
-	struct R11Node {};
-	struct R12Node {};
-	struct R13Node {};
-	struct R14Node {};
-	struct R15Node {};
+	struct RaxNode { static constexpr sv_t kw { KW::RAX }; };
+	struct RbxNode { static constexpr sv_t kw { KW::RBX }; };
+	struct RcxNode { static constexpr sv_t kw { KW::RCX }; };
+	struct RdxNode { static constexpr sv_t kw { KW::RDX }; };
+	struct RdiNode { static constexpr sv_t kw { KW::RDI }; };
+	struct RsiNode { static constexpr sv_t kw { KW::RSI }; };
+	struct RbpNode { static constexpr sv_t kw { KW::RBP }; };
+	struct RspNode { static constexpr sv_t kw { KW::RSP }; };	
+	struct R8Node  { static constexpr sv_t kw { KW::R8  }; };
+	struct R9Node  { static constexpr sv_t kw { KW::R9  }; };
+	struct R10Node { static constexpr sv_t kw { KW::R10 }; };
+	struct R11Node { static constexpr sv_t kw { KW::R11 }; };
+	struct R12Node { static constexpr sv_t kw { KW::R12 }; };
+	struct R13Node { static constexpr sv_t kw { KW::R13 }; };
+	struct R14Node { static constexpr sv_t kw { KW::R14 }; };
+	struct R15Node { static constexpr sv_t kw { KW::R15 }; };
 
-	struct _0Node {};
-	struct _1Node {};
-	struct _2Node {};
-	struct _3Node {};
-	struct _4Node {};
-	struct _8Node {};
+	struct _0Node { static constexpr sv_t kw { "0" }; };
+	struct _1Node { static constexpr sv_t kw { "1" }; };
+	struct _2Node { static constexpr sv_t kw { "2" }; };
+	struct _3Node { static constexpr sv_t kw { "3" }; };
+	struct _4Node { static constexpr sv_t kw { "4" }; };
+	struct _8Node { static constexpr sv_t kw { "8" }; };
 
 	struct NIntNode { std::string_view val; };
 
@@ -215,21 +218,21 @@ namespace L1
 	struct iAddStoreNode
 	{
 		MemNode mem_n;	xNode x_n; MNode M_n;
-		AddEqNode addeq_n;
+		AddEqNode add_eq_n;
 		tNode t_n;
 	};
 	// mem x M -= t
 	struct iSubStoreNode
 	{
 		MemNode mem_n; xNode x_n; MNode M_n;
-		SubEqNode subeq_n;
+		SubEqNode sub_eq_n;
 		tNode t_n;
 	};
 	// w += mem x M
 	struct iLoadAddNode	
 	{
 		wNode w_n;
-		AddEqNode addeq_n;
+		AddEqNode add_eq_n;
 		MemNode mem_n; xNode x_n; MNode M_n;
 	};
 
@@ -237,7 +240,7 @@ namespace L1
 	struct iLoadSubNode
 	{
 		wNode w_n;
-		SubEqNode subeq_n;
+		SubEqNode sub_eq_n;
 		MemNode mem_n; xNode x_n; MNode M_n;
 	};
 	// w <- t cmp t
