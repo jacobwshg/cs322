@@ -1,5 +1,6 @@
 
 #include "parser.h"
+#include "ast.h"
 
 #include <cctype>
 #include <iostream>

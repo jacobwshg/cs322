@@ -120,8 +120,11 @@ namespace L1
 	struct MemNode {};
 	struct CJumpNode {};
 	struct GotoNode {};
-
 	struct CallNode {};
+	struct ReturnNode {};
+
+	struct PrintNode {};
+	struct InputNode {};
 	struct AllocateNode {};
 	struct TupleErrorNode {};
 	struct TensorErrorNode {};
@@ -150,33 +153,169 @@ namespace L1
 	struct _4Node {};
 	struct _8Node {};
 
-	struct NameNode { std::string_view name_re; };
-	struct LabelNode { ColonNode colon; NameNode name; };
-	struct LNode { AtNode at; NameNode name; };
-	struct NNode { std::string_view n_re; };
-	struct MNode { unsigned long M_val; };
-	struct FNode { unsigned long F_val; };
-	struct ENode { unsigned long E_val; };
+	struct NIntNode { std::string_view val; };
 
-	using CmpNode = std::variant< LtNode, LEqNode, EqNode >;
-	using SOpNode = std::variant< LShEqNode, RShEqNode >;
-	using AOpNode = std::variant< AddEqNode, SubEqNode, MulEqNode, BAndEqNode >;
+	struct nameNode { std::string_view val; };
+	struct labelNode { ColonNode colon_n; nameNode name_n; };
+	struct lNode { AtNode at_n; nameNode name_n; };
 
-	using SxNode = std::variant< RcxNode >;
-	using ANode = std::variant< RdiNode, RsiNode, SxNode, RdxNode, R8Node, R9Node >;
-	using WNode = std::variant< ANode, RaxNode, RbxNode, R10Node, R11Node, R12Node, R13Node, R14Node, R15Node >;
+	using NNode = std::variant< _0Node, NIntNode >;
+	struct MNode { std::string_view val; };
+	using FNode = std::variant< _1Node, _3Node, _4Node >;
+	using ENode = std::variant< _1Node, _2Node, _4Node, _8Node >;
 
-	using XNode = std::variant< WNode, RspNode >;
-	using UNode = std::variant< WNode, LNode >;
-	using TNode = std::variant< XNode, NNode >;
-	using SNode = std::variant< TNode, LabelNode, LNode >;
+	using cmpNode = std::variant< LtNode, LEqNode, EqNode >;
+	using sopNode = std::variant< LShEqNode, RShEqNode >;
+	using aopNode = std::variant< AddEqNode, SubEqNode, MulEqNode, BAndEqNode >;
 
-	struct IAssignNode { WNode w; AssignNode assign; SNode s; };
-	struct ILoadNode { WNode w; AssignNode assign; MemNode mem; XNode x; MNode M; };
-	struct IStoreNode { MemNode mem; XNode x; MNode M; AssignNode assign; SNode s; };
-	struct IAOpNode { WNode w; AOpNode aop; TNode t; };
-	struct ISOpSxNode { WNode w; SOpNode sop; SxNode sx; };
-	struct ISOpNNode { WNode w; SOpNode sop; NNode N; };
+	using sxNode = std::variant< RcxNode >;
+	using aNode = std::variant< RdiNode, RsiNode, sxNode, RdxNode, R8Node, R9Node >;
+	using wNode = std::variant< aNode, RaxNode, RbxNode, R10Node, R11Node, R12Node, R13Node, R14Node, R15Node >;
+
+	using xNode = std::variant< wNode, RspNode >;
+	using uNode = std::variant< wNode, lNode >;
+	using tNode = std::variant< xNode, NNode >;
+	using sNode = std::variant< tNode, labelNode, lNode >;
+
+	// w <- s
+	struct iAssignNode 
+	{
+		wNode w_n; AssignNode assign_n; sNode s_n;
+	};
+	// w <- mem x M
+	struct iLoadNode
+	{
+		wNode w_n;
+		AssignNode assign_n;
+		MemNode mem_n; xNode x_n; MNode M_n;
+	};
+	// mem x M <- s
+	struct iStoreNode
+	{
+		MemNode mem_n; xNode x_n; MNode M_n;
+		AssignNode assign_n;
+		sNode s_n;
+	};
+	// w aop t
+	struct iAOpNode
+	{
+		wNode w_n; aopNode aop_n; tNode t_n;
+	};
+	// w sop sx
+	struct iSxNode
+	{
+		wNode w_n; sopNode sop_n; sxNode sx_n;
+	};
+	// w sop N
+	struct iSOpNode
+	{
+		wNode w_n; sopNode sop_n; NNode N_n;
+	};
+	// mem x M += t
+	struct iAddStoreNode
+	{
+		MemNode mem_n;	xNode x_n; MNode M_n;
+		AddEqNode addeq_n;
+		tNode t_n;
+	};
+	// mem x M -= t
+	struct iSubStoreNode
+	{
+		MemNode mem_n; xNode x_n; MNode M_n;
+		SubEqNode subeq_n;
+		tNode t_n;
+	};
+	// w += mem x M
+	struct iLoadAddNode	
+	{
+		wNode w_n;
+		AddEqNode addeq_n;
+		MemNode mem_n; xNode x_n; MNode M_n;
+	};
+
+	// w -= mem x M
+	struct iLoadSubNode
+	{
+		wNode w_n;
+		SubEqNode subeq_n;
+		MemNode mem_n; xNode x_n; MNode M_n;
+	};
+	// w <- t cmp t
+	struct iCmpAssignNode
+	{
+		wNode w_n;
+		AssignNode assign_n;
+		tNode t1_n; cmpNode cmp_n; tNode t2_n;
+	};
+	// cjump t cmp t label
+	struct iCJumpNode
+	{
+		CJumpNode cjump_n;
+		tNode t1_n; cmpNode cmp_n; tNode t2_n;
+		labelNode label_n;
+	};
+	// label
+	struct iLabelNode
+	{
+		labelNode label_n;
+	};
+	// goto label
+	struct iGotoNode
+	{
+		GotoNode goto_n; labelNode label_n;
+	};
+	// return
+	struct iReturnNode
+	{
+		ReturnNode return_n;
+	};
+	// call u N
+	struct iCallUNode
+	{
+		CallNode call_n; uNode u_n; NNode N_n;
+	};
+	// call print 1
+	struct iCallPrintNode
+	{
+		CallNode call_n; PrintNode print_n; _1Node _1_n;
+	};
+	// call input 0
+	struct iCallInputNode
+	{
+		CallNode call_n; InputNode input_n; _0Node _0_n;
+	};
+	// call allocate 2
+	struct iCallAllocateNode
+	{
+		CallNode call_n; AllocateNode allocate_n; _2Node _2_n;
+	};
+	// call tuple-error 3
+	struct iCallTupleErrorNode
+	{
+		CallNode call_n; TupleErrorNode tuple_error_n; _3Node _3_n;
+	};
+	// call tensor-error F
+	struct iCallTensorErrorNode
+	{
+		CallNode call_n; TensorErrorNode tensor_error_n; FNode F_n;
+	};
+	// w ++
+	struct iIncrNode
+	{
+		wNode w_n; IncrNode incr_n;
+	};
+	// w --
+	struct iDecrNode
+	{
+		wNode w_n; DecrNode decr_n;
+	};
+	// w @ w w E
+	struct iLEANode
+	{
+		wNode w1_n;
+	 	AtNode at_n; 
+		wNode w2_n; wNode w3_n; ENode E_n;
+	};
 
 }
 
