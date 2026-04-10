@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "ast.h"
 
+#include <cstdint>
 #include <cctype>
 #include <iostream>
 #include <vector>
@@ -46,6 +47,7 @@ Parser::Parser( void )
 {
 	this->srcbuf.reserve( 1024 );
 	this->tok_base_idxs.reserve( 256 );
+	this->tok_idx = 0;
 }
 
 void
@@ -132,12 +134,28 @@ Parser::lex( std::istream &src_is )
 
 void
 L1::
-Parser::print_toks() const
+Parser::print_toks( void ) const
 {
 	std::printf( "Tokens\n" );
 	for ( const int tokbase : this->tok_base_idxs )
 	{
 		std::printf( "%0d\t%s\n", tokbase, &this->srcbuf.data()[ tokbase ] );
+	}
+}
+
+std::string_view
+L1::
+Parser::gettok( void )
+{
+	static constexpr std::string_view EMPTYTOK { "" };
+	if ( this->tok_idx >= this->tok_base_idxs.size() )
+	{
+		return EMPTYTOK;
+	}
+	else
+	{
+		return std::string_view { &this->srcbuf.data()[ this->tok_idx ] };
+		++this->tok_idx;
 	}
 }
 

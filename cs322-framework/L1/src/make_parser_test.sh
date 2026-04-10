@@ -1,5 +1,5 @@
 
 #!/bin/bash
 
-clang++ ./parser.cpp ./parser_test.cpp -o parser_test.out
+clang++ --std=c++20 ./parser.cpp ./parser_test.cpp -o parser_test.out
 

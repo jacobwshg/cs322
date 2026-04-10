@@ -1,8 +1,14 @@
 
+
+#include "ast.h"
+	
+
 #include "parser.h"
 #include <iostream>
 #include <fstream>
 #include <cstdio>
+#include <regex>
+
 
 int
 main( int argc, char *argv[] )
@@ -18,6 +24,14 @@ main( int argc, char *argv[] )
 		std::fprintf( stderr, "Error: unable to open test file\n" );
 		return 2;
 	}
+
+	std::cout << "Regex tests\n";
+	std::cout << std::regex_match( "+18342", L1::N_int_re ) << "\n";
+	std::cout << std::regex_match( "-0", L1::N_int_re ) << "\n";
+	std::cout << std::regex_match( "_b26", L1::name_re ) << "\n";
+	std::cout << std::regex_match( "Z0", L1::name_re ) << "\n";
+	std::cout << "\n";
+	
 
 	L1::Parser prsr {};
 	prsr.lex( test_ifs );

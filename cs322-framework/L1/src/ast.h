@@ -7,6 +7,7 @@
 #include <vector>
 #include <iostream>
 #include <variant>
+#include <regex>
 
 namespace L1
 {
@@ -94,10 +95,19 @@ namespace L1
 		};
 	}
 
+	static const std::regex N_int_re { "[+-]?[1-9][0-9]*" }; 
+	static const std::regex name_re { "[a-zA-Z_][a-zA-z_0-9]*" };
+
 	template< typename ... Handlers >
 	struct NodeVisitor : Handlers...
 	{
 		using Handlers::operator()...;
+	};
+
+	template< typename NodeType >
+	concept IsKWNode = requires
+	{
+		{ NodeType::kw } -> std::convertible_to< std::string_view >;
 	};
 
 	struct LParNode  { static constexpr sv_t kw { KW::LPAR }; };
