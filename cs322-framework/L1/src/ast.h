@@ -317,6 +317,36 @@ namespace L1
 		wNode w2_n; wNode w3_n; ENode E_n;
 	};
 
+	using iNode = std::variant<
+		iAssignNode, iLoadNode, iStoreNode,
+		iAOpNode, iSxNode, iSOpNode,
+		iAddStoreNode, iSubStoreNode, iLoadAddNode, iLoadSubNode,
+		iCmpAssignNode, iCJumpNode, iLabelNode, iGotoNode,
+		iReturnNode,
+		iCallUNode, iCallPrintNode, iCallAllocateNode, iCallTupleErrorNode, iCallTensorErrorNode,
+		iIncrNode, iDecrNode, iLEANode
+	>;
+
+	struct fNode
+	{
+		LParNode lpar_n;
+
+		lNode l_n;
+		NNode N1_n; NNode N2_n;
+		std::vector< iNode > i_ns;
+
+		RParNode rpar_n;
+	};
+
+	struct pNode
+	{
+		LParNode lpar_n;
+
+		lNode l_n;
+		std::vector< fNode > f_ns;
+
+		RParNode rpar_n;		
+	};
 }
 
 #endif
