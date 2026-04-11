@@ -3,16 +3,66 @@
 #define L1_AST_H
 
 #include <string_view>
+#include <concepts>
 #include <array>
 #include <vector>
 #include <iostream>
 #include <variant>
 #include <regex>
+#include <tuple>
+
+namespace
+{
+	/*
+	 * Two ways to check if a type is a std::variant instantiation
+	 *
+	 */
+	template< typename T >
+	struct is_variant: std::false_type
+	{};
+	template< typename ... Ts >
+	struct is_variant< std::variant< Ts... > >: std::true_type
+	{};
+	template< typename T >
+	inline constexpr bool is_variant_v = is_variant< T >::value;
+
+	template< typename T >
+	concept IsVariant = requires( T t )
+	{
+		[]< typename ... Ts >
+		(
+			std::variant< Ts... >
+		) {}( t );
+	};
+
+}
 
 namespace L1
 {
 
 	using sv_t = std::string_view;
+
+	// whether a node represents a keyword
+	template< typename NodeT >
+	concept IsKWNode = requires
+	{
+		{ NodeT::kw } -> std::convertible_to< std::string_view >;
+	};
+
+	// whether a node represents an identifier token that matches a regular expression
+	// ( namely, a `name` or nonzero `N` token )
+	template< typename NodeT >
+	concept IsIdentNode = requires
+	{
+		{ NodeT::re } -> std::convertible_to< std::regex >;
+	};
+
+	// whether a node is a record (struct with subnodes as members)
+	template< typename NodeT >
+	concept IsRecNode = requires
+	{
+		typename NodeT::fields_t;
+	};
 
 	/*
 	 * Reserved words
@@ -95,40 +145,25 @@ namespace L1
 		};
 	}
 
-	static const std::regex N_int_re { "[+-]?[1-9][0-9]*" }; 
-	static const std::regex name_re { "[a-zA-Z_][a-zA-z_0-9]*" };
-
-	template< typename ... Handlers >
-	struct NodeVisitor : Handlers...
-	{
-		using Handlers::operator()...;
-	};
-
-	template< typename NodeType >
-	concept IsKWNode = requires
-	{
-		{ NodeType::kw } -> std::convertible_to< std::string_view >;
-	};
-
 	struct LParNode  { static constexpr sv_t kw { KW::LPAR }; };
 	struct RParNode  { static constexpr sv_t kw { KW::RPAR }; };
 	struct AtNode    { static constexpr sv_t kw { KW::AT }; };
 	struct ColonNode { static constexpr sv_t kw { KW::COLON }; };
 
-	struct AddNode    { static constexpr sv_t kw { KW::OP_ADD }; };
-	struct SubNode    { static constexpr sv_t kw { KW::OP_SUB }; };
-	struct IncrNode   { static constexpr sv_t kw { KW::OP_INCR }; };
-	struct DecrNode   { static constexpr sv_t kw { KW::OP_DECR }; };
-	struct AssignNode { static constexpr sv_t kw { KW::OP_ASSIGN }; };
-	struct AddEqNode  { static constexpr sv_t kw { KW::OP_ADD_EQ }; };
-	struct SubEqNode  { static constexpr sv_t kw { KW::OP_SUB_EQ }; };
-	struct MulEqNode  { static constexpr sv_t kw { KW::OP_MUL_EQ }; };
-	struct BAndEqNode { static constexpr sv_t kw { KW::OP_BAND_EQ }; };
-	struct LShEqNode  { static constexpr sv_t kw { KW::OP_LSH_EQ }; };
-	struct RShEqNode  { static constexpr sv_t kw { KW::OP_RSH_EQ }; };
-	struct LtNode     { static constexpr sv_t kw { KW::OP_LT }; };
-	struct LEqNode    { static constexpr sv_t kw { KW::OP_LEQ }; };
-	struct EqNode     { static constexpr sv_t kw { KW::OP_EQ }; };
+	struct OpAssignNode { static constexpr sv_t kw { KW::OP_ASSIGN }; };
+	struct OpAddNode    { static constexpr sv_t kw { KW::OP_ADD }; };
+	struct OpSubNode    { static constexpr sv_t kw { KW::OP_SUB }; };
+	struct OpIncrNode   { static constexpr sv_t kw { KW::OP_INCR }; };
+	struct OpDecrNode   { static constexpr sv_t kw { KW::OP_DECR }; };
+	struct OpAddEqNode  { static constexpr sv_t kw { KW::OP_ADD_EQ }; };
+	struct OpSubEqNode  { static constexpr sv_t kw { KW::OP_SUB_EQ }; };
+	struct OpMulEqNode  { static constexpr sv_t kw { KW::OP_MUL_EQ }; };
+	struct OpBAndEqNode { static constexpr sv_t kw { KW::OP_BAND_EQ }; };
+	struct OpLShEqNode  { static constexpr sv_t kw { KW::OP_LSH_EQ }; };
+	struct OpRShEqNode  { static constexpr sv_t kw { KW::OP_RSH_EQ }; };
+	struct OpLtNode     { static constexpr sv_t kw { KW::OP_LT }; };
+	struct OpLEqNode    { static constexpr sv_t kw { KW::OP_LEQ }; };
+	struct OpEqNode     { static constexpr sv_t kw { KW::OP_EQ }; };
 
 	struct MemNode    { static constexpr sv_t kw { KW::MEM }; };
 	struct CJumpNode  { static constexpr sv_t kw { KW::CJUMP }; };
@@ -166,20 +201,28 @@ namespace L1
 	struct _4Node { static constexpr sv_t kw { "4" }; };
 	struct _8Node { static constexpr sv_t kw { "8" }; };
 
-	struct NIntNode { std::string_view val; };
+	struct NNZNode
+	{
+		static inline const std::regex re { "[+-]?[1-9][0-9]*" }; 
+		std::string_view val;
+	};
 
-	struct nameNode { std::string_view val; };
+	struct nameNode
+	{
+		static inline const std::regex re { "[a-zA-Z_][a-zA-z_0-9]*" };
+		std::string_view val;
+	};
 	struct labelNode { ColonNode colon_n; nameNode name_n; };
 	struct lNode { AtNode at_n; nameNode name_n; };
 
-	using NNode = std::variant< _0Node, NIntNode >;
+	using NNode = std::variant< _0Node, NNZNode >;
 	struct MNode { std::string_view val; };
 	using FNode = std::variant< _1Node, _3Node, _4Node >;
 	using ENode = std::variant< _1Node, _2Node, _4Node, _8Node >;
 
-	using cmpNode = std::variant< LtNode, LEqNode, EqNode >;
-	using sopNode = std::variant< LShEqNode, RShEqNode >;
-	using aopNode = std::variant< AddEqNode, SubEqNode, MulEqNode, BAndEqNode >;
+	using cmpNode = std::variant< OpLtNode, OpLEqNode, OpEqNode >;
+	using sopNode = std::variant< OpLShEqNode, OpRShEqNode >;
+	using aopNode = std::variant< OpAddEqNode, OpSubEqNode, OpMulEqNode, OpBAndEqNode >;
 
 	using sxNode = std::variant< RcxNode >;
 	using aNode = std::variant< RdiNode, RsiNode, sxNode, RdxNode, R8Node, R9Node >;
@@ -193,76 +236,88 @@ namespace L1
 	// w <- s
 	struct iAssignNode 
 	{
-		wNode w_n; AssignNode assign_n; sNode s_n;
+		using fields_t = std::tuple< wNode, OpAssignNode, sNode >;
+		wNode w_n; OpAssignNode op_assign_n; sNode s_n;
 	};
 	// w <- mem x M
 	struct iLoadNode
 	{
+		using fields_t = std::tuple< wNode, OpAssignNode, MemNode, xNode, MNode >;
 		wNode w_n;
-		AssignNode assign_n;
+		OpAssignNode op_assign_n;
 		MemNode mem_n; xNode x_n; MNode M_n;
 	};
 	// mem x M <- s
 	struct iStoreNode
 	{
+		using fields_t = std::tuple< MemNode, xNode, MNode, OpAssignNode, sNode >;
 		MemNode mem_n; xNode x_n; MNode M_n;
-		AssignNode assign_n;
+		OpAssignNode op_assign_n;
 		sNode s_n;
 	};
 	// w aop t
 	struct iAOpNode
 	{
+		using fields_t = std::tuple< wNode, aopNode, tNode >;
 		wNode w_n; aopNode aop_n; tNode t_n;
 	};
 	// w sop sx
 	struct iSxNode
 	{
+		using fields_t = std::tuple< wNode, sopNode, sxNode >;
 		wNode w_n; sopNode sop_n; sxNode sx_n;
 	};
 	// w sop N
 	struct iSOpNode
 	{
+		using fields_t = std::tuple< wNode, sopNode, NNode >;
 		wNode w_n; sopNode sop_n; NNode N_n;
 	};
 	// mem x M += t
 	struct iAddStoreNode
 	{
+		using fields_t = std::tuple< MemNode, xNode, MNode, OpAddEqNode, tNode >;
 		MemNode mem_n;	xNode x_n; MNode M_n;
-		AddEqNode add_eq_n;
+		OpAddEqNode op_add_eq_n;
 		tNode t_n;
 	};
 	// mem x M -= t
 	struct iSubStoreNode
 	{
+		using fields_t = std::tuple< MemNode, xNode, MNode, OpSubEqNode, tNode >;
 		MemNode mem_n; xNode x_n; MNode M_n;
-		SubEqNode sub_eq_n;
+		OpSubEqNode op_sub_eq_n;
 		tNode t_n;
 	};
 	// w += mem x M
 	struct iLoadAddNode	
 	{
+		using fields_t = std::tuple< wNode, OpAddEqNode, MemNode, xNode, MNode >;
 		wNode w_n;
-		AddEqNode add_eq_n;
+		OpAddEqNode op_add_eq_n;
 		MemNode mem_n; xNode x_n; MNode M_n;
 	};
 
 	// w -= mem x M
 	struct iLoadSubNode
 	{
+		using fields_t = std::tuple< wNode, OpSubEqNode, MemNode, xNode, MNode >;
 		wNode w_n;
-		SubEqNode sub_eq_n;
+		OpSubEqNode op_sub_eq_n;
 		MemNode mem_n; xNode x_n; MNode M_n;
 	};
 	// w <- t cmp t
 	struct iCmpAssignNode
 	{
+		using fields_t = std::tuple< wNode, OpAssignNode, tNode, cmpNode, tNode >;
 		wNode w_n;
-		AssignNode assign_n;
+		OpAssignNode op_assign_n;
 		tNode t1_n; cmpNode cmp_n; tNode t2_n;
 	};
 	// cjump t cmp t label
 	struct iCJumpNode
 	{
+		using fields_t = std::tuple< CJumpNode, tNode, cmpNode, tNode, labelNode >;
 		CJumpNode cjump_n;
 		tNode t1_n; cmpNode cmp_n; tNode t2_n;
 		labelNode label_n;
@@ -270,61 +325,73 @@ namespace L1
 	// label
 	struct iLabelNode
 	{
+		using fields_t = std::tuple< labelNode >;
 		labelNode label_n;
 	};
 	// goto label
 	struct iGotoNode
 	{
+		using fields_t = std::tuple< GotoNode, labelNode >;
 		GotoNode goto_n; labelNode label_n;
 	};
 	// return
 	struct iReturnNode
 	{
+		using fields_t = std::tuple< ReturnNode >;
 		ReturnNode return_n;
 	};
 	// call u N
 	struct iCallUNode
 	{
+		using fields_t = std::tuple< CallNode, uNode, NNode >;
 		CallNode call_n; uNode u_n; NNode N_n;
 	};
 	// call print 1
 	struct iCallPrintNode
 	{
+		using fields_t = std::tuple< CallNode, PrintNode, _1Node >;
 		CallNode call_n; PrintNode print_n; _1Node _1_n;
 	};
 	// call input 0
 	struct iCallInputNode
 	{
+		using fields_t = std::tuple< CallNode, InputNode, _0Node >;
 		CallNode call_n; InputNode input_n; _0Node _0_n;
 	};
 	// call allocate 2
 	struct iCallAllocateNode
 	{
+		using fields_t = std::tuple< CallNode, AllocateNode, _2Node >;
 		CallNode call_n; AllocateNode allocate_n; _2Node _2_n;
 	};
 	// call tuple-error 3
 	struct iCallTupleErrorNode
 	{
+		using fields_t = std::tuple< CallNode, TupleErrorNode, _3Node >;
 		CallNode call_n; TupleErrorNode tuple_error_n; _3Node _3_n;
 	};
 	// call tensor-error F
 	struct iCallTensorErrorNode
 	{
+		using fields_t = std::tuple< CallNode, TensorErrorNode, FNode >;
 		CallNode call_n; TensorErrorNode tensor_error_n; FNode F_n;
 	};
 	// w ++
 	struct iIncrNode
 	{
-		wNode w_n; IncrNode incr_n;
+		using fields_t = std::tuple< wNode, OpIncrNode >;
+		wNode w_n; OpIncrNode op_incr_n;
 	};
 	// w --
 	struct iDecrNode
 	{
-		wNode w_n; DecrNode decr_n;
+		using fields_t = std::tuple< wNode, OpDecrNode >;
+		wNode w_n; OpDecrNode op_decr_n;
 	};
 	// w @ w w E
 	struct iLEANode
 	{
+		using fields_t = std::tuple< wNode, AtNode, wNode, wNode, ENode >;
 		wNode w1_n;
 	 	AtNode at_n; 
 		wNode w2_n; wNode w3_n; ENode E_n;
@@ -342,6 +409,8 @@ namespace L1
 
 	struct fNode
 	{
+		using fields_t = std::tuple< LParNode, lNode, NNode, NNode, std::vector<iNode>, RParNode >;
+
 		LParNode lpar_n;
 
 		lNode l_n;
@@ -353,6 +422,8 @@ namespace L1
 
 	struct pNode
 	{
+		using fields_t = std::tuple< LParNode, lNode, std::vector< fNode >, RParNode >;
+
 		LParNode lpar_n;
 
 		lNode l_n;

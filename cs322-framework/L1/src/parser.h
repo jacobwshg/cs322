@@ -27,6 +27,8 @@ namespace L1
 	bool
 	isparen( const char c );
 
+	template< typename T > struct node_tag {};
+
 	class Parser
 	{
 	private:
@@ -51,25 +53,131 @@ namespace L1
 		std::string_view
 		gettok( void );
 
-		// default
-		template< typename NodeType >
-		std::optional< NodeType > node_handler( void )
+		// for variant nodes
+		template< typename VariantNodeT >
+			requires ::is_variant_v< VariantNodeT >
+		std::optional< VariantNodeT > make_variant_node( void )
 		{
-			return std::nullopt;
+			std::optional< VariantNodeT > result { std::nullopt };
+
+			auto try_parse
+			{
+				[ & ]< typename NodeT >() -> bool
+				{
+					// descend into alternatives.
+					// if make_node< NodeT > fails, it is assumed to 
+					// restore token idx before returning
+					if ( auto node = this->make_node< NodeT >() )
+					{
+						result = std::move( *node );
+						return true;
+					}
+					return false;
+				}
+			};
+			auto expand
+			{
+				[ & ]< typename ... Ts >( std::variant< Ts ... > * )
+				{
+					( try_parse.template operator()< Ts >() || ... );
+				}
+			};
+
+			const std::size_t cur_idx { this->tok_idx };
+
+			expand( ( VariantNodeT * ) nullptr );
+
+			if ( result )
+			{
+				return std::move( result );
+			}
+			else
+			{
+				this->tok_idx = cur_idx;
+				return std::nullopt;
+			}
 		}
 
-		template< L1::IsKWNode KWNodeType >
-		std::optional< KWNodeType > node_handler( void )
+		// for terminal kw nodes
+		template< typename KWNodeT >
+			requires L1::IsKWNode< KWNodeT >
+		std::optional< KWNodeT > make_kw_node( void )
 		{
 			const std::size_t cur_idx { this->tok_idx };
 			const std::string_view tok { this->gettok() };
-			return ( tok == KWNodeType::kw )
-				? KWNodeType {}
-				: std::nullopt;
+			if ( tok == KWNodeT::kw ) // token matches kw 
+			{
+				return KWNodeT {};
+			}
+			else // match failed, restore idx
+			{
+				this->tok_idx = cur_idx;
+				return std::nullopt;
+			}
 		};
 
-		std::optional< NIntNode > node_handler( void );
+		// for terminal identifier nodes with regex
+		template< typename IdentNodeT >
+			requires L1::IsIdentNode< IdentNodeT >
+		std::optional< IdentNodeT > make_ident_node( void )
+		{
+			const std::size_t cur_idx { this->tok_idx };
+			const std::string_view tok { this->gettok() };
+			if ( std::regex_match( tok, IdentNodeT::re ) ) // token matches node regex
+			{
+				return IdentNodeT { .val = tok };
+			}
+			else // match failed, restore idx
+			{
+				this->tok_idx = cur_idx;
+				return std::nullopt;
+			}
+		};
 
+		// for most record (struct) nodes
+		template< typename RecNodeT >
+			requires L1::IsRecNode< RecNodeT >
+		std::optional< RecNodeT > make_record_node( void )
+		{
+			// TODO
+			const std::size_t cur_idx { this->tok_idx };
+
+			this->tok_idx = cur_idx;
+			return std::nullopt;
+		};
+
+		// dispatcher
+		template< typename NodeT >
+		std::optional< NodeT > make_node( void )
+		{
+			if constexpr ( ::is_variant_v< NodeT > )
+			{
+				return this->make_variant_node< NodeT >();
+			}
+			if constexpr ( L1::IsKWNode< NodeT > )
+			{
+				return this->make_kw_node< NodeT >();
+			}
+			if constexpr ( L1::IsIdentNode< NodeT > )
+			{
+				return this->make_ident_node< NodeT >();
+			}
+			/*
+			if constexpr ( std::is_same_v< NodeT, L1::fNode > )
+			{
+				return this->make_f_node();
+			}
+			if constexpr ( std::is_same_v< NodeT, L1::pNode > )
+			{
+				return this->make_p_node();
+			}
+			*/
+			if constexpr ( L1::IsRecNode< NodeT > )
+			{
+				return this->make_record_node< NodeT >();
+			}
+			return std::nullopt;
+		}
 	};
 
 }

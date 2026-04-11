@@ -26,10 +26,10 @@ main( int argc, char *argv[] )
 	}
 
 	std::cout << "Regex tests\n";
-	std::cout << std::regex_match( "+18342", L1::N_int_re ) << "\n";
-	std::cout << std::regex_match( "-0", L1::N_int_re ) << "\n";
-	std::cout << std::regex_match( "_b26", L1::name_re ) << "\n";
-	std::cout << std::regex_match( "Z0", L1::name_re ) << "\n";
+	std::cout << std::regex_match( "+18342", L1::NNZNode::re ) << "\n";
+	std::cout << std::regex_match( "-0", L1::NNZNode::re ) << "\n";
+	std::cout << std::regex_match( "_b26", L1::nameNode::re ) << "\n";
+	std::cout << std::regex_match( "Z0", L1::nameNode::re ) << "\n";
 	std::cout << "\n";
 	
 
