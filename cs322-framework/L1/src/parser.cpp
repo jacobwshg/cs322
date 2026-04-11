@@ -56,7 +56,7 @@ Parser::lex( std::istream &src_is )
 {
 	enum class State
 	{
-		IN_SPACE, IN_TOK,
+		IN_SPACE, IN_COMMENT, IN_TOK,
 	};
 
 	static constexpr char NUL { '\0' };
@@ -64,6 +64,7 @@ Parser::lex( std::istream &src_is )
 	char prv { NUL }, cur {};
 	State state { State::IN_SPACE };
 	bool cur_isspace { false };
+	bool in_comment { false };
 
 	for ( cur=src_is.get(); src_is; cur=src_is.get() )
 	{
@@ -72,7 +73,9 @@ Parser::lex( std::istream &src_is )
 		cur_isspace = std::isspace( cur );
 		switch ( state )
 		{
+
 		case State::IN_SPACE:
+			// if current token is still space, ignore
 			if ( !cur_isspace )
 			{
 				// token begin, transition from space
@@ -87,6 +90,14 @@ Parser::lex( std::istream &src_is )
 				std::printf( "space\n" );
 			}
 			break;
+
+		case State::IN_COMMENT:
+			if ( cur=='\r' || cur=='\n' )
+			{
+				state = State::IN_SPACE;
+			}
+			break;
+
 		case State::IN_TOK:
 			if ( cur_isspace )
 			{
@@ -108,6 +119,7 @@ Parser::lex( std::istream &src_is )
 				// and must be its own token )
 				this->srcbuf.push_back( NUL );
 				++idx;
+				// register base of new token
 				this->tok_base_idxs.emplace_back( idx );
 				this->srcbuf.push_back( cur );
 				++idx;
@@ -118,10 +130,25 @@ Parser::lex( std::istream &src_is )
 				std::printf( "same token \n" );
 				this->srcbuf.push_back( cur );
 				++idx;
+
+				if ( cur=='/' && prv=='/' )
+				{
+					// we realized that we are inside a comment. both `/`s have been appended
+					// to `srcbuf`, and `idx` has advanced past the second `/`. we need to 
+					// throw them out and ignore all chars until EOL
+					state = State::IN_COMMENT;
+					idx -= 2;
+					this->srcbuf.pop_back();
+					this->srcbuf.pop_back();
+					this->tok_base_idxs.pop_back();
+				}
+
 			}
 			break;
+
 		default:
 			break;
+
 		}
 
 		// shift
