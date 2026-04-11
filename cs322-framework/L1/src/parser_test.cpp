@@ -25,6 +25,12 @@ main( int argc, char *argv[] )
 		return 2;
 	}
 
+	std::cout << "Concept test\n";
+	if constexpr( L1::IsRecNode< L1::pNode > )
+	{
+		std::cout<<"pNode is RecNode\n\n";
+	}
+
 	std::cout << "Regex tests\n";
 	std::cout << std::regex_match( "+18342", L1::NNZNode::re ) << "\n";
 	std::cout << std::regex_match( "-0", L1::NNZNode::re ) << "\n";

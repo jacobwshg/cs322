@@ -14,12 +14,13 @@
 namespace
 {
 	/*
-	 * Two ways to check if a type is a std::variant instantiation
+	 * Two ways to check if a type is a std::variant< ... >
 	 *
 	 */
 	template< typename T >
 	struct is_variant: std::false_type
 	{};
+	// specialize `is_variant` for types that are `std::variant<...>`s of some other types
 	template< typename ... Ts >
 	struct is_variant< std::variant< Ts... > >: std::true_type
 	{};
@@ -35,6 +36,23 @@ namespace
 		) {}( t );
 	};
 
+	template< typename T >
+	struct is_tuple: std::false_type
+	{};
+	template< typename ... Ts >
+	struct is_tuple< std::tuple< Ts... > >: std::true_type
+	{};
+	template< typename T >
+	inline constexpr bool is_tuple_v = is_tuple< T >::value;
+
+	template< typename T >
+	struct is_vector: std::false_type
+	{};
+	template< typename T, typename A >
+	struct is_vector< std::vector< T, A > >: std::true_type
+	{};
+	template< typename T >
+	inline constexpr bool is_vector_v = is_vector< T >::value;
 }
 
 namespace L1
@@ -61,7 +79,7 @@ namespace L1
 	template< typename NodeT >
 	concept IsRecNode = requires
 	{
-		typename NodeT::fields_t;
+		::is_tuple_v< typename NodeT::fields_t >;
 	};
 
 	/*
