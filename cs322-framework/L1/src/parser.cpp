@@ -174,15 +174,32 @@ std::string_view
 L1::
 Parser::gettok( void )
 {
-	static constexpr std::string_view EMPTYTOK { "" };
 	if ( this->tok_idx >= this->tok_base_idxs.size() )
 	{
-		return EMPTYTOK;
+		return L1::EMPTYTOK;
 	}
 	else
 	{
-		return std::string_view { &this->srcbuf.data()[ this->tok_idx ] };
+		const std::string_view tok { &this->srcbuf.data()[ this->tok_idx ] };
 		++this->tok_idx;
+		return tok;
 	}
+}
+
+std::optional< L1::MNode >
+L1::
+Parser::make_M_node( void )
+{
+	const std::size_t cur_idx { this->tok_idx };
+
+	const std::string_view tok { this->gettok() };
+	const unsigned long val { std::strtoul( tok.data(), nullptr, 0 ) }; 
+
+	if ( 0UL == ( val & ( 0x8UL-1 ) ) ) // multiple of 8
+	{
+		return L1::MNode { .val = val };
+	}
+	this->tok_idx = cur_idx;
+	return std::nullopt;
 }
 

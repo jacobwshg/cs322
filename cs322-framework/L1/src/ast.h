@@ -86,6 +86,8 @@ namespace L1
 		::is_tuple_v< typename NodeT::fields_t >;
 	};
 
+	static constexpr std::string_view EMPTYTOK { "" };
+
 	/*
 	 * Reserved words
 	 */
@@ -234,11 +236,21 @@ namespace L1
 		static inline const std::regex re { "[a-zA-Z_][a-zA-z_0-9]*" };
 		std::string_view val;
 	};
-	struct labelNode { ColonNode colon_n; nameNode name_n; };
-	struct lNode { AtNode at_n; nameNode name_n; };
+	struct labelNode
+	{
+		using fields_t = std::tuple< ColonNode, nameNode >;
+		ColonNode colon_n;
+		nameNode name_n;
+	};
+	struct lNode
+	{
+		using fields_t = std::tuple< AtNode, nameNode >;
+		AtNode at_n;
+		nameNode name_n;
+	};
 
 	using NNode = std::variant< _0Node, NNZNode >;
-	struct MNode { std::string_view val; };
+	struct MNode { unsigned long val; }; // multiples of 8 
 	using FNode = std::variant< _1Node, _3Node, _4Node >;
 	using ENode = std::variant< _1Node, _2Node, _4Node, _8Node >;
 
@@ -434,11 +446,9 @@ namespace L1
 		using fields_t = std::tuple< LParNode, lNode, NNode, NNode, std::vector<iNode>, RParNode >;
 
 		LParNode lpar_n;
-
 		lNode l_n;
 		NNode N1_n; NNode N2_n;
 		std::vector< iNode > i_ns;
-
 		RParNode rpar_n;
 	};
 
@@ -447,10 +457,8 @@ namespace L1
 		using fields_t = std::tuple< LParNode, lNode, std::vector< fNode >, RParNode >;
 
 		LParNode lpar_n;
-
 		lNode l_n;
 		std::vector< fNode > f_ns;
-
 		RParNode rpar_n;		
 	};
 }

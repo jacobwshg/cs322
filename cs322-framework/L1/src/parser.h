@@ -53,6 +53,8 @@ namespace L1
 		std::string_view
 		gettok( void );
 
+		std::optional< MNode > make_M_node( void );
+
 		// for variant nodes
 		template< typename VariantNodeT >
 			requires ::is_variant_v< VariantNodeT >
@@ -150,7 +152,6 @@ namespace L1
 			requires L1::IsRecNode< RecNodeT >
 		std::optional< RecNodeT > make_record_node( void )
 		{
-			// TODO
 			const std::size_t cur_idx { this->tok_idx };
 
 			std::optional< typename RecNodeT::fields_t > ndtuple_opt
@@ -186,18 +187,26 @@ namespace L1
 		template< typename NodeT >
 		std::optional< NodeT > make_node( void )
 		{
+			if constexpr ( std::is_same_v< NodeT, L1::MNode > )
+			{
+				return this->make_M_node();
+			}
+
 			if constexpr ( ::is_variant_v< NodeT > )
 			{
 				return this->make_variant_node< NodeT >();
 			}
+
 			if constexpr ( L1::IsKWNode< NodeT > )
 			{
 				return this->make_kw_node< NodeT >();
 			}
+
 			if constexpr ( L1::IsIdentNode< NodeT > )
 			{
 				return this->make_ident_node< NodeT >();
 			}
+
 			/*
 			if constexpr ( std::is_same_v< NodeT, L1::fNode > )
 			{
@@ -208,10 +217,12 @@ namespace L1
 				return this->make_p_node();
 			}
 			*/
+
 			if constexpr ( L1::IsRecNode< NodeT > )
 			{
 				return this->make_record_node< NodeT >();
 			}
+
 			return std::nullopt;
 		}
 	};
