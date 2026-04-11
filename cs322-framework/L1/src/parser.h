@@ -10,6 +10,7 @@
 #include <iostream>
 #include <variant>
 #include <optional>
+#include <tuple>
 
 namespace L1
 {
@@ -53,6 +54,7 @@ namespace L1
 		std::string_view
 		gettok( void );
 
+		// for MNode specifically
 		std::optional< MNode > make_M_node( void );
 
 		// for variant nodes
@@ -92,15 +94,13 @@ namespace L1
 
 			expand( (VariantNodeT *) nullptr );
 
-			if ( res_opt )
+			if ( res_opt ) // successfully parsed an alternative
 			{
-				return std::move( res_opt );
+				return res_opt;
 			}
-			else
-			{
-				this->tok_idx = cur_idx;
-				return std::nullopt;
-			}
+			// match failed, restore idx
+			this->tok_idx = cur_idx;
+			return std::nullopt;
 		}
 
 		// for terminal kw nodes
@@ -114,11 +114,9 @@ namespace L1
 			{
 				return KWNodeT {};
 			}
-			else // match failed, restore idx
-			{
-				this->tok_idx = cur_idx;
-				return std::nullopt;
-			}
+			// match failed, restore idx
+			this->tok_idx = cur_idx;
+			return std::nullopt;
 		};
 
 		// for terminal identifier nodes with regex
@@ -132,17 +130,67 @@ namespace L1
 			{
 				return IdentNodeT { .val = tok };
 			}
-			else // match failed, restore idx
+			// match failed, restore idx
+			this->tok_idx = cur_idx;
+			return std::nullopt;
+		};
+
+		// for a vector of nodes of a given type; namely,
+		// the `f+` field in p nodes and `i+` in f nodes
+		template< typename NodeT >
+		std::vector< NodeT > make_node_vector( void )
+		{
+			std::vector< NodeT > nodevec {};
+
+			//const cur_idx { this->tok_idx };
+			while ( NodeT node { this->make_node< NodeT >() } )
+			{
+				nodevec.emplace_back( std::move( *node ) );
+			}
+
+			return nodevec;
+		}
+
+		// helper for make_record_node(): make the tuple of members
+		template< typename LeftT, typename ... RightTs >
+		std::optional< std::tuple< LeftT, RightTs... > > make_node_tuple( void )
+		{
+			const std::size_t cur_idx { this->tok_idx };
+
+			// make leftmost member
+			std::optional< LeftT > left_opt { std::nullopt };
+			if constexpr ( ::is_vector_v< LeftT > )
+			{
+				left_opt = this->make_node_vector< LeftT/*::value_type*/ >();
+			}
+			else
+			{
+				left_opt = this->make_node< LeftT >();
+			}
+			if ( !left_opt )
 			{
 				this->tok_idx = cur_idx;
 				return std::nullopt;
 			}
-		};
 
-		template< typename ... NodeTs >
-		std::optional< std::tuple< NodeTs... > > make_node_tuple( void )
-		{
-			// TODO
+			// recurse on remaining members
+			if constexpr ( sizeof...( RightTs ) == 0 )
+			{
+				// no more remaining members
+				return std::make_tuple( *left_opt );
+			}
+			else
+			{
+				auto right_opt { this->make_node_tuple< RightTs... >() };
+				if ( !right_opt )
+				{
+					// failed
+					this->tok_idx = cur_idx;
+					return std::nullopt;
+				}
+				// succeeded
+				return std::tuple_cat( std::make_tuple( *left_opt ), *right_opt );
+			}
 
 			return std::nullopt;
 		};
@@ -166,22 +214,6 @@ namespace L1
 			this->tok_idx = cur_idx;
 			return std::nullopt;
 		};
-
-		// for a vector of nodes of a given type; namely,
-		// the `f+` field in p nodes and `i+` in f nodes
-		template< typename NodeT >
-		std::vector< NodeT > make_node_vector( void )
-		{
-			std::vector< NodeT > nodevec {};
-
-			//const cur_idx { this->tok_idx };
-			while ( NodeT node { this->make_node< NodeT >() } )
-			{
-				nodevec.emplace_back( std::move( *node ) );
-			}
-
-			return nodevec;
-		}
 
 		// dispatcher
 		template< typename NodeT >
