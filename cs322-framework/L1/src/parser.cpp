@@ -204,3 +204,11 @@ Parser::make_M_node( void )
 	return std::nullopt;
 }
 
+bool
+L1::
+Parser::parse( void )
+{
+	this->ast = this->make_node< pNode >();
+	return this->ast ? true: false;
+}
+

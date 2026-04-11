@@ -38,9 +38,11 @@ main( int argc, char *argv[] )
 	std::cout << std::regex_match( "Z0", L1::nameNode::re ) << "\n";
 	std::cout << "\n";
 	
-
 	L1::Parser prsr {};
 	prsr.lex( test_ifs );
 	prsr.print_toks();
+
+	prsr.parse();
+
 }
 

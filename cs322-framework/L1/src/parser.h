@@ -51,8 +51,13 @@ namespace L1
 		void
 		print_toks( void ) const;
 
+		// extract one lexed token and advance position
 		std::string_view
 		gettok( void );
+
+		// parse tokens into AST
+		bool
+		parse( void );
 
 		// for MNode specifically
 		std::optional< MNode > make_M_node( void );
@@ -161,7 +166,9 @@ namespace L1
 			std::optional< LeftT > left_opt { std::nullopt };
 			if constexpr ( ::is_vector_v< LeftT > )
 			{
-				left_opt = this->make_node_vector< LeftT/*::value_type*/ >();
+				left_opt = std::move(
+					this->make_node_vector< LeftT::value_type >()
+				);
 			}
 			else
 			{
@@ -204,7 +211,7 @@ namespace L1
 
 			std::optional< typename RecNodeT::fields_t > ndtuple_opt
 			{
-				this->make_node_tuple< RecNodeT::fields_t >()
+				this->make_node_tuple< typename RecNodeT::fields_t >()
 			};
 			if ( ndtuple_opt )
 			{
@@ -255,6 +262,7 @@ namespace L1
 				return this->make_record_node< NodeT >();
 			}
 
+			std::cout << "unable to make node of type " << typeid( std::declval<NodeT> ).name() << "\n";
 			return std::nullopt;
 		}
 	};
