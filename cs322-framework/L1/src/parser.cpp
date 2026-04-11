@@ -75,7 +75,6 @@ Parser::lex( std::istream &src_is )
 		{
 
 		case State::IN_SPACE:
-			// if current token is still space, ignore
 			if ( !cur_isspace )
 			{
 				// token begin, transition from space
@@ -87,6 +86,7 @@ Parser::lex( std::istream &src_is )
 			}
 			else
 			{
+				// if current token is still space, ignore
 				std::printf( "space\n" );
 			}
 			break;

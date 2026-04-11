@@ -67,7 +67,7 @@ namespace L1
 					// descend into alternatives.
 					// if make_node< NodeT > fails, it is assumed to 
 					// restore token idx before returning
-					if ( auto node = this->make_node< NodeT >() )
+					if ( NodeT node { this->make_node< NodeT >() } )
 					{
 						result = std::move( *node );
 						return true;
@@ -143,10 +143,27 @@ namespace L1
 			const std::size_t cur_idx { this->tok_idx };
 
 			//RecNodeT::fields_t
+			// distinguish between single node members and node vector members
 
 			this->tok_idx = cur_idx;
 			return std::nullopt;
 		};
+
+		// for a vector of nodes of a given type; namely,
+		// the `f+` field in p nodes and `i+` in f nodes
+		template< typename NodeT >
+		std::vector< NodeT > make_node_vector( void )
+		{
+			std::vector< NodeT > nodevec {};
+
+			//const cur_idx { this->tok_idx };
+			while ( NodeT node { this->make_node< NodeT >() } )
+			{
+				nodevec.emplace_back( std::move( *node ) );
+			}
+
+			return nodevec;
+		}
 
 		// dispatcher
 		template< typename NodeT >
