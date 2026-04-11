@@ -13,6 +13,10 @@
 
 namespace
 {
+
+	template< typename T >
+	using TypeTag = std::unique_ptr< T >;
+
 	/*
 	 * Two ways to check if a type is a std::variant< ... >
 	 *

@@ -58,18 +58,21 @@ namespace L1
 			requires ::is_variant_v< VariantNodeT >
 		std::optional< VariantNodeT > make_variant_node( void )
 		{
-			std::optional< VariantNodeT > result { std::nullopt };
+			std::optional< VariantNodeT > res_opt { std::nullopt };
 
-			auto try_parse
+			// don't use a local struct with a `bool operator()`
+			// because local struct methods can't be templates and we can't parameterize
+			// operator() with NodeAltT
+			auto try_make_alternative
 			{
-				[ & ]< typename NodeT >() -> bool
+				[ & ]< typename NodeAltT >( void ) -> bool
 				{
-					// descend into alternatives.
-					// if make_node< NodeT > fails, it is assumed to 
+					// descend into alternative.
+					// if make_node< NodeAltT > fails, it is assumed to 
 					// restore token idx before returning
-					if ( NodeT node { this->make_node< NodeT >() } )
+					if ( NodeAltT node { this->make_node< NodeAltT >() } )
 					{
-						result = std::move( *node );
+						res_opt = std::move( *node );
 						return true;
 					}
 					return false;
@@ -77,19 +80,19 @@ namespace L1
 			};
 			auto expand
 			{
-				[ & ]< typename ... Ts >( std::variant< Ts ... > * )
+				[ & ]< typename ... AltTs >( std::variant< AltTs... > *_tag )
 				{
-					( try_parse.template operator()< Ts >() || ... );
+					( try_make_alternative.template operator()< AltTs >() || ... );
 				}
 			};
 
 			const std::size_t cur_idx { this->tok_idx };
 
-			expand( ( VariantNodeT * ) nullptr );
+			expand( (VariantNodeT *) nullptr );
 
-			if ( result )
+			if ( res_opt )
 			{
-				return std::move( result );
+				return std::move( res_opt );
 			}
 			else
 			{
@@ -134,6 +137,14 @@ namespace L1
 			}
 		};
 
+		template< typename ... NodeTs >
+		std::optional< std::tuple< NodeTs... > > make_node_tuple( void )
+		{
+			// TODO
+
+			return std::nullopt;
+		};
+
 		// for most record (struct) nodes
 		template< typename RecNodeT >
 			requires L1::IsRecNode< RecNodeT >
@@ -142,8 +153,14 @@ namespace L1
 			// TODO
 			const std::size_t cur_idx { this->tok_idx };
 
-			//RecNodeT::fields_t
-			// distinguish between single node members and node vector members
+			std::optional< typename RecNodeT::fields_t > ndtuple_opt
+			{
+				this->make_node_tuple< RecNodeT::fields_t >()
+			};
+			if ( ndtuple_opt )
+			{
+				return std::make_from_tuple< RecNodeT >( *ndtuple_opt );
+			}
 
 			this->tok_idx = cur_idx;
 			return std::nullopt;
