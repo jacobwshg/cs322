@@ -42,7 +42,8 @@ main( int argc, char *argv[] )
 	prsr.lex( test_ifs );
 	prsr.print_toks();
 
-	prsr.parse();
+	const bool success { prsr.parse() };
+	std::cout << "parse() success: " << success << "\n";
 
 }
 

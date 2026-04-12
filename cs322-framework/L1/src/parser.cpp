@@ -69,7 +69,7 @@ Parser::lex( std::istream &src_is )
 
 	for ( cur=src_is.get(); src_is; cur=src_is.get() )
 	{
-		std::printf( "%c\t\t", cur );
+		//std::printf( "%c\t\t", cur );
 
 		cur_isspace = std::isspace( cur );
 		switch ( state )
@@ -79,7 +79,7 @@ Parser::lex( std::istream &src_is )
 			if ( !cur_isspace )
 			{
 				// token begin, transition from space
-				std::printf( "token begin, transition from space, idx %0d\n", idx );
+				//std::printf( "token begin, transition from space, idx %0d\n", idx );
 				state = State::IN_TOK;
 				this->tok_base_idxs.emplace_back( idx );
 				this->srcbuf.push_back( cur );
@@ -88,7 +88,7 @@ Parser::lex( std::istream &src_is )
 			else
 			{
 				// if current token is still space, ignore
-				std::printf( "space\n" );
+				//std::printf( "space\n" );
 			}
 			break;
 
@@ -103,7 +103,7 @@ Parser::lex( std::istream &src_is )
 			if ( cur_isspace )
 			{
 				// token end, transition to space
-				std::printf( "token end, transition to space\n" );
+				//std::printf( "token end, transition to space\n" );
 				state = State::IN_SPACE;
 				this->srcbuf.push_back( NUL );
 				++idx;
@@ -113,7 +113,7 @@ Parser::lex( std::istream &src_is )
 				|| ( L1::isparen( prv ) ^ L1::isparen( cur ) )
 			)
 			{
-				std::printf( "token boundary without space, idx %0d\n", idx );
+				//std::printf( "token boundary without space, idx %0d\n", idx );
 				// token boundary without space
 				// ( one is identifier, one is not; alternatively, 
 				// both aren't identifiers, but one is a parenthesis
@@ -128,7 +128,7 @@ Parser::lex( std::istream &src_is )
 			else
 			{
 				// same token
-				std::printf( "same token \n" );
+				//std::printf( "same token \n" );
 				this->srcbuf.push_back( cur );
 				++idx;
 
@@ -275,6 +275,7 @@ Parser::parse( void )
 {
 	this->ast = this->make_node< pNode >();
 	return this->ast ? true: false;
+
 }
 
 

@@ -83,7 +83,7 @@ namespace L1
 	template< typename NodeT >
 	concept IsRecNode = requires
 	{
-		::is_tuple_v< typename NodeT::fields_t >;
+		true == ::is_tuple_v< typename NodeT::fields_t >;
 	};
 
 	static constexpr std::string_view EMPTYTOK { "" };

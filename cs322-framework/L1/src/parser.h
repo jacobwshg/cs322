@@ -60,19 +60,69 @@ namespace L1
 		bool
 		parse( void );
 
+		// dispatcher
+		template< typename NodeT >
+		std::optional< NodeT >
+		make_node( void )
+		{
+			/*
+			if constexpr ( std::is_same_v< NodeT, L1::pNode > )
+			{
+				return this->make_p_node();
+			}
+
+			if constexpr ( std::is_same_v< NodeT, L1::fNode > )
+			{
+				return this->make_f_node();
+			}
+			*/
+
+			if constexpr ( std::is_same_v< NodeT, L1::MNode > )
+			{
+				return this->make_M_node();
+			}
+
+			if constexpr ( ::is_variant_v< NodeT > )
+			{
+				return this->make_variant_node< NodeT >();
+			}
+
+			if constexpr ( L1::IsKWNode< NodeT > )
+			{
+				return this->make_kw_node< NodeT >();
+			}
+
+			if constexpr ( L1::IsIdentNode< NodeT > )
+			{
+				return this->make_ident_node< NodeT >();
+			}
+
+			if constexpr ( L1::IsRecNode< NodeT > )
+			{
+				return this->make_record_node< NodeT >();
+			}
+
+			return std::nullopt;
+		}
+
+	private:
 		// for MNode specifically
-		std::optional< MNode > make_M_node( void );
+		std::optional< MNode >
+		make_M_node( void );
 
 		// for fNode
-		std::optional< fNode > make_f_node( void );
+		std::optional< fNode >
+		make_f_node( void );
 
 		// for pNode
-		std::optional< pNode > make_p_node( void );
+		std::optional< pNode >
+		make_p_node( void );
 
 		// for variant nodes
 		template< typename VariantNodeT >
 			requires ::is_variant_v< VariantNodeT >
-		std::optional< VariantNodeT > make_variant_node( void )
+		std::optional< VariantNodeT >
+		make_variant_node( void )
 		{
 			std::optional< VariantNodeT > res_opt { std::nullopt };
 
@@ -118,12 +168,14 @@ namespace L1
 		// for terminal kw nodes
 		template< typename KWNodeT >
 			requires L1::IsKWNode< KWNodeT >
-		std::optional< KWNodeT > make_kw_node( void )
+		std::optional< KWNodeT >
+		make_kw_node( void )
 		{
 			const std::size_t cur_idx { this->tok_idx };
 			const std::string_view tok { this->gettok() };
 			if ( tok == KWNodeT::kw ) // token matches kw 
 			{
+				std::printf( "kw `%s` match success\n", tok.data() );
 				return KWNodeT {};
 			}
 			// match failed, restore idx
@@ -134,12 +186,14 @@ namespace L1
 		// for terminal identifier nodes with regex
 		template< typename IdentNodeT >
 			requires L1::IsIdentNode< IdentNodeT >
-		std::optional< IdentNodeT > make_ident_node( void )
+		std::optional< IdentNodeT >
+		make_ident_node( void )
 		{
 			const std::size_t cur_idx { this->tok_idx };
 			const std::string_view tok { this->gettok() };
 			if ( std::regex_match( tok.data(), IdentNodeT::re ) ) // token matches node regex
 			{
+				std::printf( "identifier `%s` match success\n", tok.data() );
 				return IdentNodeT { .val = tok };
 			}
 			// match failed, restore idx
@@ -150,7 +204,8 @@ namespace L1
 		// for a vector of nodes of a given type; namely,
 		// the `f+` field in p nodes and `i+` in f nodes
 		template< typename ElemT, typename RDelimT = L1::RParNode >
-		std::optional< std::vector< ElemT > > make_node_vector( void )
+		std::optional< std::vector< ElemT > >
+		make_node_vector( void )
 		{
 			std::vector< ElemT > nodevec {};
 
@@ -189,7 +244,8 @@ namespace L1
 
 		// helper for make_record_node(): make the tuple of members
 		template< typename LeftT, typename ... RightTs >
-		std::optional< std::tuple< LeftT, RightTs... > > make_node_tuple( void )
+		std::optional< std::tuple< LeftT, RightTs... > >
+		make_node_tuple( void )
 		{
 			const std::size_t cur_idx { this->tok_idx };
 
@@ -198,7 +254,7 @@ namespace L1
 			if constexpr ( ::is_vector_v< LeftT > )
 			{
 				// this block is supposed to be used by f+ and i+
-				left_opt = this->make_node_vector< LeftT::value_type >();
+				left_opt = this->make_node_vector< typename LeftT::value_type >();
 			}
 			else
 			{
@@ -218,7 +274,10 @@ namespace L1
 			}
 			else
 			{
-				auto rtup_opt { this->make_node_tuple< RightTs... >() };
+				std::optional< std::tuple< RightTs... > > rtup_opt
+				{
+					this->make_node_tuple< RightTs... >()
+				};
 				if ( !rtup_opt )
 				{
 					// failed
@@ -230,6 +289,7 @@ namespace L1
 					std::make_tuple( *left_opt ),
 					std::move( *rtup_opt )
 				);
+
 			}
 
 			return std::nullopt;
@@ -238,13 +298,26 @@ namespace L1
 		// for most record (struct) nodes
 		template< typename RecNodeT >
 			requires L1::IsRecNode< RecNodeT >
-		std::optional< RecNodeT > make_record_node( void )
+		std::optional< RecNodeT >
+		make_record_node( void )
 		{
 			const std::size_t cur_idx { this->tok_idx };
 
+			// IMPORTANT - expand `fields_t`. else the entire `fields_t` gets mapped to
+			// `LeftT` in `make_node_tuple()` and `RightT` maps nothing.
+			auto make_fields_tuple
+			{
+				[ this ]< typename ... FieldTs >( std::tuple< FieldTs... > *_tag )
+					-> std::optional< std::tuple< FieldTs... > >
+				{
+					return this->make_node_tuple< FieldTs... >();
+				}
+			};
+
 			std::optional< typename RecNodeT::fields_t > ndtuple_opt
 			{
-				this->make_node_tuple< typename RecNodeT::fields_t >()
+				//this->make_node_tuple< typename RecNodeT::fields_t >()
+				make_fields_tuple( ( typename RecNodeT::fields_t * ) {} )
 			};
 			if ( ndtuple_opt )
 			{
@@ -255,48 +328,6 @@ namespace L1
 			return std::nullopt;
 		};
 
-		// dispatcher
-		template< typename NodeT >
-		std::optional< NodeT > make_node( void )
-		{
-			if constexpr ( std::is_same_v< NodeT, L1::pNode > )
-			{
-				return this->make_p_node();
-			}
-
-			if constexpr ( std::is_same_v< NodeT, L1::fNode > )
-			{
-				return this->make_f_node();
-			}
-
-			if constexpr ( std::is_same_v< NodeT, L1::MNode > )
-			{
-				return this->make_M_node();
-			}
-
-			if constexpr ( ::is_variant_v< NodeT > )
-			{
-				return this->make_variant_node< NodeT >();
-			}
-
-			if constexpr ( L1::IsKWNode< NodeT > )
-			{
-				return this->make_kw_node< NodeT >();
-			}
-
-			if constexpr ( L1::IsIdentNode< NodeT > )
-			{
-				return this->make_ident_node< NodeT >();
-			}
-
-			if constexpr ( L1::IsRecNode< NodeT > )
-			{
-				return this->make_record_node< NodeT >();
-			}
-
-			std::cout << "unable to make node of type " << typeid( std::declval<NodeT> ).name() << "\n";
-			return std::nullopt;
-		}
 	};
 
 }
