@@ -204,6 +204,71 @@ Parser::make_M_node( void )
 	return std::nullopt;
 }
 
+std::optional< L1::fNode >
+L1::
+Parser::make_f_node( void )
+{
+	const std::size_t cur_idx { this->tok_idx };
+
+	std::optional< L1::LParNode > lpar_n_opt {};
+	std::optional< L1::lNode > l_n_opt {};
+	std::optional< L1::NNode > N1_n_opt {};
+	std::optional< L1::NNode > N2_n_opt {};
+	std::optional< std::vector< L1::iNode > > i_ns_opt {};
+	std::optional< L1::RParNode > rpar_n_opt {};
+
+	if ( !( lpar_n_opt = this->make_node< L1::LParNode >() ) ) { goto fail; }
+	if ( !( l_n_opt = this->make_node< L1::lNode >() ) ) { goto fail; }
+	if ( !( N1_n_opt = this->make_node< L1::NNode >() ) ) { goto fail; }
+	if ( !( N2_n_opt = this->make_node< L1::NNode >() ) ) { goto fail; }
+	if ( !( i_ns_opt = this->make_node_vector< L1::iNode >() ) ) { goto fail; }
+	if ( !( rpar_n_opt = this->make_node< L1::RParNode >() ) ) { goto fail; }
+
+	return
+		L1::fNode
+		{
+			.lpar_n = *lpar_n_opt,
+			.l_n = *l_n_opt,
+			.N1_n = *N1_n_opt, .N2_n = *N2_n_opt,
+			.i_ns = std::move( *i_ns_opt ),
+			.rpar_n = *rpar_n_opt
+		};
+
+	fail:
+		this->tok_idx = cur_idx;
+		return std::nullopt;
+}
+
+std::optional< L1::pNode >
+L1::
+Parser::make_p_node( void )
+{
+	const std::size_t cur_idx { this->tok_idx };
+
+	std::optional< L1::LParNode > lpar_n_opt {};
+	std::optional< L1::lNode >    l_n_opt {};
+	std::optional< std::vector< L1::fNode > > f_ns_opt {};
+	std::optional< L1::RParNode > rpar_n_opt {};
+
+	if ( !( lpar_n_opt = this->make_node< L1::LParNode >() )  ) { goto fail; }
+	if ( !( l_n_opt    = this->make_node< L1::lNode >() ) ) { goto fail; }
+	if ( !( f_ns_opt   = this->make_node_vector< L1::fNode >() ) ) { goto fail; }
+	if ( !( rpar_n_opt = this->make_node< L1::RParNode >() ) ) { goto fail; }
+
+	return
+		L1::pNode
+		{
+			.lpar_n = *lpar_n_opt,
+			.l_n    = *l_n_opt,
+			.f_ns   = std::move( *f_ns_opt ),
+			.rpar_n = *rpar_n_opt
+		};
+
+	fail:
+		this->tok_idx = cur_idx;
+		return std::nullopt;
+}
+
 bool
 L1::
 Parser::parse( void )
@@ -211,4 +276,6 @@ Parser::parse( void )
 	this->ast = this->make_node< pNode >();
 	return this->ast ? true: false;
 }
+
+
 

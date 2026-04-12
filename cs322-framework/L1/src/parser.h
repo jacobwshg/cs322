@@ -11,6 +11,7 @@
 #include <variant>
 #include <optional>
 #include <tuple>
+#include <regex>
 
 namespace L1
 {
@@ -62,6 +63,12 @@ namespace L1
 		// for MNode specifically
 		std::optional< MNode > make_M_node( void );
 
+		// for fNode
+		std::optional< fNode > make_f_node( void );
+
+		// for pNode
+		std::optional< pNode > make_p_node( void );
+
 		// for variant nodes
 		template< typename VariantNodeT >
 			requires ::is_variant_v< VariantNodeT >
@@ -79,9 +86,9 @@ namespace L1
 					// descend into alternative.
 					// if make_node< NodeAltT > fails, it is assumed to 
 					// restore token idx before returning
-					if ( NodeAltT node { this->make_node< NodeAltT >() } )
+					if ( std::optional< NodeAltT > node_opt { this->make_node< NodeAltT >() } )
 					{
-						res_opt = std::move( *node );
+						res_opt = std::move( *node_opt );
 						return true;
 					}
 					return false;
@@ -131,7 +138,7 @@ namespace L1
 		{
 			const std::size_t cur_idx { this->tok_idx };
 			const std::string_view tok { this->gettok() };
-			if ( std::regex_match( tok, IdentNodeT::re ) ) // token matches node regex
+			if ( std::regex_match( tok.data(), IdentNodeT::re ) ) // token matches node regex
 			{
 				return IdentNodeT { .val = tok };
 			}
@@ -142,18 +149,42 @@ namespace L1
 
 		// for a vector of nodes of a given type; namely,
 		// the `f+` field in p nodes and `i+` in f nodes
-		template< typename NodeT >
-		std::vector< NodeT > make_node_vector( void )
+		template< typename ElemT, typename RDelimT = L1::RParNode >
+		std::optional< std::vector< ElemT > > make_node_vector( void )
 		{
-			std::vector< NodeT > nodevec {};
+			std::vector< ElemT > nodevec {};
 
-			//const cur_idx { this->tok_idx };
-			while ( NodeT node { this->make_node< NodeT >() } )
+			while ( true )
 			{
-				nodevec.emplace_back( std::move( *node ) );
+				const std::size_t cur_idx { this->tok_idx };
+				if ( const std::optional< RDelimT > rdelim_n { this->make_node< RDelimT >() } )
+				{
+					// unget right delimiter and break
+					this->tok_idx = cur_idx;
+					break;
+				}
+
+				if ( std::optional< ElemT > node_opt { this->make_node< ElemT >() } )
+				{
+					// parsed elem node
+					nodevec.emplace_back( std::move( *node_opt ) );
+				}
+				else
+				{
+					// bad node ( neither elem nor rdelim )
+					goto fail;
+				}
 			}
 
-			return nodevec;
+			if ( !nodevec.empty() )
+			{
+				return nodevec;
+			}
+
+			fail:
+				// empty vector ( grammar requires +, not * )
+				// or bad node
+				return std::nullopt;
 		}
 
 		// helper for make_record_node(): make the tuple of members
@@ -166,9 +197,8 @@ namespace L1
 			std::optional< LeftT > left_opt { std::nullopt };
 			if constexpr ( ::is_vector_v< LeftT > )
 			{
-				left_opt = std::move(
-					this->make_node_vector< LeftT::value_type >()
-				);
+				// this block is supposed to be used by f+ and i+
+				left_opt = this->make_node_vector< LeftT::value_type >();
 			}
 			else
 			{
@@ -188,15 +218,18 @@ namespace L1
 			}
 			else
 			{
-				auto right_opt { this->make_node_tuple< RightTs... >() };
-				if ( !right_opt )
+				auto rtup_opt { this->make_node_tuple< RightTs... >() };
+				if ( !rtup_opt )
 				{
 					// failed
 					this->tok_idx = cur_idx;
 					return std::nullopt;
 				}
 				// succeeded
-				return std::tuple_cat( std::make_tuple( *left_opt ), *right_opt );
+				return std::tuple_cat(
+					std::make_tuple( *left_opt ),
+					std::move( *rtup_opt )
+				);
 			}
 
 			return std::nullopt;
@@ -226,6 +259,16 @@ namespace L1
 		template< typename NodeT >
 		std::optional< NodeT > make_node( void )
 		{
+			if constexpr ( std::is_same_v< NodeT, L1::pNode > )
+			{
+				return this->make_p_node();
+			}
+
+			if constexpr ( std::is_same_v< NodeT, L1::fNode > )
+			{
+				return this->make_f_node();
+			}
+
 			if constexpr ( std::is_same_v< NodeT, L1::MNode > )
 			{
 				return this->make_M_node();
@@ -245,17 +288,6 @@ namespace L1
 			{
 				return this->make_ident_node< NodeT >();
 			}
-
-			/*
-			if constexpr ( std::is_same_v< NodeT, L1::fNode > )
-			{
-				return this->make_f_node();
-			}
-			if constexpr ( std::is_same_v< NodeT, L1::pNode > )
-			{
-				return this->make_p_node();
-			}
-			*/
 
 			if constexpr ( L1::IsRecNode< NodeT > )
 			{
