@@ -2,13 +2,24 @@
 (
 	@func
 	69 420
-	:_128fc42f_6051_411e_99f4_d935c0a0a5d9
+	:__primetime_sexcrime
+	//rax <- rdx < rsi
+	//r8 <- 36 < 12
+
 	call tensor-error 1
 	call @OE45Ny09QSphMTltcDFwQU5NPjVJO3FTPztJaVdOOytWcFA9WWpKREJLbkNDRV01Rm48LUJOQEZAXiU4NSMrZ0hII3VBPUk2SmYkPGMhJjE_IldtWEQvIS01RCou 67
+
+	cjump r13 = 2048 :__primetime_sexcrime
+
+	r9--
+	r12--
+	r13 <- rcx = rsp
+
 	call tensor-error 4
 	call allocate 2
 	call tensor-error 3
 	call tuple-error 3
-	cjump 1 <= 1 :_128fc42f_6051_411e_99f4_d935c0a0a5d9
+	return
+	goto :__primetime_sexcrime
 )
 

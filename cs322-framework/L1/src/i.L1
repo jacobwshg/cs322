@@ -1,5 +1,6 @@
 
 //rdi <- rax
-//cjump 5 = 5 :_53
-call input 0
+//call input 0
+
+r9++
 

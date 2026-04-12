@@ -80,7 +80,10 @@ Parser::lex( std::istream &src_is )
 
 	static constexpr char NUL { '\0' };
 	int charidx { 0 };
-	char prv { NUL }, cur {};
+	char
+		pprv { NUL },
+		prv { NUL },
+		cur {};
 	State state { State::IN_SPACE };
 	bool cur_isspace { false };
 	bool in_comment { false };
@@ -91,16 +94,32 @@ Parser::lex( std::istream &src_is )
 
 		// non-space token break condition
 		bool tokbrk { false };
-		if ( L1::isident( prv ) ^ L1::isident( cur ) )
+		if ( L1::isident( prv ) != L1::isident( cur ) )
 		{
-			// don't break up `tuple-error` and `tensor-error`
-			tokbrk = ( prv=='-' ) == ( cur=='-' );
+			// one of the most recent 2 tokens can appear in an identifier; the other cannot
+			// generally, we have a token break
+			//
+			tokbrk = true;
+			// but don't break up a sign and the following number ( non-zero M )
+			//
+			if ( ( prv=='+'||prv=='-' ) && std::isdigit( cur ) )
+			{
+				tokbrk = false;
+			}
 		}
 		else
 		{
-			// parentheses form their own tokens and break from surrounding
-			// non-identifier characters
-			tokbrk = L1::isparen( prv ) ^ L1::isparen( cur );
+			// both chars are identifier or non-identifier
+			// generally, there's no token break
+			//
+			tokbrk = false;
+			// however, a parenthesis must be its own token even if 
+			// neighboring chars are non-identifier
+			//
+			if ( L1::isparen( prv ) || L1::isparen( cur ) )
+			{
+				tokbrk = true;
+			}
 		}
 
 		cur_isspace = std::isspace( cur );
@@ -141,16 +160,30 @@ Parser::lex( std::istream &src_is )
 			}
 			else if ( tokbrk )
 			{
-				// token boundary without space
-				// ( one is identifier, one is not; alternatively, 
-				// both aren't identifiers, but one is a parenthesis
-				// and must be its own token )
+				// token break without space
 				this->srcbuf.push_back( NUL );
 				++charidx;
 				// register base of new token
 				this->tok_base_idxs.emplace_back( charidx );
 				this->srcbuf.push_back( cur );
 				++charidx;
+
+				if ( std::isalpha( pprv ) && ( prv=='-' ) && std::isalpha( cur ) )
+				{
+					// relink kebab-case identifiers
+					// advanced charidx: ... A \0 - \0 A _
+					//                                   ^
+					this->srcbuf.pop_back(); // cur
+					this->srcbuf.pop_back(); // \0 after prv
+					this->srcbuf.pop_back(); // prv
+					this->srcbuf.pop_back(); // \0 after pprv
+					this->tok_base_idxs.pop_back(); // cur
+					this->tok_base_idxs.pop_back(); // prv
+					this->srcbuf.push_back( prv );
+					this->srcbuf.push_back( cur );
+					charidx -= 2;
+				}
+
 			}
 			else
 			{
@@ -163,7 +196,7 @@ Parser::lex( std::istream &src_is )
 				{
 					// we realized that we are inside a comment. both `/`s have been appended
 					// to `srcbuf`, and `charidx` has advanced past the second `/`. we need to 
-					// throw them out and ignore all chars until EOL
+					// throw them out and ignore all chars until EOL.
 					state = State::IN_COMMENT;
 					charidx -= 2;
 					this->srcbuf.pop_back();
@@ -180,6 +213,7 @@ Parser::lex( std::istream &src_is )
 		}
 
 		// shift
+		pprv = prv;
 		prv = cur;
 	}
 	// register final token before EOF
