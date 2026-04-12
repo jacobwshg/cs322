@@ -181,7 +181,7 @@ Parser::gettok( void )
 	}
 	else
 	{
-		const std::string_view tok { &this->srcbuf.data()[ this->tok_idx ] };
+		const std::string_view tok { &this->srcbuf.data()[ this->tok_base_idxs[ this->tok_idx ] ] };
 		++this->tok_idx;
 		return tok;
 	}
@@ -275,7 +275,6 @@ Parser::parse( void )
 {
 	this->ast = this->make_node< pNode >();
 	return this->ast ? true: false;
-
 }
 
 

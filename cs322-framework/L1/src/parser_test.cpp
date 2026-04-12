@@ -42,7 +42,7 @@ main( int argc, char *argv[] )
 	prsr.lex( test_ifs );
 	prsr.print_toks();
 
-	const bool success { prsr.parse() };
+	const bool success { prsr.make_node< L1::pNode >() };
 	std::cout << "parse() success: " << success << "\n";
 
 }
