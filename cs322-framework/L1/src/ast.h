@@ -228,7 +228,7 @@ namespace L1
 	struct NNZNode
 	{
 		static inline const std::regex re { "[+-]?[1-9][0-9]*" }; 
-		std::string_view val;
+		unsigned long long val;
 	};
 
 	struct nameNode
@@ -250,7 +250,7 @@ namespace L1
 	};
 
 	using NNode = std::variant< _0Node, NNZNode >;
-	struct MNode { unsigned long val; }; // multiples of 8 
+	struct MNode { long long val; }; // multiples of 8 
 	using FNode = std::variant< _1Node, _3Node, _4Node >;
 	using ENode = std::variant< _1Node, _2Node, _4Node, _8Node >;
 
@@ -433,9 +433,13 @@ namespace L1
 
 	using iNode = std::variant<
 
+		// `w <- s` could be a prefix of `w <- t cmp t`, and since we use short-circuit parsing,
+		// we must try matching the longer instruction first to avoid always parsing as the shorter one
+		//
 		iCmpAssignNode,
+		iAssignNode,
 
-		iAssignNode, iLoadNode, iStoreNode,
+		iLoadNode, iStoreNode,
 		iAOpNode, iSxNode, iSOpNode,
 		iAddStoreNode, iSubStoreNode, iLoadAddNode, iLoadSubNode,
 

@@ -193,13 +193,28 @@ namespace L1
 		{
 			const std::size_t cur_idx { this->tok_idx };
 			const std::string_view tok { this->gettok() };
-			if ( std::regex_match( tok.data(), IdentNodeT::re ) ) // token matches node regex
+			if ( !std::regex_match( tok.data(), IdentNodeT::re ) ) // token matches node regex
 			{
-				std::printf( "identifier `%s` match success\n", tok.data() );
+				// match failed, restore idx
+				this->tok_idx = cur_idx;
+				return std::nullopt;
+			}
+
+			std::printf( "identifier `%s` match success\n", tok.data() );
+
+			if constexpr ( std::is_same_v< IdentNodeT, L1::nameNode > )
+			{
+				// name ( val should be a token )
 				return IdentNodeT { .val = tok };
 			}
-			// match failed, restore idx
-			this->tok_idx = cur_idx;
+			if constexpr ( std::is_same_v< IdentNodeT, L1::NNZNode > )
+			{
+				// nonzero N ( value should be an integer )
+				errno = 0;
+				const unsigned long long val { std::strtoull( tok.data(), nullptr, 0 ) };
+				if ( errno == ERANGE ) { return std::nullopt; }
+				return IdentNodeT { .val = val };
+			}
 			return std::nullopt;
 		};
 

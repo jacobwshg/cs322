@@ -1,18 +1,19 @@
-#include <algorithm>
+
+#include <utils.h>
+
+#include <unistd.h>
 #include <assert.h>
+#include <stdint.h>
+#include <algorithm>
 #include <cctype>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <iterator>
 #include <set>
-#include <stdint.h>
 #include <string>
-#include <unistd.h>
 #include <utility>
 #include <vector>
-
-#include <utils.h>
 
 void
 print_help( char *progName )

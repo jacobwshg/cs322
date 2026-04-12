@@ -255,9 +255,9 @@ Parser::make_M_node( void )
 	const std::size_t cur_idx { this->tok_idx };
 
 	const std::string_view tok { this->gettok() };
-	const unsigned long val { std::strtoul( tok.data(), nullptr, 0 ) }; 
+	const long long val { std::strtoll( tok.data(), nullptr, 0 ) }; 
 
-	if ( 0UL == ( val & ( 0x8UL-1 ) ) ) // multiple of 8
+	if ( 0LL == ( val & ( 0x8LL-1 ) ) ) // multiple of 8
 	{
 		return L1::MNode { .val = val };
 	}
