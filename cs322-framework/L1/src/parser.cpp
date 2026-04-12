@@ -10,6 +10,24 @@
 #include <cctype>
 #include <cstdlib>
 
+namespace L1
+{
+ 	/* 
+ 	 * @brief
+ 	 *   Returns whether a character can be used in an identifier (name).
+	 */
+	bool
+	isident( const char c );
+
+ 	/* 
+ 	 * @brief
+ 	 *   Returns whether a character is a parenthesis.
+	 */
+	bool
+	isparen( const char c );
+
+}
+
 /*
  * @brief
  *   Returns whether a character can be used in an identifier (name).
@@ -61,7 +79,7 @@ Parser::lex( std::istream &src_is )
 	};
 
 	static constexpr char NUL { '\0' };
-	int idx { 0 };
+	int charidx { 0 };
 	char prv { NUL }, cur {};
 	State state { State::IN_SPACE };
 	bool cur_isspace { false };
@@ -71,6 +89,20 @@ Parser::lex( std::istream &src_is )
 	{
 		//std::printf( "%c\t\t", cur );
 
+		// non-space token break condition
+		bool tokbrk { false };
+		if ( L1::isident( prv ) ^ L1::isident( cur ) )
+		{
+			// don't break up `tuple-error` and `tensor-error`
+			tokbrk = ( prv=='-' ) == ( cur=='-' );
+		}
+		else
+		{
+			// parentheses form their own tokens and break from surrounding
+			// non-identifier characters
+			tokbrk = L1::isparen( prv ) ^ L1::isparen( cur );
+		}
+
 		cur_isspace = std::isspace( cur );
 		switch ( state )
 		{
@@ -79,11 +111,10 @@ Parser::lex( std::istream &src_is )
 			if ( !cur_isspace )
 			{
 				// token begin, transition from space
-				//std::printf( "token begin, transition from space, idx %0d\n", idx );
 				state = State::IN_TOK;
-				this->tok_base_idxs.emplace_back( idx );
+				this->tok_base_idxs.emplace_back( charidx );
 				this->srcbuf.push_back( cur );
-				++idx;
+				++charidx;
 			}
 			else
 			{
@@ -106,39 +137,35 @@ Parser::lex( std::istream &src_is )
 				//std::printf( "token end, transition to space\n" );
 				state = State::IN_SPACE;
 				this->srcbuf.push_back( NUL );
-				++idx;
+				++charidx;
 			}
-			else if (
-				( L1::isident( prv ) ^ L1::isident( cur ) )
-				|| ( L1::isparen( prv ) ^ L1::isparen( cur ) )
-			)
+			else if ( tokbrk )
 			{
-				//std::printf( "token boundary without space, idx %0d\n", idx );
 				// token boundary without space
 				// ( one is identifier, one is not; alternatively, 
 				// both aren't identifiers, but one is a parenthesis
 				// and must be its own token )
 				this->srcbuf.push_back( NUL );
-				++idx;
+				++charidx;
 				// register base of new token
-				this->tok_base_idxs.emplace_back( idx );
+				this->tok_base_idxs.emplace_back( charidx );
 				this->srcbuf.push_back( cur );
-				++idx;
+				++charidx;
 			}
 			else
 			{
 				// same token
 				//std::printf( "same token \n" );
 				this->srcbuf.push_back( cur );
-				++idx;
+				++charidx;
 
 				if ( cur=='/' && prv=='/' )
 				{
 					// we realized that we are inside a comment. both `/`s have been appended
-					// to `srcbuf`, and `idx` has advanced past the second `/`. we need to 
+					// to `srcbuf`, and `charidx` has advanced past the second `/`. we need to 
 					// throw them out and ignore all chars until EOL
 					state = State::IN_COMMENT;
-					idx -= 2;
+					charidx -= 2;
 					this->srcbuf.pop_back();
 					this->srcbuf.pop_back();
 					this->tok_base_idxs.pop_back();
@@ -157,7 +184,7 @@ Parser::lex( std::istream &src_is )
 	}
 	// register final token before EOF
 	this->srcbuf.push_back( NUL );
-	++idx; // only for consistency
+	++charidx; // only for consistency
 }
 
 void

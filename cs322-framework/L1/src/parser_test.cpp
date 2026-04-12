@@ -8,7 +8,8 @@
 #include <fstream>
 #include <cstdio>
 #include <regex>
-
+#include <string>
+#include <string_view>
 
 int
 main( int argc, char *argv[] )
@@ -18,7 +19,12 @@ main( int argc, char *argv[] )
 		std::fprintf( stderr, "Usage: parser_test <test_file_path>\n" );
 		return 2;
 	}
-	std::ifstream test_ifs { argv[ 1 ], std::ios_base::in };
+
+	const std::string_view a1v { argv[ 1 ] };
+	const bool test_f { a1v == "-f" };
+	const bool test_i { a1v == "-i" };
+
+	std::ifstream test_ifs { argv[ argc-1 ], std::ios_base::in };
 	if ( test_ifs.fail() )
 	{
 		std::fprintf( stderr, "Error: unable to open test file\n" );
@@ -42,7 +48,23 @@ main( int argc, char *argv[] )
 	prsr.lex( test_ifs );
 	prsr.print_toks();
 
-	const bool success { prsr.make_node< L1::pNode >() };
+	bool success {};
+	if ( test_f )
+	{
+		// test function
+		success = prsr.make_node< L1::fNode >()? true: false;
+	}
+	else if ( test_i )
+	{
+		// test instruction
+		success = prsr.make_node< L1::iNode >()? true :false;
+	}
+	else
+	{
+		// test program
+		success = prsr.make_node< L1::pNode >()? true: false;
+	}
+
 	std::cout << "parse() success: " << success << "\n";
 
 }

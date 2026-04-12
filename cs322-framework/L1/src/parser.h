@@ -17,20 +17,6 @@
 
 namespace L1
 {
- 	/* 
- 	 * @brief
- 	 *   Returns whether a character can be used in an identifier (name).
-	 */
-	bool
-	isident( const char c );
-
- 	/* 
- 	 * @brief
- 	 *   Returns whether a character is a parenthesis.
-	 */
-	bool
-	isparen( const char c );
-
 	template< typename T > struct node_tag {};
 
 	class Parser

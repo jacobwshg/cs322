@@ -437,7 +437,7 @@ namespace L1
 		iAddStoreNode, iSubStoreNode, iLoadAddNode, iLoadSubNode,
 		iCmpAssignNode, iCJumpNode, iLabelNode, iGotoNode,
 		iReturnNode,
-		iCallUNode, iCallPrintNode, iCallAllocateNode, iCallTupleErrorNode, iCallTensorErrorNode,
+		iCallUNode, iCallPrintNode, iCallInputNode, iCallAllocateNode, iCallTupleErrorNode, iCallTensorErrorNode,
 		iIncrNode, iDecrNode, iLEANode
 	>;
 
