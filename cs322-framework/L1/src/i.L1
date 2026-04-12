@@ -2,5 +2,5 @@
 //rdi <- rax
 //call input 0
 
-r9++
+r10 <- 5 = 4
 

@@ -260,7 +260,7 @@ namespace L1
 
 	using sxNode = std::variant< RcxNode >;
 	using aNode = std::variant< RdiNode, RsiNode, sxNode, RdxNode, R8Node, R9Node >;
-	using wNode = std::variant< aNode, RaxNode, RbxNode, R10Node, R11Node, R12Node, R13Node, R14Node, R15Node >;
+	using wNode = std::variant< aNode, RaxNode, RbxNode, RbpNode, R10Node, R11Node, R12Node, R13Node, R14Node, R15Node >;
 
 	using xNode = std::variant< wNode, RspNode >;
 	using uNode = std::variant< wNode, lNode >;
@@ -432,10 +432,14 @@ namespace L1
 	};
 
 	using iNode = std::variant<
+
+		iCmpAssignNode,
+
 		iAssignNode, iLoadNode, iStoreNode,
 		iAOpNode, iSxNode, iSOpNode,
 		iAddStoreNode, iSubStoreNode, iLoadAddNode, iLoadSubNode,
-		iCmpAssignNode, iCJumpNode, iLabelNode, iGotoNode,
+
+		iCJumpNode, iLabelNode, iGotoNode,
 		iReturnNode,
 		iCallUNode, iCallPrintNode, iCallInputNode, iCallAllocateNode, iCallTupleErrorNode, iCallTensorErrorNode,
 		iIncrNode, iDecrNode, iLEANode
