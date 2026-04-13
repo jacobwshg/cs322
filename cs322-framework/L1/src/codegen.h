@@ -24,8 +24,8 @@ namespace L1
 	{
 		std::ostream &os;
 
-		Visitor( std::ostream &os_ ): os { os_ } {}
-		Visitor( std::shared_ptr< std::ostream > osp ): os { *osp } {}
+		explicit Visitor( std::ostream &os_ ): os { os_ } {}
+		explicit Visitor( std::shared_ptr< std::ostream > osp ): os { *osp } {}
 	};
 
 	// if the target node type is a struct, then handle it directly
@@ -36,13 +36,19 @@ namespace L1
 
 	struct labelVisitor: Visitor
 	{
+		bool ismem { false };
+
+		labelVisitor( std::ostream &os_, const bool ismem_ ): os { os_ }, ismem { ismem_ } {}
+
 		void operator()( const L1::labelNode &label_n )
 		{
+			if { this->ismem } { this->os << "$" };
 			this->os << "_";
 			nameVisitor{ this->os }( label_n.name_n );
 		}
 	};
 
+	// function name
 	struct lVisitor: Visitor
 	{
 		void operator()( const L1::lNode &l_n )
@@ -55,9 +61,26 @@ namespace L1
 	// if the target node type is a variant, then overload for alternatives
 	struct NVisitor: Visitor
 	{
-		void operator()( const L1::_0Node &_0_n )    { this->os << "0"; }
-		void operator()( const L1::NNZNode &N_nz_n ) { this->os << N_nz_n.val; }
+		void operator()( const L1::_0Node &_0_n )    { this->os << "$" << "0"; }
+		void operator()( const L1::NNZNode &N_nz_n ) { this->os << "$" << N_nz_n.val; }
 	};
+
+	struct MVisitor: Visitor
+	{
+		void operator()( const L1::MNode &M_n ) { this->os << M_n.val; }
+	};
+
+	struct FVisitor: Visitor
+	{
+		template< typename F > requires L1::IsKwNode< F >
+		void operator()( const F &F_n ) { this->os << F::kw; }
+	}
+
+	struct EVisitor: Visitor
+	{
+		template< typename E > requires L1::IsKwNode< E >
+		void operator()( const E &E_n ) { this->os << E::kw; }
+	}
 
 	struct RegVisitor: Visitor
 	{
@@ -92,22 +115,48 @@ namespace L1
 
 	struct sxVisitor: Visitor
 	{
-		void operator()( const L1::RcxNode &rcx_n ) { RegVisitor{ this->os }( rcx_n ); }
+		bool use_low;
+
+		sxVisitor( std::ostream &os_, bool use_low_ ): os { os }, use_low { use_low_ } {}
+
+		void operator()( const L1::RcxNode &rcx_n )
+		{
+			if ( this->use_low ) { RegVisitor{ this->os }( rcx_n ); }
+			else { LowRegVisitor{ this->os }( rcx_n ) };
+		}
 	};
 
 	struct aVisitor: Visitor
 	{
+		bool use_low;
+
+		aVisitor( std::ostream &os_, bool use_low_ ): os { os }, use_low { use_low_ } {}
+
 		// if argument is still a variant, it must be properly dispatched to the downstream visitor
-		void operator()( const L1::sxNode &sx_n ) { std::visit( sxVisitor{ this->os }, sx_n ); }
+		void operator()( const L1::sxNode &sx_n ) { std::visit( sxVisitor{ this->os, use_low }, sx_n ); }
+
 		template< typename RegNode > requires L1::IsKWNode< RegNode >
-		void operator()( const RegNode &reg_n ) { RegVisitor{ this->os }( reg_n ); }
+		void operator()( const RegNode &reg_n )
+		{
+			if ( this->use_low ) { LowRegVisitor{ this->os }( reg_n ) };
+			else { RegVisitor{ this->os }( reg_n ); }
+		}
 	};
 
 	struct wVisitor: Visitor
 	{
-		void operator()( const L1::aNode &a_n ) { std::visit( aVisitor{ this->os }, a_n ); }
+		bool use_low { false };
+
+		wVisitor( std::ostream &os_, bool use_low_ ): os { os_ }, use_low { use_low_ } {}
+
+		void operator()( const L1::aNode &a_n ) { std::visit( aVisitor{ this->os, this->use_low }, a_n ); }
+
 		template< typename RegNode > requires L1::IsKWNode< RegNode >
-		void operator()( const RegNode &reg_n ) { RegVisitor{ this->os }( reg_n ); }
+		void operator()( const RegNode &reg_n )
+		{
+			if ( this->use_low ) { LowRegVisitor{ this->os }( reg_n ) };
+			else { RegVisitor{ this->os }( reg_n ); }
+		}
 	};
 
 	struct xVisitor: Visitor
@@ -126,6 +175,17 @@ namespace L1
 	{
 		void operator()( const L1::xNode &x_n ) { std::visit( xVisitor{ this->os }, x_n ); }
 		void operator()( const L1::NNode &N_n ) { std::visit( NVisitor{ this->os }, N_n ); }
+	};
+
+	struct sVisitor: Visitor
+	{
+		bool ismem { false }; // only needed for label name ( labelNode )
+
+		sVisitor( std::ostream &os_, const bool ismem_ ): os { os_ }, ismem { ismem_ } {}
+
+		void operator()( const L1::tNode &t_n ) { std::visit( tVisitor{ this->os }, t_n ); }
+		void operator()( const L1::labelNode &label_n ) { std::visit( labelVisitor{ this->os, this->ismem }, label_n ); }
+		void operator()( const L1::lNode &l_n ) { std::visit( lVisitor{ this->os }, l_n ); }
 	};
 
 	struct iVisitor: Visitor
