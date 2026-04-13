@@ -3,6 +3,8 @@
 #include "ast.h"
 #include <iostream>
 #include <cassert>
+#include <string>
+#include <string_view>
 
 namespace L1
 {
@@ -13,16 +15,16 @@ namespace L1
 
 	struct aopVisitor: L1::Visitor
 	{
-		void operator()( const L1::OpAddEqNode &op_add_eq_n )   { this->os << L1::Instr::ADDQ };
-		void operator()( const L1::OpSubEqNode &op_sub_eq_n )   { this->os << L1::Instr::SUBQ };
-		void operator()( const L1::OpMulEqNode &op_mul_eq_n )   { this->os << L1::Instr::IMULQ };
-		void operator()( const L1::OpBAndEqNode &op_band_eq_n ) { this->os << L1::Instr::ANDQ };
+		std::string_view operator()( const L1::OpAddEqNode &op_add_eq_n )   { return L1::Instr::ADDQ };
+		std::string_view operator()( const L1::OpSubEqNode &op_sub_eq_n )   { return L1::Instr::SUBQ };
+		std::string_view operator()( const L1::OpMulEqNode &op_mul_eq_n )   { return L1::Instr::IMULQ };
+		std::string_view operator()( const L1::OpBAndEqNode &op_band_eq_n ) { return L1::Instr::ANDQ };
 	};
 
 	struct sopVisitor: L1::Visitor
 	{
-		void operator()( const L1::OpLshEqNode &op_lsh_eq_n ) { this->os << L1::Instr::SALQ };
-		void operator()( const L1::OpLshEqNode &op_rsh_eq_n ) { this->os << L1::Instr::SARQ };
+		std::string_view operator()( const L1::OpLshEqNode &op_lsh_eq_n ) { return L1::Instr::SALQ };
+		std::string_view operator()( const L1::OpLshEqNode &op_rsh_eq_n ) { return L1::Instr::SARQ };
 	};
 
 	// doesn't emit, only retrieve tag
@@ -36,7 +38,7 @@ namespace L1
 	// doens't emit, only retrieve val
 	struct NViewer
 	{
-		long long operator()( const L1::_0Node &_0_n ) { return 0LL; }
+		long long operator()( const L1::_0Node &_0_n )    { return 0LL; }
 		long long operator()( const L1::NNZNode &N_nz_n ) { return N_nz_n.val; }
 	};
 
@@ -45,11 +47,12 @@ namespace L1
 		L1::CmpTag cmptag {}; // passed in by iVisitor overload, which can see cmpNode member of overload arg
 		L1::WNode &w_n;
 
-		cmpVisitor( std::ostream &os_, L1::CmpTag cmptag_, L1::WNode &w_n_ ):
-			os { os_ }, cmptag { cmptag_ }, w_n { w_n_ }
+		cmpVisitor( L1::CmpTag cmptag_, L1::WNode &w_n_ ):
+			cmptag { cmptag_ }, w_n { w_n_ }
 		{}
 
-		void operator()( const L1::NNode &t1_n, const L1::NNode &t2_n )
+		// w <- N cmp N
+		std::string operator()( const L1::NNode &t1_n, const L1::NNode &t2_n )
 		{
 			// directly evaluate comparison of literals
 			const long long
@@ -76,92 +79,124 @@ namespace L1
 				break;
 			}
 
-			this->os << L1::Instr::MOVQ;
-			this->os << ( cmp_res ? CMP_TRUVAL : CMP_FLSVAL );
-			std::visit( L1::wVisitor{ this->os }, this->w_n );
-			this->os << "\n";
+			const std::string_view cmp_val { cmp_res ? CMP_TRUVAL : CMP_FLSVAL };
+			const std::string w_str { std::visit( L1::wVisitor{}, this->w_n ) };
+
+			return std::string { L1::Instr::MOVQ } + cmp_val + w_str + "\n";
 		}
 
-		void operator()( const L1::xNode &t1_n, const L1::xNode &t2_n )
+		// w <- x cmp x
+		// w <- x cmp N
+		// w <- N cmp x ( flip )
+		template< typename T1, typename T2 >
+		std::string operator()( const T1 &t1_n, const T2 &t2_n )
 		{
-			constexpr bool use_low { true };
-			const std::string_view
-				t1_sv { std::visit( L1::xViewer, t1_n ) },
-				t2_sv { std::visit( L1::xViewer, t2_n ) },
-				w_low_sv { std::visit( L1::wViewer{ use_low }, this->w_n ) };
-			const std::string cmp_line
+			constexpr bool t1_is_N { std::is_same_v{ T1, L1::NNode } };
+			constexpr bool t2_is_N { std::is_same_v{ T2, L1::NNode } };
+			constexpr bool flip { t1_is_N && !t2_is_N };
+
+			std::string t1_str {}, t2_str {};
+			if constexpr ( t1_is_N )
 			{
-				std::string{ L1::Instr::CMPQ } + "%" + t2_sv + "," + "%" + t1_sv + "\n"
+				t1_str = std::visit( L1::NVisitor, t1_n );
+			}
+			else
+			{
+				t1_str = std::visit( L1::xVisitor, t1_n )
 			};
+			if constexpr ( t2_is_N )
+			{
+				t2_str = std::visit( L1::NVisitor, t2_n );
+			}
+			else
+			{
+				t2_str = std::visit( L1::xVisitor, t2_n )
+			};
+
+			constexpr bool use_low { true };
+			const std::string
+				w_str     { std::visit( L1::wVisitor, this->w_n ) },
+				w_low_str { std::visit( L1::wVisitor{ use_low }, this->w_n ) };
+
+			std::string cmp_line {};
+			if constexpr ( flip ) // flip, put N (t1) on the left in generated instr
+			{
+				cmp_line = std::string { L1::Instr::CMPQ } + t1_str + "," + t2_str + "\n"
+			};
+			else
+			{
+				cmp_line = std::string { L1::Instr::CMPQ } + t2_str + "," + t1_str + "\n"
+			}
 
 			std::string_view set_instr {};
 			switch ( this->cmptag )
 			{
 			case L1::CmpTag::LT:
-				set_instr = L1::Instr::SETL;
+				if constexpr ( flip ) { set_instr = L1::Instr::SETG };
+				else { set_instr = L1::Instr::SETL; }
 				break;
 			case L1::CmpTag::LEQ:
-				set_instr = L1::Instr::SETLE;
+				if constexpr ( flip ) { set_instr = L1::Instr::SETGE };
+				else { set_instr = L1::Instr::SETLE; }
 				break;
-			case L1::CmpTag::EQ:
+			case L1::CmpTag::EQ: // not impacted by direction flip
 				set_instr = L1::Instr::SETE;
 				break;
 			default:
 				assert( false );
 				break;
 			}
-			const std::string set_line { std::string { set_instr } + "%" + w_low_sv + "\n" };
+			const std::string set_line { std::string { set_instr } + w_low_str + "\n" };
 
 			const std::string mov_line
 			{
-				std::string { L1::Instr::MOVZBQ + "%" + w_low_sv + ",%" + w_sv + "\n" }
+				std::string { L1::Instr::MOVZBQ + w_low_str + "," + w_str + "\n" }
 			};
 
-			this->os << cmp_line << set_line << mov_line;
+			return cmp_line + set_line + mov_line;
 		}
-
-		void operator()( const L1::xNode &t1_n, const L1::NNode &t2_n );
-		{
-			
-		}
-
-		void operator()( const L1::NNode &t1_n, const L1::xNode &t2_n );
 
 	};
 
 }
 
-void
+std::string
 L1::
 iVisitor::operator()( const L1::iCmpAssignNode &i_cmp_assign_n )
 {
 	constexpr bool use_low { true };
-	const L1::wNode w_n { i_cmp_assign_n.w_n };
+	const L1::wNode &w_n { i_cmp_assign_n.w_n };
 
 	const L1::CmpTag cmptag { std::visit( L1::cmpViewer, i_cmp_assign_n.cmp_n ) };
-	
-	std::visit(
-		L1::cmpVisitor{ this->os, cmptag, i_cmp_assign_n.w_n },
+
+	return std::visit(
+		L1::cmpVisitor{ cmptag, i_cmp_assign_n.w_n },
 		i_cmp_assign_n.t1_n,
 		i_cmp_assign_n.t2_n
 	);
 }
 
-void
+std::string
 L1::
 iVisitor::operator()( const L1::iAssignNode &i_assign_n )
 {
+	// w <- s
+	// rax <- 1
+	//
+	// movq $1,%rax
+	// movq s,w
+	//
+
 	constexpr bool ismem { true };
 
-	this->os << L1::Instr::MOVQ;
+	const std::string s_str { std::visit( L1::sVisitor{ ismem }, i_assign_n.s_n ) };	
+	const std::string w_str { std::visit( L1::wVisitor{}, i_assign_n.w_n ) };
 
-	std::visit( L1::sVisitor{ this->os, ismem }, i_assign_n.s_n );	
-	this->os << ",";
-	std::visit( L1::wVisitor{ this->os }, i_assign_n.w_n );
-	this->os << "\n";
+	return std::string { L1::Instr::MOVQ } + s_str + "," + w_str + "\n";
+
 }
 
-void
+std::string
 L1::
 iVisitor::operator()( const L1::iLoadNode &i_load_n )
 {
@@ -171,19 +206,16 @@ iVisitor::operator()( const L1::iLoadNode &i_load_n )
 	// movq 8(%rsp),%rdi
 	// movq M(x),w
 
-	this->os << L1::Instr::MOVQ;
-
 	// MNode is not variant
-	L1::MVisitor{ this->os }( i_load_n.M_n );
-	this->os << "(";
-	std::visit( L1::xVisitor, i_load_n.x_n );
-	this->os << "),";
-	std::visit( L1::wVisitor{ this->os }, i_load_n.w_n );
-	this->os << "\n";
+	const std::string M_str { L1::MVisitor{}( i_load_n.M_n ) };
+	const std::string x_str { std::visit( L1::xVisitor{}, i_load_n.x_n ) };
+	const std::string w_str { std::visit( L1::wVisitor{}, i_load_n.w_n ) };
+
+	return std::string { L1::Instr::MOVQ } + M_str + "(" + x_str + ")," + w_str + "\n";
 
 }
 
-void
+std::string
 L1::
 iVisitor::operator()( const L1::iStoreNode &i_store_n )
 {
@@ -195,14 +227,11 @@ iVisitor::operator()( const L1::iStoreNode &i_store_n )
 
 	constexpr bool ismem { true };
 
-	this->os << L1::Instr::MOVQ;
+	const std::string s_str { std::visit( L1::sVisitor{ ismem }, i_store_n.s_n ) };
+	const std::string M_str { L1::MVisitor{}( i_load_n.M_n ) };
+	const std::string x_str { std::visit( L1::xVisitor, i_load_n.x_n ) };
 
-	std::visit( L1::sVisitor{ this->os, ismem }, i_store_n.s_n );
-	this->os << ",";
-	L1::MVisitor{ this->os }( i_load_n.M_n );
-	this->os << "(";
-	std::visit( L1::xVisitor, i_load_n.x_n );
-	this->os << ")\n";
+	return std::string { L1::Instr::MOVQ } + s_str + ",",  M_str + "(" + x_str + ")\n";
 }
 
 void
@@ -216,12 +245,12 @@ iVisitor::operator()( const L1::iAOpNode &i_aop_n )
 	// aop t,w
 	//
 
-	std::visit( L1::aopVisitor{ this->os }, i_aop_n.aop_n );
+	const std::string
+		aop_str { std::visit( L1::aopVisitor{}, i_aop_n.aop_n ) },
+		t_str { std::visit( L1::tVisitor{}, i_aop_n.t_n ) },
+		w_str{ std::visit( L1::wVisitor{}, i_aop_n.w_n ) };
 
-	std::visit( L1::tVisitor{ this->os }, i_aop_n.t_n );
-	this->os << ",";
-	std::visit( L1::wVisitor{ this->os }, i_aop_n.w_n );
-	this->os << "\n";
+	return aop_str + t_str + "," + w_str + "\n";
 }
 
 void
@@ -238,15 +267,16 @@ operator()( const L1::iSxNode &i_sx_n )
 
 	constexpr bool use_low { true };
 
-	std::visit( L1::sopVisitor{ this->os }, i_sx_n.sop_n );
+	const std::string
+		sop_str { std::visit( L1::sopVisitor{}, i_sx_n.sop_n ) },
+		sx_str  { std::visit( L1::sxVisitor{ use_low }, i_sx_n.sx_n ) },
+		w_str   { std::visit( L1::wVisitor{}, i_sx_n.w_n ) };
 
-	std::visit( L1::sxVisitor{ this->os, use_low }, i_sx_n.sx_n );
-	this->os << ",";
-	std::visit( L1::wVisitor{ this->os }, i_sx_n.w_n );
-	this->os << "\n";
+	return sop_str + sx_str + "," + w_str + "\n";
+
 }
 
-void
+std::string
 L1::
 iVisitor::operator()( const L1::iSOpNode &i_sop_n )
 {
@@ -257,16 +287,16 @@ iVisitor::operator()( const L1::iSOpNode &i_sop_n )
 	// sop N,w
 	//
 
-	std::visit( L1::sopVisitor{ this->os }, i_sop_n.sop_n );
+	const std::string
+		sop_str { std::visit( L1::sopVisitor{}, i_sop_n.sop_n ) },
+		N_str   { std::visit( L1::NVisitor{}, i_sop_n.N_n ) },
+		w_str   { std::visit( L1::wVisitor{}, i_sop_n.w_n ) };
 
-	std::visit( L1::NVisitor{ this->os }, i_sop_n.N_n );
-	this->os << ",";
-	std::visit( L1::wVisitor{ this->os }, i_sop_n.w_n );
-	this->os << "\n";
+	return sop_str + N_str + "," + w_str + "\n";
 
 }
 
-void
+std::string
 L1::
 iVisitor::operator()( const L1::iAddStoreNode &i_add_store_n )
 {
@@ -278,18 +308,15 @@ iVisitor::operator()( const L1::iAddStoreNode &i_add_store_n )
 	// addq t,M(x)
 	//
 
-	this->os << L1::Instr::ADDQ;
+	const std::string
+		t_str { std::visit( L1::tVisitor{}, i_add_store_n.t_n ) },
+		M_str { std::visit( L1::MVisitor{}, i_add_store_n.M_n ) },
+		x_str { std::visit( L1::xVisitor{}, i_add_store_n.x_n ) };	
 
-	std::visit( L1::tVisitor( this->os ), i_add_store_n.t_n );
-	this->os << ",";
-	std::visit( L1::MVisitor( this->os ), i_add_store_n.M_n );	
-	this->os << "(";
-	std::visit( L1::xVisitor( this->os ), i_add_store_n.x );	
-	this->os << ")\n";
-	
+	return std::string { L1::Instr::ADDQ } + t_str + "," + M_str + "(" + x_str + ")\n";
 }
 
-void
+std::string
 L1::
 iVisitor::operator()( const L1::iSubStoreNode &i_sub_store_n )
 {
@@ -301,19 +328,15 @@ iVisitor::operator()( const L1::iSubStoreNode &i_sub_store_n )
 	// subq t,M(x)
 	//
 
-	this->os << L1::Instr::SUBQ;
+	const std::string
+		t_str { std::visit( L1::tVisitor{}, i_sub_store_n.t_n ) },
+		M_str { std::visit( L1::MVisitor{}, i_sub_store_n.M_n ) },	
+		x_str { std::visit( L1::xVisitor{}, i_sub_store_n.x_n ) };
 
-	std::visit( L1::tVisitor( this->os ), i_sub_store_n.t_n );
-	this->os << ",";
-	std::visit( L1::MVisitor( this->os ), i_sub_store_n.M_n );	
-	this->os << "(";
-	std::visit( L1::xVisitor( this->os ), i_sub_store_n.x );	
-	this->os << ")";
-	this->os << "\n";
+	return std::string { L1::Instr::SUBQ } + t_str + "," + M_str + "(" + x_str + ")\n";
 }
 
-
-void
+std::string
 L1::
 iVisitor::operator()( const L1::iLoadSubNode &i_load_sub_n )
 {
@@ -325,18 +348,15 @@ iVisitor::operator()( const L1::iLoadSubNode &i_load_sub_n )
 	// subq M(x),w
 	//
 
-	this->os << L1::Instr::SUBQ;
+	const std::string
+		M_str { std::visit( L1::MVisitor{}, i_load_sub_n.M_n ) },
+		x_str { std::visit( L1::xVisitor{}, i_load_sub_n.x_n ) },	
+		w_str { std::visit( L1::wVisitor{}, i_load_sub_n.w_n ) };
 
-	std::visit( L1::MVisitor( this->os ), i_load_sub_n.M_n );	
-	this->os << "(";
-	std::visit( L1::xVisitor( this->os ), i_load_sub_n.x );	
-	this->os << "),";
-	std::visit( L1::wVisitor( this->os ), i_load_sub_n.w_n );
-	this->os << "\n";
+	return std::string { L1::Instr::SUBQ } + M_str + "(" + x_str + ")," + w_str + "\n";
 }
 
-
-void
+std::string
 L1::
 iVisitor::operator()( const L1::iLoadAddNode &i_load_add_n )
 {
@@ -348,65 +368,60 @@ iVisitor::operator()( const L1::iLoadAddNode &i_load_add_n )
 	// addq M(x),w
 	//
 
-	this->os << L1::Instr::ADDQ;
 
-	std::visit( L1::MVisitor( this->os ), i_load_add_n.M_n );
-	this->os << "(";
-	std::visit( L1::xVisitor( this->os ), i_load_add_n.x );	
-	this->os << "),";
-	std::visit( L1::wVisitor( this->os ), i_load_add_n.w_n );
-	this->os << "\n";
+	const std::string
+		M_str { std::visit( L1::MVisitor{}, i_load_add_n.M_n ) },
+		x_str { std::visit( L1::xVisitor{}, i_load_add_n.x_n ) },	
+		w_str { std::visit( L1::wVisitor{}  i_load_add_n.w_n ) };
+
+	return std::string{ L1::Instr::ADDQ } + M_str + "(" + x_str + ")," + w_str + "\n";
 
 }
 
-
-void operator()( const L1::iIncrNode &i_incr_n )
+std::string
+L1::
+iVisitor::operator()( const L1::iIncrNode &i_incr_n )
 {
-	this->os << L1::Instr::ADDQ;
+	const std::string w_str { std::visit( L1::wVisitor{}, i_incr_n.w_n ) };
 
-	this->os << "$1,";
-	std::visit( L1::wVisitor( this->os ), i_incr_n.w_n );
-	this->os << "\n";
-	
+	return std::string{ L1::Instr::ADDQ } + "$1," + w_str + "\n";
 }
 
-void operator()( const L1::iDecrNode &i_decr_n )
+std::string
+L1::
+iVisitor::operator()( const L1::iDecrNode &i_decr_n )
 {
-	this->os << L1::Instr::SUBQ;
+	const std::string w_str { std::visit( L1::wVisitor{}, i_decr_n.w_n ) };
 
-	this->os << "$1,";
-	std::visit( L1::wVisitor( this->os ), i_decr_n.w_n );
-	this->os << "\n";
-	
+	return std::string{ L1::Instr::SUBQ } + "$1," + w_str + "\n";
 }
 
-void
+std::string
 L1::
 iVisitor::operator()( const L1::iLabelNode &i_label_n )
 {
-	L1::labelVisitor{ this->os }( i_label_n.label_n );
-	this->os << ":\n";
+	const std::string label_str { L1::labelVisitor{}( i_label_n.label_n ) };
+
+	return label_str + ":\n";
 }
 
-void
+std::string
 L1::
 iVisitor::operator()( const L1::iGotoNode &i_goto_n )
 {
-	this->os << L1::Instr::JMP;
+	const std::string label_str { L1::labelVisitor{}( i_goto_n.label_n ) };
 
-	L1::labelVisitor{ this->os }( i_goto_n.label_n );
-	this->os << "\n";
+	return std::string{ L1::Instr::JMP } + label_str + "\n";
 }
 
-
-void
+std::string
 L1::
 iVisitor::operator()( const L1::iReturnNode &i_return_n )
 {
-	this->os << L1::Instr::RETQ << "\n";
+	return std::string { L1::Instr::RETQ } + "\n";
 }
 
-void
+std::string
 L1::
 iVisitor::operator()( const L1::iLEANode &i_lea_n )
 {
@@ -418,27 +433,25 @@ iVisitor::operator()( const L1::iLEANode &i_lea_n )
 	// lea (w2,w3,E),w1
 	//
 
-	this->os << L1::Instr::LEA;
+	const std::string
+		w1_str { std::visit( L1::wVisitor{}, i_lea_n.w1_n ) },
+		w2_str { std::visit( L1::wVisitor{}, i_lea_n.w2_n ) },
+		w3_str { std::visit( L1::wVisitor{}, i_lea_n.w3_n ) };
+		E_str { L1::EVisitor{}( i_lea_n.E_n ) };
 
-	this->os << "(";
-	std::visit( L1::wVisitor{ this->os }, i_lea_n.w2_n );
-	this->os << ",";
-	std::visit( L1::wVisitor{ this->os }, i_lea_n.w3_n );	
-	this->os << ",";
-	L1::EVisitor{ this->os }( i_lea_n.E_n );
-	this->os << "),";
-	std::visit( L1::wVisitor{ this->os }, i_lea_n.w1_n );
-	this->os << "\n";
+	return std::string{ L1::Instr::LEA } + "(" 
+		+ w2_str + "," + w3_str + "," + E_str + ")," + w1_str + "\n";
+
 }
 
 /*
 
-		void operator()( const L1::iCJumpNode & );
-		void operator()( const L1::iCallUNode & );
-		void operator()( const L1::iCallPrintNode & );
-		void operator()( const L1::iCallInputNode & );
-		void operator()( const L1::iCallAllocateNode & );
-		void operator()( const L1::iCallTupleErrorNode & );
-		void operator()( const L1::iCallTensorErrorNode & );
+		std::string operator()( const L1::iCJumpNode & );
+		std::string operator()( const L1::iCallUNode & );
+		std::string operator()( const L1::iCallPrintNode & );
+		std::string operator()( const L1::iCallInputNode & );
+		std::string operator()( const L1::iCallAllocateNode & );
+		std::string operator()( const L1::iCallTupleErrorNode & );
+		std::string operator()( const L1::iCallTensorErrorNode & );
 */
 
