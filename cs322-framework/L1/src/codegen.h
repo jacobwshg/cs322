@@ -213,8 +213,9 @@ namespace L1
 	struct iVisitor: Visitor
 	{	
 		std::string operator()( const L1::iCmpAssignNode & );
-		std::string operator()( const L1::iAssignNode & );
+		std::string operator()( const L1::iCJumpNode & );
 
+		std::string operator()( const L1::iAssignNode & );
 		std::string operator()( const L1::iLoadNode & );
 		std::string operator()( const L1::iStoreNode & );
 		std::string operator()( const L1::iAOpNode & );
@@ -225,10 +226,13 @@ namespace L1
 		std::string operator()( const L1::iLoadAddNode & );
 		std::string operator()( const L1::iLoadSubNode & );
 
-		std::string operator()( const L1::iCJumpNode & );
+		std::string operator()( const L1::iIncrNode & );
+		std::string operator()( const L1::iDecrNode & );
+
 		std::string operator()( const L1::iLabelNode & );
 		std::string operator()( const L1::iGotoNode & );
 		std::string operator()( const L1::iReturnNode & );
+
 		std::string operator()( const L1::iCallUNode & );
 		std::string operator()( const L1::iCallPrintNode & );
 		std::string operator()( const L1::iCallInputNode & );
@@ -236,8 +240,6 @@ namespace L1
 		std::string operator()( const L1::iCallTupleErrorNode & );
 		std::string operator()( const L1::iCallTensorErrorNode & );
 
-		std::string operator()( const L1::iIncrNode & );
-		std::string operator()( const L1::iDecrNode & );
 		std::string operator()( const L1::iLEANode & );
 	};
 
