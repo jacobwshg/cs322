@@ -70,6 +70,7 @@ iVisitor::operator()( const L1::iAssignNode &i_assign_n )
 	constexpr bool ismem { true };
 
 	this->os << L1::Instr::MOVQ;
+
 	std::visit( L1::sVisitor{ this->os, ismem }, this->s_n );	
 	this->os << ",";
 	std::visit( L1::wVisitor{ this->os }, this->w_n );
@@ -132,7 +133,7 @@ iVisitor::operator()( const L1::iAOpNode &i_aop_n )
 	//
 
 	std::visit( L1::aopVisitor{ this->os }, i_aop_n.aop_n );
-	this->os << " ";
+
 	std::visit( L1::tVisitor{ this->os }, i_aop_n.t_n );
 	this->os << ",";
 	std::visit( L1::wVisitor{ this->os }, i_aop_n.w_n );
@@ -154,7 +155,7 @@ operator()( const L1::iSxNode &i_sx_n )
 	constexpr bool use_low { true };
 
 	std::visit( L1::sopVisitor{ this->os }, i_sx_n.sop_n );
-	this->os << " ";
+
 	std::visit( L1::sxVisitor{ this->os, use_low }, i_sx_n.sx_n );
 	this->os << ",";
 	std::visit( L1::wVisitor{ this->os }, i_sx_n.w_n );
@@ -173,7 +174,7 @@ iVisitor::operator()( const L1::iSOpNode &i_sop_n )
 	//
 
 	std::visit( L1::sopVisitor{ this->os }, i_sop_n.sop_n );
-	this->os << " ";
+
 	std::visit( L1::NVisitor{ this->os }, i_sop_n.N_n );
 	this->os << ",";
 	std::visit( L1::wVisitor{ this->os }, i_sop_n.w_n );
@@ -194,7 +195,7 @@ iVisitor::operator()( const L1::iAddStoreNode &i_add_store_n )
 	//
 
 	this->os << L1::Instr::ADDQ;
-	this->os << " ";
+
 	std::visit( L1::tVisitor( this->os ), i_add_store_n.t_n );
 	this->os << ",";
 	std::visit( L1::MVisitor( this->os ), i_add_store_n.M_n );	
@@ -216,8 +217,8 @@ iVisitor::operator()( const L1::iSubStoreNode &i_sub_store_n )
 	// subq t,M(x)
 	//
 
-	this->os << L1::Instr::SUBQ
-	this->os << " ";
+	this->os << L1::Instr::SUBQ;
+
 	std::visit( L1::tVisitor( this->os ), i_sub_store_n.t_n );
 	this->os << ",";
 	std::visit( L1::MVisitor( this->os ), i_sub_store_n.M_n );	
@@ -241,7 +242,7 @@ iVisitor::operator()( const L1::iLoadSubNode &i_load_sub_n )
 	//
 
 	this->os << L1::Instr::SUBQ;
-	this->os << " ";
+
 	std::visit( L1::MVisitor( this->os ), i_load_sub_n.M_n );	
 	this->os << "(";
 	std::visit( L1::xVisitor( this->os ), i_load_sub_n.x );	
@@ -264,6 +265,7 @@ iVisitor::operator()( const L1::iLoadAddNode &i_load_add_n )
 	//
 
 	this->os << L1::Instr::ADDQ;
+
 	std::visit( L1::MVisitor( this->os ), i_load_add_n.M_n );
 	this->os << "(";
 	std::visit( L1::xVisitor( this->os ), i_load_add_n.x );	
@@ -277,6 +279,7 @@ iVisitor::operator()( const L1::iLoadAddNode &i_load_add_n )
 void operator()( const L1::iIncrNode &i_incr_n )
 {
 	this->os << L1::Instr::ADDQ;
+
 	this->os << "$1,";
 	std::visit( L1::wVisitor( this->os ), i_incr_n.w_n );
 	this->os << "\n";
@@ -286,6 +289,7 @@ void operator()( const L1::iIncrNode &i_incr_n )
 void operator()( const L1::iDecrNode &i_decr_n )
 {
 	this->os << L1::Instr::SUBQ;
+
 	this->os << "$1,";
 	std::visit( L1::wVisitor( this->os ), i_decr_n.w_n );
 	this->os << "\n";
@@ -305,6 +309,7 @@ L1::
 iVisitor::operator()( const L1::iGotoNode &i_goto_n )
 {
 	this->os << L1::Instr::JMP;
+
 	L1::labelVisitor{ this->os }( i_goto_n.label_n );
 	this->os << "\n";
 }
@@ -330,6 +335,7 @@ iVisitor::operator()( const L1::iLEANode &i_lea_n )
 	//
 
 	this->os << L1::Instr::LEA;
+
 	this->os << "(";
 	std::visit( L1::wVisitor{ this->os }, i_lea_n.w2_n );
 	this->os << ",";

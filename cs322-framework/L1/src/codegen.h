@@ -202,7 +202,10 @@ namespace L1
 		sVisitor( std::ostream &os_, const bool ismem_ ): os { os_ }, ismem { ismem_ } {}
 
 		void operator()( const L1::tNode &t_n ) { std::visit( tVisitor{ this->os }, t_n ); }
-		void operator()( const L1::labelNode &label_n ) { std::visit( labelVisitor{ this->os, this->ismem }, label_n ); }
+		void operator()( const L1::labelNode &label_n )
+		{
+			std::visit( labelVisitor{ this->os, this->ismem }, label_n );
+		}
 		void operator()( const L1::lNode &l_n ) { std::visit( lVisitor{ this->os }, l_n ); }
 	};
 
