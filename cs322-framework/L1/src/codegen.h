@@ -11,6 +11,22 @@
 namespace L1
 {
 
+	namespace Instr
+	{
+		static constexpr std::string_view
+			CALLQ { "\tcallq " }, RETQ { "\tretq " },
+			PUSHQ { "\tpushq " }, POPQ { "\tpopq " },
+			MOVQ { "\tmovq " }, MOVZBQ { "\tmovzbq " },
+			ADDQ { "\taddq " }, SUBQ { "\tsubq " }, IMULQ { "\timulq " }, ANDQ { "\tandq " },
+			SALQ { "\tsalq " }, SARQ { "\tsarq " },
+			CMPQ { "\tcmpq " },
+			SETE { "\tsete " }, SETL { "\tsetl " }, SETG { "\tsetg " }, SETLE { "\tsetle " }, SETGE { "\tsetge " },
+			JMP { "\tjmp " },
+			JE { "\tje " }, JL { "\tjl " }, JG { "\tjg " }, JLE { "\tjle " }, JGE { "\tjge " },
+			LEA { "\tlea " }
+			;
+	}
+
 	// when brace-initialized with a list of function objects,
 	// `Handlers...` will be deduced to the function types 
 	//
@@ -143,6 +159,8 @@ namespace L1
 		}
 	};
 
+	// only w regs and those lower in the AST are possibly used in low form
+	// by cmp and shift
 	struct wVisitor: Visitor
 	{
 		bool use_low { false };
