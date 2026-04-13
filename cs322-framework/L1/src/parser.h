@@ -211,7 +211,7 @@ namespace L1
 			{
 				// nonzero N ( value should be an integer )
 				errno = 0;
-				const unsigned long long val { std::strtoull( tok.data(), nullptr, 0 ) };
+				const long long val { std::strtoll( tok.data(), nullptr, 0 ) };
 				if ( errno == ERANGE ) { return std::nullopt; }
 				return IdentNodeT { .val = val };
 			}

@@ -228,7 +228,7 @@ namespace L1
 	struct NNZNode
 	{
 		static inline const std::regex re { "[+-]?[1-9][0-9]*" }; 
-		unsigned long long val;
+		long long val;
 	};
 
 	struct nameNode

@@ -2,9 +2,14 @@
 #include "codegen.h"
 #include "ast.h"
 #include <iostream>
+#include <cassert>
 
 namespace L1
 {
+	enum class CmpTag: int
+	{
+		LT = 0, LEQ, EQ,
+	};
 
 	struct aopVisitor: L1::Visitor
 	{
@@ -20,24 +25,112 @@ namespace L1
 		void operator()( const L1::OpLshEqNode &op_rsh_eq_n ) { this->os << L1::Instr::SARQ };
 	};
 
-	struct cmp_N1N2_Visitor: L1::Visitor
+	// doesn't emit, only retrieve tag
+	struct cmpViewer
 	{
-		cmpNode &cmp_n;
-
-		cmp_N1N2_Visitor( std::ostream &os_, cmpNode &cmp_n_ ): os { os_ }, cmp_n { cmp_n_ } {}
-
+		L1::CmpTag operator()( const L1::OpLtNode &op_lt_n )   { return L1::CmpTag::LT; }
+		L1::CmpTag operator()( const L1::OpLEqNode &op_leq_n ) { return L1::CmpTag::LEQ; }
+		L1::CmpTag operator()( const L1::OpEqNode &op_eq_n )   { return L1::CmpTag::EQ; }
 	};
 
-	struct cmp_t1t2_Visitor : L1::Visitor
+	// doens't emit, only retrieve val
+	struct NViewer
 	{
-		void operator()( const NNode &t1_n, const NNode &t2_n )
+		long long operator()( const L1::_0Node &_0_n ) { return 0LL; }
+		long long operator()( const L1::NNZNode &N_nz_n ) { return N_nz_n.val; }
+	};
+
+	struct cmpVisitor: L1::Visitor
+	{
+		L1::CmpTag cmptag {}; // passed in by iVisitor overload, which can see cmpNode member of overload arg
+		L1::WNode &w_n;
+
+		cmpVisitor( std::ostream &os_, L1::CmpTag cmptag_, L1::WNode &w_n_ ):
+			os { os_ }, cmptag { cmptag_ }, w_n { w_n_ }
+		{}
+
+		void operator()( const L1::NNode &t1_n, const L1::NNode &t2_n )
+		{
+			// directly evaluate comparison of literals
+			const long long
+				t1val { std::visit( L1::NViewer, t1_n ) },
+				t2val { std::visit( L1::NViewer, t2_n ) };
+
+			static constexpr std::string_view
+				CMP_TRUVAL { "$1," }, CMP_FLSVAL { "$0," };
+
+			bool cmp_res {};
+			switch ( this->cmptag )
+			{
+			case L1::CmpTag::LT:
+				cmp_res = t1val < t2val;
+				break;
+			case L1::CmpTag::LEQ:
+				cmp_res = t1val <= t2val;
+				break;
+			case L1::CmpTag::EQ:
+				cmp_res = t1val == t2val;
+				break;
+			default:
+				assert( false );
+				break;
+			}
+
+			this->os << L1::Instr::MOVQ;
+			this->os << ( cmp_res ? CMP_TRUVAL : CMP_FLSVAL );
+			std::visit( L1::wVisitor{ this->os }, this->w_n );
+			this->os << "\n";
+		}
+
+		void operator()( const L1::xNode &t1_n, const L1::xNode &t2_n )
+		{
+			constexpr bool use_low { true };
+			const std::string_view
+				t1_sv { std::visit( L1::xViewer, t1_n ) },
+				t2_sv { std::visit( L1::xViewer, t2_n ) },
+				w_low_sv { std::visit( L1::wViewer{ use_low }, this->w_n ) };
+			const std::string cmp_line
+			{
+				std::string{ L1::Instr::CMPQ } + "%" + t2_sv + "," + "%" + t1_sv + "\n"
+			};
+
+			std::string_view set_instr {};
+			switch ( this->cmptag )
+			{
+			case L1::CmpTag::LT:
+				set_instr = L1::Instr::SETL;
+				break;
+			case L1::CmpTag::LEQ:
+				set_instr = L1::Instr::SETLE;
+				break;
+			case L1::CmpTag::EQ:
+				set_instr = L1::Instr::SETE;
+				break;
+			default:
+				assert( false );
+				break;
+			}
+			const std::string set_line { std::string { set_instr } + "%" + w_low_sv + "\n" };
+
+			const std::string mov_line
+			{
+				std::string { L1::Instr::MOVZBQ + "%" + w_low_sv + ",%" + w_sv + "\n" }
+			};
+
+			this->os << cmp_line << set_line << mov_line;
+		}
+
+		void operator()( const L1::xNode &t1_n, const L1::NNode &t2_n );
 		{
 			
 		}
+
+		void operator()( const L1::NNode &t1_n, const L1::xNode &t2_n );
+
 	};
+
 }
 
-/*
 void
 L1::
 iVisitor::operator()( const L1::iCmpAssignNode &i_cmp_assign_n )
@@ -45,23 +138,14 @@ iVisitor::operator()( const L1::iCmpAssignNode &i_cmp_assign_n )
 	constexpr bool use_low { true };
 	const L1::wNode w_n { i_cmp_assign_n.w_n };
 
-	// op aux
-	// t1 t2 aux
+	const L1::CmpTag cmptag { std::visit( L1::cmpViewer, i_cmp_assign_n.cmp_n ) };
 	
-	L1::
-	this->os << " ";
-	L1::wVisitor{ this->os }( w_n );
-	this->os << "\n";
-
-	this->os << "\tmovzbq ";
-	L1::wVisitor{ this->os, use_low }( w_n );
-	this->os << "," ;
-	// re-recurse on w because each visitor outputs directly to stream and can't cache strings
-	// but that's OK since it's all going to burn anyway
-	L1::wVisitor{ this->os }( w_n );
-	this->os << "\n";
+	std::visit(
+		L1::cmpVisitor{ this->os, cmptag, i_cmp_assign_n.w_n },
+		i_cmp_assign_n.t1_n,
+		i_cmp_assign_n.t2_n
+	);
 }
-*/
 
 void
 L1::
@@ -71,9 +155,9 @@ iVisitor::operator()( const L1::iAssignNode &i_assign_n )
 
 	this->os << L1::Instr::MOVQ;
 
-	std::visit( L1::sVisitor{ this->os, ismem }, this->s_n );	
+	std::visit( L1::sVisitor{ this->os, ismem }, i_assign_n.s_n );	
 	this->os << ",";
-	std::visit( L1::wVisitor{ this->os }, this->w_n );
+	std::visit( L1::wVisitor{ this->os }, i_assign_n.w_n );
 	this->os << "\n";
 }
 
