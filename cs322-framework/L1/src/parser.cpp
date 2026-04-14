@@ -330,12 +330,11 @@ Parser::make_p_node( void )
 		return std::nullopt;
 }
 
-bool
+std::optional< L1::pNode >
 L1::
 Parser::parse( void )
 {
-	this->ast = this->make_node< pNode >();
-	return this->ast ? true: false;
+	return this->make_node< pNode >();
 }
 
 

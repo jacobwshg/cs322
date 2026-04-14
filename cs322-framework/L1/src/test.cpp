@@ -48,6 +48,16 @@ main( int argc, char *argv[] )
 	prsr.lex( test_ifs );
 	prsr.print_toks();
 
+	std::optional< L1::pNode > ast_opt { prsr.parse() };
+	const bool parse_success { ast_opt ? true : false };
+	std::cout << "parse success: " << parse_success << "\n";
+	if ( !parse_success ) { return( 2 ); }
+
+	const L1::pNode &ast { *ast_opt };
+	L1::CodeGenerator cgr {};
+	cgr.emit( std::cout, ast );
+
+	/*
 	bool success {};
 	if ( test_f )
 	{
@@ -67,5 +77,6 @@ main( int argc, char *argv[] )
 
 	std::cout << "parse() success: " << success << "\n";
 
+	*/
 }
 

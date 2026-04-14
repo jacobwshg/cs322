@@ -64,6 +64,13 @@ namespace L1
 			;
 	}
 
+	class CodeGenerator
+	{
+	public:
+		void
+		emit( std::ostream &, const L1::pNode & );
+	};
+
 	// when brace-initialized with a list of function objects,
 	// `Handlers...` will be deduced to the function types 
 	//
@@ -147,7 +154,7 @@ namespace L1
 		template< typename RegNode > requires L1::IsKWNode< RegNode >
 		std::string operator()( const RegNode &reg_n )
 		{
-			return std::string { "%%" } + std::string { RegNode::kw };
+			return std::string { "%" } + std::string { RegNode::kw };
 		}
 	};
 

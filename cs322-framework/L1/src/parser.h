@@ -29,8 +29,6 @@ namespace L1
 		// Token base indices in buffer with null-terminated tokens
 		std::vector< int > tok_base_idxs {};
 		std::size_t tok_idx {};
-	
-		std::optional< L1::pNode > ast {};
 
 	public:
 		Parser( void );
@@ -46,7 +44,7 @@ namespace L1
 		gettok( void );
 
 		// parse tokens into AST
-		bool
+		std::optional< L1::pNode >
 		parse( void );
 
 		// dispatcher

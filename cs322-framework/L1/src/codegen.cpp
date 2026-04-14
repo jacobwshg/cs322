@@ -718,5 +718,10 @@ pVisitor::operator()( const L1::pNode &p_n )
 
 }
 
-int main(){}
+void
+L1::
+CodeGenerator::emit( std::ostream &os, const L1::pNode &ast )
+{
+	os << L1::pVisitor{}( ast );
+}
 
