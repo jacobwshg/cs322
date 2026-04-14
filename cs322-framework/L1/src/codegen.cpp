@@ -15,16 +15,16 @@ namespace L1
 
 	struct aopVisitor: L1::Visitor
 	{
-		std::string_view operator()( const L1::OpAddEqNode &op_add_eq_n )   { return L1::Instr::ADDQ };
-		std::string_view operator()( const L1::OpSubEqNode &op_sub_eq_n )   { return L1::Instr::SUBQ };
-		std::string_view operator()( const L1::OpMulEqNode &op_mul_eq_n )   { return L1::Instr::IMULQ };
-		std::string_view operator()( const L1::OpBAndEqNode &op_band_eq_n ) { return L1::Instr::ANDQ };
+		std::string_view operator()( const L1::OpAddEqNode &op_add_eq_n )   { return L1::Instr::ADDQ; }
+		std::string_view operator()( const L1::OpSubEqNode &op_sub_eq_n )   { return L1::Instr::SUBQ; }
+		std::string_view operator()( const L1::OpMulEqNode &op_mul_eq_n )   { return L1::Instr::IMULQ; }
+		std::string_view operator()( const L1::OpBAndEqNode &op_band_eq_n ) { return L1::Instr::ANDQ; }
 	};
 
 	struct sopVisitor: L1::Visitor
 	{
-		std::string_view operator()( const L1::OpLshEqNode &op_lsh_eq_n ) { return L1::Instr::SALQ };
-		std::string_view operator()( const L1::OpLshEqNode &op_rsh_eq_n ) { return L1::Instr::SARQ };
+		std::string_view operator()( const L1::OpLShEqNode &op_lsh_eq_n ) { return L1::Instr::SALQ; }
+		std::string_view operator()( const L1::OpRShEqNode &op_rsh_eq_n ) { return L1::Instr::SARQ; }
 	};
 
 	// doesn't emit, only retrieve tag
@@ -49,7 +49,7 @@ namespace L1
 		std::string_view w_sv {};
 		std::string_view w_low_sv {};
 
-		cmpVisitor( const L1::CmpTag cmptag_, const std::string_view w_sv_, const std::string_view w_low_sv ):
+		cmpVisitor( const L1::CmpTag cmptag_, const std::string_view w_sv_, const std::string_view w_low_sv_ ):
 			cmptag { cmptag_ }, w_sv { w_sv_ }, w_low_sv { w_low_sv_ }
 		{}
 
@@ -58,8 +58,8 @@ namespace L1
 		{
 			// directly evaluate comparison of literals
 			const long long
-				t1val { std::visit( L1::NViewer, t1_n ) },
-				t2val { std::visit( L1::NViewer, t2_n ) };
+				t1val { std::visit( L1::NViewer{}, t1_n ) },
+				t2val { std::visit( L1::NViewer{}, t2_n ) };
 
 			static constexpr std::string_view
 				CMP_TRUVAL { "$1," }, CMP_FLSVAL { "$0," };
@@ -81,9 +81,9 @@ namespace L1
 				break;
 			}
 
-			const std::string_view cmp_val { cmp_res ? CMP_TRUVAL : CMP_FLSVAL };
+			const std::string cmp_val { cmp_res ? CMP_TRUVAL : CMP_FLSVAL };
 
-			return std::string { L1::Instr::MOVQ } + cmp_val + this->w_sv + "\n";
+			return std::string { L1::Instr::MOVQ } + cmp_val + std::string { this->w_sv } + "\n";
 		}
 
 		// w <- x cmp x
@@ -92,47 +92,47 @@ namespace L1
 		template< typename T1, typename T2 >
 		std::string operator()( const T1 &t1_n, const T2 &t2_n )
 		{
-			constexpr bool t1_is_N { std::is_same_v{ T1, L1::NNode } };
-			constexpr bool t2_is_N { std::is_same_v{ T2, L1::NNode } };
+			constexpr bool t1_is_N { std::is_same_v< T1, L1::NNode > };
+			constexpr bool t2_is_N { std::is_same_v< T2, L1::NNode > };
 			constexpr bool flip { t1_is_N && !t2_is_N };
 
 			std::string t1_str {}, t2_str {};
 			if constexpr ( t1_is_N )
 			{
-				t1_str = std::visit( L1::NVisitor, t1_n );
+				t1_str = std::visit( L1::NVisitor{}, t1_n );
 			}
 			else
 			{
-				t1_str = std::visit( L1::xVisitor, t1_n )
+				t1_str = std::visit( L1::xVisitor{}, t1_n );
 			};
 			if constexpr ( t2_is_N )
 			{
-				t2_str = std::visit( L1::NVisitor, t2_n );
+				t2_str = std::visit( L1::NVisitor{}, t2_n );
 			}
 			else
 			{
-				t2_str = std::visit( L1::xVisitor, t2_n )
+				t2_str = std::visit( L1::xVisitor{}, t2_n );
 			};
 
 			std::string cmp_line {};
-			if constexpr ( flip ) // flip, put N (t1) on the left in generated instr
+			if ( flip ) // flip, put N (t1) on the left in generated instr
 			{
-				cmp_line = std::string { L1::Instr::CMPQ } + t1_str + "," + t2_str + "\n"
-			};
+				cmp_line = std::string { L1::Instr::CMPQ } + t1_str + "," + t2_str + "\n";
+			}
 			else
 			{
-				cmp_line = std::string { L1::Instr::CMPQ } + t2_str + "," + t1_str + "\n"
+				cmp_line = std::string { L1::Instr::CMPQ } + t2_str + "," + t1_str + "\n";
 			}
 
-			std::string_view set_instr {};
+			std::string set_instr {};
 			switch ( this->cmptag )
 			{
 			case L1::CmpTag::LT:
-				if constexpr ( flip ) { set_instr = L1::Instr::SETG };
+				if ( flip ) { set_instr = L1::Instr::SETG; }
 				else { set_instr = L1::Instr::SETL; }
 				break;
 			case L1::CmpTag::LEQ:
-				if constexpr ( flip ) { set_instr = L1::Instr::SETGE };
+				if ( flip ) { set_instr = L1::Instr::SETGE; }
 				else { set_instr = L1::Instr::SETLE; }
 				break;
 			case L1::CmpTag::EQ: // not impacted by direction flip
@@ -142,11 +142,16 @@ namespace L1
 				assert( false );
 				break;
 			}
-			const std::string set_line { std::string { set_instr } + this->w_low_sv + "\n" };
+			const std::string set_line { set_instr + std::string { this->w_low_sv } + "\n" };
 
 			const std::string mov_line
 			{
-				std::string { L1::Instr::MOVZBQ + this->w_low_sv + "," + this->w_sv + "\n" }
+				std::string
+				{
+					std::string { L1::Instr::MOVZBQ }
+						+ std::string { this->w_low_sv } + ","
+						+ std::string { this->w_sv } + "\n"
+				}
 			};
 
 			return cmp_line + set_line + mov_line;
@@ -158,9 +163,9 @@ namespace L1
 	struct cjumpVisitor: L1::Visitor
 	{
 		L1::CmpTag cmptag {}; // passed in by iVisitor overload, which can see cmpNode member of overload arg
-		std::string_view &label_sv;
+		std::string_view label_sv;
 
-		cmpVisitor( const L1::CmpTag cmptag_, const std::string_view label_sv_ ):
+		cjumpVisitor( const L1::CmpTag cmptag_, std::string_view label_sv_ ):
 			cmptag { cmptag_ }, label_sv { label_sv_ }
 		{}
 
@@ -169,8 +174,8 @@ namespace L1
 		{
 			// directly evaluate comparison of literals
 			const long long
-				t1val { std::visit( L1::NViewer, t1_n ) },
-				t2val { std::visit( L1::NViewer, t2_n ) };
+				t1val { std::visit( L1::NViewer{}, t1_n ) },
+				t2val { std::visit( L1::NViewer{}, t2_n ) };
 
 			bool cmp_res {};
 			switch ( this->cmptag )
@@ -189,11 +194,10 @@ namespace L1
 				break;
 			}
 
-			const std::string_view cmp_val { cmp_res ? CMP_TRUVAL : CMP_FLSVAL };
 			if ( cmp_res )
 			{
 				// jump
-				return std::string { L1::Instr::JMP } + this->label_sv + "\n";
+				return std::string { L1::Instr::JMP } + std::string { this->label_sv } + "\n";
 			}
 			// don't jump
 			return std::string {};
@@ -205,47 +209,47 @@ namespace L1
 		template< typename T1, typename T2 >
 		std::string operator()( const T1 &t1_n, const T2 &t2_n )
 		{
-			constexpr bool t1_is_N { std::is_same_v{ T1, L1::NNode } };
-			constexpr bool t2_is_N { std::is_same_v{ T2, L1::NNode } };
+			constexpr bool t1_is_N { std::is_same_v< T1, L1::NNode > };
+			constexpr bool t2_is_N { std::is_same_v< T2, L1::NNode > };
 			constexpr bool flip { t1_is_N && !t2_is_N };
 
 			std::string t1_str {}, t2_str {};
 			if constexpr ( t1_is_N )
 			{
-				t1_str = std::visit( L1::NVisitor, t1_n );
+				t1_str = std::visit( L1::NVisitor{}, t1_n );
 			}
 			else
 			{
-				t1_str = std::visit( L1::xVisitor, t1_n )
+				t1_str = std::visit( L1::xVisitor{}, t1_n );
 			};
 			if constexpr ( t2_is_N )
 			{
-				t2_str = std::visit( L1::NVisitor, t2_n );
+				t2_str = std::visit( L1::NVisitor{}, t2_n );
 			}
 			else
 			{
-				t2_str = std::visit( L1::xVisitor, t2_n )
+				t2_str = std::visit( L1::xVisitor{}, t2_n );
 			};
 
 			std::string cmp_line {};
-			if constexpr ( flip ) // flip, put N (t1) on the left in generated instr
+			if ( flip ) // flip, put N (t1) on the left in generated instr
 			{
-				cmp_line = std::string { L1::Instr::CMPQ } + t1_str + "," + t2_str + "\n"
-			};
+				cmp_line = std::string { L1::Instr::CMPQ } + t1_str + "," + t2_str + "\n";
+			}
 			else
 			{
-				cmp_line = std::string { L1::Instr::CMPQ } + t2_str + "," + t1_str + "\n"
+				cmp_line = std::string { L1::Instr::CMPQ } + t2_str + "," + t1_str + "\n";
 			}
 
-			std::string_view j_instr {};
+			std::string j_instr {};
 			switch ( this->cmptag )
 			{
 			case L1::CmpTag::LT:
-				if constexpr ( flip ) { j_instr = L1::Instr::JG };
+				if ( flip ) { j_instr = L1::Instr::JG; }
 				else { j_instr = L1::Instr::JL; }
 				break;
 			case L1::CmpTag::LEQ:
-				if constexpr ( flip ) { j_instr = L1::Instr::JGE };
+				if ( flip ) { j_instr = L1::Instr::JGE; }
 				else { j_instr = L1::Instr::JLE; }
 				break;
 			case L1::CmpTag::EQ: // not impacted by direction flip
@@ -255,7 +259,10 @@ namespace L1
 				assert( false );
 				break;
 			}
-			const std::string j_line { std::string { j_instr } + this->label_sv } + "\n";
+			const std::string j_line
+			{
+				j_instr + std::string { this->label_sv } + "\n"
+			};
 
 			return cmp_line + j_line;
 		}
@@ -271,7 +278,7 @@ iVisitor::operator()( const L1::iCmpAssignNode &i_cmp_assign_n )
 {
 	constexpr bool use_low { true };
 	// partially traverse
-	const L1::CmpTag cmptag { std::visit( L1::cmpViewer, i_cmp_assign_n.cmp_n ) };
+	const L1::CmpTag cmptag { std::visit( L1::cmpViewer{}, i_cmp_assign_n.cmp_n ) };
 	const L1::wNode &w_n { i_cmp_assign_n.w_n };
 	const std::string
 		w_str     { std::visit( L1::wVisitor{}, w_n ) },
@@ -291,13 +298,13 @@ iVisitor::operator()( const L1::iCJumpNode &i_cjump_n )
 {
 	// partially traverse
 	const std::string label_str { L1::labelVisitor{}( i_cjump_n.label_n ) };
-	const L1::CmpTag cmptag { std::visit( L1::cmpViewer, i_cjump_n.cmp_n ) };
+	const L1::CmpTag cmptag { std::visit( L1::cmpViewer{}, i_cjump_n.cmp_n ) };
 
 	// call helper visitor
 	return std::visit(
 		L1::cjumpVisitor{ cmptag, label_str },
-		i_cmp_assign_n.t1_n,
-		i_cmp_assign_n.t2_n
+		i_cjump_n.t1_n,
+		i_cjump_n.t2_n
 	);
 }
 
@@ -353,13 +360,13 @@ iVisitor::operator()( const L1::iStoreNode &i_store_n )
 	constexpr bool ismem { true };
 
 	const std::string s_str { std::visit( L1::sVisitor{ ismem }, i_store_n.s_n ) };
-	const std::string M_str { L1::MVisitor{}( i_load_n.M_n ) };
-	const std::string x_str { std::visit( L1::xVisitor, i_load_n.x_n ) };
+	const std::string M_str { L1::MVisitor{}( i_store_n.M_n ) };
+	const std::string x_str { std::visit( L1::xVisitor{}, i_store_n.x_n ) };
 
-	return std::string { L1::Instr::MOVQ } + s_str + ",",  M_str + "(" + x_str + ")\n";
+	return std::string { L1::Instr::MOVQ } + s_str + "," + M_str + "(" + x_str + ")\n";
 }
 
-void
+std::string
 L1::
 iVisitor::operator()( const L1::iAOpNode &i_aop_n )
 {
@@ -378,7 +385,7 @@ iVisitor::operator()( const L1::iAOpNode &i_aop_n )
 	return aop_str + t_str + "," + w_str + "\n";
 }
 
-void
+std::string
 L1::
 iVisitor::
 operator()( const L1::iSxNode &i_sx_n )
@@ -435,7 +442,7 @@ iVisitor::operator()( const L1::iAddStoreNode &i_add_store_n )
 
 	const std::string
 		t_str { std::visit( L1::tVisitor{}, i_add_store_n.t_n ) },
-		M_str { std::visit( L1::MVisitor{}, i_add_store_n.M_n ) },
+		M_str { L1::MVisitor{}( i_add_store_n.M_n ) },
 		x_str { std::visit( L1::xVisitor{}, i_add_store_n.x_n ) };	
 
 	return std::string { L1::Instr::ADDQ } + t_str + "," + M_str + "(" + x_str + ")\n";
@@ -455,7 +462,7 @@ iVisitor::operator()( const L1::iSubStoreNode &i_sub_store_n )
 
 	const std::string
 		t_str { std::visit( L1::tVisitor{}, i_sub_store_n.t_n ) },
-		M_str { std::visit( L1::MVisitor{}, i_sub_store_n.M_n ) },	
+		M_str { L1::MVisitor{}( i_sub_store_n.M_n ) },	
 		x_str { std::visit( L1::xVisitor{}, i_sub_store_n.x_n ) };
 
 	return std::string { L1::Instr::SUBQ } + t_str + "," + M_str + "(" + x_str + ")\n";
@@ -474,7 +481,7 @@ iVisitor::operator()( const L1::iLoadSubNode &i_load_sub_n )
 	//
 
 	const std::string
-		M_str { std::visit( L1::MVisitor{}, i_load_sub_n.M_n ) },
+		M_str { L1::MVisitor{}( i_load_sub_n.M_n ) },
 		x_str { std::visit( L1::xVisitor{}, i_load_sub_n.x_n ) },	
 		w_str { std::visit( L1::wVisitor{}, i_load_sub_n.w_n ) };
 
@@ -495,9 +502,9 @@ iVisitor::operator()( const L1::iLoadAddNode &i_load_add_n )
 
 
 	const std::string
-		M_str { std::visit( L1::MVisitor{}, i_load_add_n.M_n ) },
+		M_str { L1::MVisitor{}( i_load_add_n.M_n ) },
 		x_str { std::visit( L1::xVisitor{}, i_load_add_n.x_n ) },	
-		w_str { std::visit( L1::wVisitor{}  i_load_add_n.w_n ) };
+		w_str { std::visit( L1::wVisitor{}, i_load_add_n.w_n ) };
 
 	return std::string{ L1::Instr::ADDQ } + M_str + "(" + x_str + ")," + w_str + "\n";
 
@@ -561,8 +568,8 @@ iVisitor::operator()( const L1::iLEANode &i_lea_n )
 	const std::string
 		w1_str { std::visit( L1::wVisitor{}, i_lea_n.w1_n ) },
 		w2_str { std::visit( L1::wVisitor{}, i_lea_n.w2_n ) },
-		w3_str { std::visit( L1::wVisitor{}, i_lea_n.w3_n ) };
-		E_str { L1::EVisitor{}( i_lea_n.E_n ) };
+		w3_str { std::visit( L1::wVisitor{}, i_lea_n.w3_n ) },
+		E_str  { std::visit( L1::EVisitor{}, i_lea_n.E_n ) };
 
 	return std::string{ L1::Instr::LEA } + "(" 
 		+ w2_str + "," + w3_str + "," + E_str + ")," + w1_str + "\n";
@@ -579,4 +586,6 @@ iVisitor::operator()( const L1::iLEANode &i_lea_n )
 		std::string operator()( const L1::iCallTupleErrorNode & );
 		std::string operator()( const L1::iCallTensorErrorNode & );
 */
+
+int main(){}
 

@@ -175,9 +175,9 @@ namespace L1
 	struct ColonNode { static constexpr sv_t kw { KW::COLON }; };
 
 	struct OpAssignNode { static constexpr sv_t kw { KW::OP_ASSIGN }; };
-	struct OpAddNode    { static constexpr sv_t kw { KW::OP_ADD } };
-	struct OpSubNode    { static constexpr sv_t kw { KW::OP_SUB } };
-	struct OpIncrNode   { static constexpr sv_t kw { KW::OP_INCR } };
+	struct OpAddNode    { static constexpr sv_t kw { KW::OP_ADD }; };
+	struct OpSubNode    { static constexpr sv_t kw { KW::OP_SUB }; };
+	struct OpIncrNode   { static constexpr sv_t kw { KW::OP_INCR }; };
 	struct OpDecrNode   { static constexpr sv_t kw { KW::OP_DECR }; };
 	struct OpAddEqNode  { static constexpr sv_t kw { KW::OP_ADD_EQ }; };
 	struct OpSubEqNode  { static constexpr sv_t kw { KW::OP_SUB_EQ }; };

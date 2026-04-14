@@ -44,19 +44,20 @@ namespace L1
 	// if the target node type is a struct, then handle it directly
 	struct nameVisitor: Visitor
 	{
-		std::string operator()( const L1::nameNode &name_n ) { return name_n.val; }
+		std::string operator()( const L1::nameNode &name_n ) { return std::string { name_n.val }; }
 	};
 
 	struct labelVisitor: Visitor
 	{
 		bool ismem { false };
 
-		labelVisitor( std::ostream &os_, const bool ismem_ ): os { os_ }, ismem { ismem_ } {}
+		labelVisitor( void ) =default;
+		labelVisitor( const bool ismem_ ): ismem { ismem_ } {}
 
 		std::string operator()( const L1::labelNode &label_n )
 		{
 			std::string sbuf {}; sbuf.reserve( 16 ); 
-			if { this->ismem } { sbuf += "$" };
+			if ( this->ismem ) { sbuf += "$"; }
 			sbuf += "_";
 			sbuf += nameVisitor{}( label_n.name_n );
 			return std::move( sbuf );
@@ -78,8 +79,14 @@ namespace L1
 	// if the target node type is a variant, then overload for alternatives
 	struct NVisitor: Visitor
 	{
-		std::string operator()( const L1::_0Node &_0_n )    { return "$0"; }
-		std::string operator()( const L1::NNZNode &N_nz_n ) { return std::string { "$" } + N_nz_n.val; }
+		std::string operator()( const L1::_0Node &_0_n )
+		{
+			return "$0";
+		}
+		std::string operator()( const L1::NNZNode &N_nz_n )
+		{
+			return std::string { "$" } + std::to_string( N_nz_n.val );
+		}
 	};
 
 	struct MVisitor: Visitor
@@ -89,20 +96,23 @@ namespace L1
 
 	struct FVisitor: Visitor
 	{
-		template< typename F > requires L1::IsKwNode< F >
+		template< typename F > requires L1::IsKWNode< F >
 		std::string_view operator()( const F &F_n ) { return F::kw; }
-	}
+	};
 
 	struct EVisitor: Visitor
 	{
-		template< typename E > requires L1::IsKwNode< E >
+		template< typename E > requires L1::IsKWNode< E >
 		std::string_view operator()( const E &E_n ) { return E::kw; }
-	}
+	};
 
 	struct RegVisitor: Visitor
 	{
 		template< typename RegNode > requires L1::IsKWNode< RegNode >
-		std::string operator()( const RegNode &reg_n ) { return std::string { "%%" } << RegNode::kw; }
+		std::string operator()( const RegNode &reg_n )
+		{
+			return std::string { "%%" } + std::string { RegNode::kw };
+		}
 	};
 
 	struct LowRegVisitor: Visitor
@@ -127,19 +137,22 @@ namespace L1
 		template<> inline constexpr std::string_view low< L1::R15Node > { "r15b" };	
 
 		template< typename RegNode > requires L1::IsKWNode< RegNode >
-		std::string operator()( const RegNode &reg_n ) { return std::string { "%%" } + LowRegVisitor::low< RegNode >; }
+		std::string operator()( const RegNode &reg_n )
+		{
+			return std::string { "%%" } + std::string { LowRegVisitor::low< RegNode > };
+		}
 	};
 
 	struct sxVisitor: Visitor
 	{
 		bool use_low;
 
-		sxVisitor( std::ostream &os_, bool use_low_ ): os { os }, use_low { use_low_ } {}
+		sxVisitor( bool use_low_ ): use_low { use_low_ } {}
 
 		std::string operator()( const L1::RcxNode &rcx_n )
 		{
 			if ( this->use_low ) { return RegVisitor{}( rcx_n ); }
-			else { return LowRegVisitor{}( rcx_n ) };
+			else { return LowRegVisitor{}( rcx_n ); }
 		}
 	};
 
@@ -155,7 +168,7 @@ namespace L1
 		template< typename RegNode > requires L1::IsKWNode< RegNode >
 		std::string operator()( const RegNode &reg_n )
 		{
-			if ( this->use_low ) { return LowRegVisitor{}( reg_n ) };
+			if ( this->use_low ) { return LowRegVisitor{}( reg_n ); }
 			else { return RegVisitor{}( reg_n ); }
 		}
 	};
@@ -164,8 +177,9 @@ namespace L1
 	// by cmp and shift
 	struct wVisitor: Visitor
 	{
-		bool use_low { false };
+		bool use_low;
 
+		wVisitor( void ) =default;
 		wVisitor( bool use_low_ ): use_low { use_low_ } {}
 
 		std::string operator()( const L1::aNode &a_n ) { return std::visit( aVisitor{ this->use_low }, a_n ); }
@@ -173,7 +187,7 @@ namespace L1
 		template< typename RegNode > requires L1::IsKWNode< RegNode >
 		std::string operator()( const RegNode &reg_n )
 		{
-			if ( this->use_low ) { return LowRegVisitor{}( reg_n ) };
+			if ( this->use_low ) { return LowRegVisitor{}( reg_n ); }
 			else { return RegVisitor{}( reg_n ); }
 		}
 	};
@@ -205,9 +219,9 @@ namespace L1
 		std::string operator()( const L1::tNode &t_n ) { return std::visit( tVisitor{}, t_n ); }
 		std::string operator()( const L1::labelNode &label_n )
 		{
-			return std::visit( labelVisitor{ this->ismem }, label_n );
+			return labelVisitor{ this->ismem }( label_n );
 		}
-		std::string operator()( const L1::lNode &l_n ) { return std::visit( lVisitor{}, l_n ); }
+		std::string operator()( const L1::lNode &l_n ) { return lVisitor{}( l_n ); }
 	};
 
 	struct iVisitor: Visitor
