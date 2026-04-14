@@ -53,7 +53,7 @@ namespace L1
 		make_node( void )
 		{
 
-			std::printf( "Token idx %0lu ", this->tok_idx  );
+			//std::printf( "Token idx %0lu ", this->tok_idx  );
 
 			/*
 			if constexpr ( std::is_same_v< NodeT, L1::pNode > )
@@ -69,35 +69,35 @@ namespace L1
 
 			if constexpr ( std::is_same_v< NodeT, L1::MNode > )
 			{
-				std::printf( "making M node\n" );
+				//std::printf( "making M node\n" );
 				return this->make_M_node();
 			}
 
 			if constexpr ( ::is_variant_v< NodeT > )
 			{
-				std::printf( "making variant node %s\n", typeid( NodeT{} ).name() );
+				//std::printf( "making variant node %s\n", typeid( NodeT{} ).name() );
 				return this->make_variant_node< NodeT >();
 			}
 
 			if constexpr ( L1::IsKWNode< NodeT > )
 			{
-				std::printf( "making kw node %s\n", typeid( NodeT{} ).name() );
+				//std::printf( "making kw node %s\n", typeid( NodeT{} ).name() );
 				return this->make_kw_node< NodeT >();
 			}
 
 			if constexpr ( L1::IsIdentNode< NodeT > )
 			{
-				std::printf( "making identifier node %s\n", typeid( NodeT{} ).name() );
+				//std::printf( "making identifier node %s\n", typeid( NodeT{} ).name() );
 				return this->make_ident_node< NodeT >();
 			}
 
 			if constexpr ( L1::IsRecNode< NodeT > )
 			{
-				std::printf( "making record node %s\n", typeid( NodeT{} ).name() );
+				//std::printf( "making record node %s\n", typeid( NodeT{} ).name() );
 				return this->make_record_node< NodeT >();
 			}
 
-			std::printf( "node type %s unknown\n", typeid( NodeT{} ).name() );
+			//std::printf( "node type %s unknown\n", typeid( NodeT{} ).name() );
 
 			return std::nullopt;
 		}
@@ -171,11 +171,11 @@ namespace L1
 			const std::size_t cur_idx { this->tok_idx };
 			const std::string_view tok { this->gettok() };
 
-			std::printf( "kw expected: %s, token: %s\n", KWNodeT::kw.data(), tok.data() );
+			//std::printf( "kw expected: %s, token: %s\n", KWNodeT::kw.data(), tok.data() );
 
 			if ( tok == KWNodeT::kw ) // token matches kw 
 			{
-				std::printf( "kw `%s` match success\n", tok.data() );
+				//std::printf( "kw `%s` match success\n", tok.data() );
 				return KWNodeT {};
 			}
 			// match failed, restore idx
@@ -198,7 +198,7 @@ namespace L1
 				return std::nullopt;
 			}
 
-			std::printf( "identifier `%s` match success\n", tok.data() );
+			//std::printf( "identifier `%s` match success\n", tok.data() );
 
 			if constexpr ( std::is_same_v< IdentNodeT, L1::nameNode > )
 			{
