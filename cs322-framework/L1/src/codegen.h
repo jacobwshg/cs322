@@ -20,6 +20,7 @@ namespace L1
 			MOVQ { "\tmovq " }, MOVZBQ { "\tmovzbq " },
 			ADDQ { "\taddq " }, SUBQ { "\tsubq " }, IMULQ { "\timulq " }, ANDQ { "\tandq " },
 			SALQ { "\tsalq " }, SARQ { "\tsarq " },
+			INC { "\tinc " }, DEC { "\tdec " },
 			CMPQ { "\tcmpq " },
 			SETE { "\tsete " }, SETL { "\tsetl " }, SETG { "\tsetg " }, SETLE { "\tsetle " }, SETGE { "\tsetge " },
 			JMP { "\tjmp " },

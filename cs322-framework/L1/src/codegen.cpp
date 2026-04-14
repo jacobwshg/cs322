@@ -516,7 +516,7 @@ iVisitor::operator()( const L1::iIncrNode &i_incr_n )
 {
 	const std::string w_str { std::visit( L1::wVisitor{}, i_incr_n.w_n ) };
 
-	return std::string{ L1::Instr::ADDQ } + "$1," + w_str + "\n";
+	return std::string{ L1::Instr::INC } + w_str + "\n";
 }
 
 std::string
@@ -525,7 +525,7 @@ iVisitor::operator()( const L1::iDecrNode &i_decr_n )
 {
 	const std::string w_str { std::visit( L1::wVisitor{}, i_decr_n.w_n ) };
 
-	return std::string{ L1::Instr::SUBQ } + "$1," + w_str + "\n";
+	return std::string{ L1::Instr::DEC } + w_str + "\n";
 }
 
 std::string
