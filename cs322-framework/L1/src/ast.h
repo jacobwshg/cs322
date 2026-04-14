@@ -440,7 +440,7 @@ namespace L1
 
 	using iNode = std::variant<
 
-		// `w <- s` could be a prefix of `w <- t cmp t`, and since we use short-circuit parsing,
+		// `w <- s` could be a prefix of `w <- t cmp t`, and since make_variant_node() use short-circuit parsing,
 		// we must try matching the longer instruction first to avoid always parsing as the shorter one
 		//
 		iCmpAssignNode,

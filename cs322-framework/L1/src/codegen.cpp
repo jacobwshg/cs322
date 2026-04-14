@@ -661,7 +661,7 @@ std::string
 L1::
 fVisitor::operator()( const L1::fNode &f_n )
 {
-	std::string sbuf {}; sbuf.reserve( 512 );
+	std::string sbuf {}; sbuf.reserve( 1024 );
 
 	const std::string l_str { L1::lVisitor{}( f_n.l_n ) };
 	sbuf += l_str; sbuf += ":\n";
@@ -695,6 +695,28 @@ fVisitor::operator()( const L1::fNode &f_n )
 	return std::move( sbuf );
 }
 
+std::string
+L1::
+pVisitor::operator()( const L1::pNode &p_n )
+{
+	std::string sbuf {}; sbuf.reserve( 8192 );
+
+	// main fn label
+	const std::string l_str { L1::lVisitor{}( p_n.l_n ) };
+
+	sbuf += L1::Instr::P_PROLOG;
+	sbuf += std::string { L1::Instr::CALL } + l_str + "\n";
+	sbuf += L1::Instr::P_EPILOG;
+
+	// emit functions
+	for ( const L1::fNode &f_n: p_n.f_ns )
+	{
+		sbuf += fVisitor{}( f_n );
+	}
+
+	return std::move( sbuf );
+
+}
 
 int main(){}
 

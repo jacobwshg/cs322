@@ -333,6 +333,7 @@ namespace L1
 
 			std::optional< typename RecNodeT::fields_t > ndtuple_opt
 			{
+				// without expansion ( doesn't work )
 				//this->make_node_tuple< typename RecNodeT::fields_t >()
 				make_fields_tuple( ( typename RecNodeT::fields_t * ) {} )
 			};

@@ -28,8 +28,11 @@ namespace L1
 			;
 
 		static constexpr std::string_view
-			PROLOG
+			P_PROLOG
 			{
+				".text\n"
+				"\t.globl go\n"
+				"go:\n"
 				"\tpushq %rbx\n"
 				"\tpushq %rbp\n"
 				"\tpushq %r12\n"
@@ -37,7 +40,7 @@ namespace L1
 				"\tpushq %r14\n"
 				"\tpushq %r15\n"
 			},
-			EPILOG
+			P_EPILOG
 			{
 				"\tpopq %r15\n"
 				"\tpopq %r14\n"
@@ -45,6 +48,7 @@ namespace L1
 				"\tpopq %r12\n"
 				"\tpopq %rbp\n"
 				"\tpopq %rbx\n"
+				"\tretq\n"
 			};
 
 	}
@@ -292,6 +296,11 @@ namespace L1
 	struct fVisitor: Visitor
 	{
 		std::string operator()( const L1::fNode & );
+	};	
+
+	struct pVisitor: Visitor
+	{
+		std::string operator()( const L1::pNode & );
 	};	
 
 }
