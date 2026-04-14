@@ -27,7 +27,7 @@ namespace L1
 		std::string_view operator()( const L1::OpRShEqNode &op_rsh_eq_n ) { return L1::Instr::SARQ; }
 	};
 
-	// doesn't emit, only retrieve tag
+	// doesn't emit, only retrieves tag
 	struct cmpViewer
 	{
 		L1::CmpTag operator()( const L1::OpLtNode &op_lt_n )   { return L1::CmpTag::LT; }
@@ -35,7 +35,7 @@ namespace L1
 		L1::CmpTag operator()( const L1::OpEqNode &op_eq_n )   { return L1::CmpTag::EQ; }
 	};
 
-	// doens't emit, only retrieve val
+	// doesn't emit, only retrieves val
 	struct NViewer
 	{
 		long long operator()( const L1::_0Node &_0_n )    { return 0LL; }
@@ -49,7 +49,10 @@ namespace L1
 		std::string_view w_sv {};
 		std::string_view w_low_sv {};
 
-		cmpVisitor( const L1::CmpTag cmptag_, const std::string_view w_sv_, const std::string_view w_low_sv_ ):
+		cmpVisitor(
+			const L1::CmpTag cmptag_,
+			const std::string_view w_sv_, const std::string_view w_low_sv_ 
+		):
 			cmptag { cmptag_ }, w_sv { w_sv_ }, w_low_sv { w_low_sv_ }
 		{}
 
@@ -83,7 +86,12 @@ namespace L1
 
 			const std::string cmp_val { cmp_res ? CMP_TRUVAL : CMP_FLSVAL };
 
-			return std::string { L1::Instr::MOVQ } + cmp_val + std::string { this->w_sv } + "\n";
+			std::string mov_line; mov_line.reserve( 32 );
+			mov_line += L1::Instr::MOVQ;
+			mov_line += cmp_val;
+			mov_line += this->w_sv;
+			mov_line += "\n";
+			return std::move( mov_line );
 		}
 
 		// w <- x cmp x
@@ -114,17 +122,20 @@ namespace L1
 				t2_str = std::visit( L1::xVisitor{}, t2_n );
 			};
 
-			std::string cmp_line {};
+			std::string cmp_line {}; cmp_line.reserve( 32 );
+			cmp_line += L1::Instr::CMPQ;
 			if ( flip ) // flip, put N (t1) on the left in generated instr
 			{
-				cmp_line = std::string { L1::Instr::CMPQ } + t1_str + "," + t2_str + "\n";
+				cmp_line += t1_str; cmp_line += ",";
+				cmp_line += t2_str; cmp_line += "\n";
 			}
 			else
 			{
-				cmp_line = std::string { L1::Instr::CMPQ } + t2_str + "," + t1_str + "\n";
+				cmp_line += t2_str; cmp_line += ",";
+				cmp_line += t1_str; cmp_line += "\n";
 			}
 
-			std::string set_instr {};
+			std::string_view set_instr {};
 			switch ( this->cmptag )
 			{
 			case L1::CmpTag::LT:
@@ -142,19 +153,22 @@ namespace L1
 				assert( false );
 				break;
 			}
-			const std::string set_line { set_instr + std::string { this->w_low_sv } + "\n" };
+			std::string set_line {}; set_line.reserve( 32 );
+			set_line += set_instr;
+			set_line += this->w_low_sv;
+			set_line += "\n";
 
-			const std::string mov_line
-			{
-				std::string
-				{
-					std::string { L1::Instr::MOVZBQ }
-						+ std::string { this->w_low_sv } + ","
-						+ std::string { this->w_sv } + "\n"
-				}
-			};
+			std::string mov_line {}; mov_line.reserve( 32 );
+			mov_line += L1::Instr::MOVZBQ;
+			mov_line += this->w_low_sv; mov_line += ",";
+			mov_line += this->w_sv;     mov_line += "\n";
 
-			return cmp_line + set_line + mov_line;
+			std::string sbuf {};
+			sbuf.reserve( cmp_line.size() + set_line.size() + mov_line.size() );
+			sbuf += cmp_line;
+			sbuf += set_line;
+			sbuf += mov_line;
+			return std::move( sbuf );
 		}
 
 	};
@@ -194,13 +208,17 @@ namespace L1
 				break;
 			}
 
-			if ( cmp_res )
+			std::string jmp_line {};
+			if ( !cmp_res )
 			{
-				// jump
-				return std::string { L1::Instr::JMP } + std::string { this->label_sv } + "\n";
-			}
-			// don't jump
-			return std::string {};
+				// no jump
+				return jmp_line;
+			} 
+			jmp_line.reserve( 32 );
+			jmp_line += L1::Instr::JMP;
+			jmp_line += this->label_sv;
+			jmp_line += "\n";
+			return std::move( jmp_line );
 		}
 
 		// cjump x cmp x
@@ -231,14 +249,17 @@ namespace L1
 				t2_str = std::visit( L1::xVisitor{}, t2_n );
 			};
 
-			std::string cmp_line {};
+			std::string cmp_line {}; cmp_line.reserve( 32 );
+			cmp_line += L1::Instr::CMPQ;
 			if ( flip ) // flip, put N (t1) on the left in generated instr
 			{
-				cmp_line = std::string { L1::Instr::CMPQ } + t1_str + "," + t2_str + "\n";
+				cmp_line += t1_str; cmp_line += ",";
+				cmp_line += t2_str; cmp_line += "\n";
 			}
 			else
 			{
-				cmp_line = std::string { L1::Instr::CMPQ } + t2_str + "," + t1_str + "\n";
+				cmp_line += t2_str; cmp_line += ",";
+				cmp_line += t1_str; cmp_line += "\n";
 			}
 
 			std::string_view j_instr {};
@@ -259,10 +280,10 @@ namespace L1
 				assert( false );
 				break;
 			}
-			const std::string j_line
-			{
-				std::string { j_instr } + std::string { this->label_sv } + "\n"
-			};
+			std::string j_line {}; j_line.reserve( 32 );
+			j_line += j_instr;
+			j_line += this->label_sv;
+			j_line += "\n";
 
 			return cmp_line + j_line;
 		}
@@ -324,8 +345,11 @@ iVisitor::operator()( const L1::iAssignNode &i_assign_n )
 	const std::string s_str { std::visit( L1::sVisitor{ ismem }, i_assign_n.s_n ) };	
 	const std::string w_str { std::visit( L1::wVisitor{}, i_assign_n.w_n ) };
 
-	return std::string { L1::Instr::MOVQ } + s_str + "," + w_str + "\n";
-
+	std::string sbuf {}; sbuf.reserve( 32 );
+	sbuf += L1::Instr::MOVQ;
+	sbuf += s_str; sbuf +=  ",";
+	sbuf += w_str; sbuf += "\n";
+	return std::move( sbuf );
 }
 
 std::string
@@ -343,7 +367,12 @@ iVisitor::operator()( const L1::iLoadNode &i_load_n )
 	const std::string x_str { std::visit( L1::xVisitor{}, i_load_n.x_n ) };
 	const std::string w_str { std::visit( L1::wVisitor{}, i_load_n.w_n ) };
 
-	return std::string { L1::Instr::MOVQ } + M_str + "(" + x_str + ")," + w_str + "\n";
+	std::string sbuf {}; sbuf.reserve( 32 );
+	sbuf += L1::Instr::MOVQ;
+	sbuf += M_str; sbuf += "(";
+	sbuf += x_str; sbuf += "),";
+	sbuf += w_str; sbuf += "\n";
+	return std::move( sbuf );
 
 }
 
@@ -363,7 +392,12 @@ iVisitor::operator()( const L1::iStoreNode &i_store_n )
 	const std::string M_str { L1::MVisitor{}( i_store_n.M_n ) };
 	const std::string x_str { std::visit( L1::xVisitor{}, i_store_n.x_n ) };
 
-	return std::string { L1::Instr::MOVQ } + s_str + "," + M_str + "(" + x_str + ")\n";
+	std::string sbuf {}; sbuf.reserve( 32 );
+	sbuf += L1::Instr::MOVQ;
+	sbuf += s_str; sbuf += ",";
+	sbuf += M_str; sbuf += "(";
+	sbuf += x_str; sbuf += ")\n";
+	return std::move( sbuf );
 }
 
 std::string
@@ -382,7 +416,12 @@ iVisitor::operator()( const L1::iAOpNode &i_aop_n )
 		t_str { std::visit( L1::tVisitor{}, i_aop_n.t_n ) },
 		w_str{ std::visit( L1::wVisitor{}, i_aop_n.w_n ) };
 
-	return aop_str + t_str + "," + w_str + "\n";
+	std::string sbuf {}; sbuf.reserve( 32 );
+	sbuf += aop_str;
+	sbuf += t_str; sbuf +=  ",";
+	sbuf += w_str; sbuf += "\n";
+	return std::move( sbuf );
+
 }
 
 std::string
@@ -404,7 +443,11 @@ operator()( const L1::iSxNode &i_sx_n )
 		sx_str  { std::visit( L1::sxVisitor{ use_low }, i_sx_n.sx_n ) },
 		w_str   { std::visit( L1::wVisitor{}, i_sx_n.w_n ) };
 
-	return sop_str + sx_str + "," + w_str + "\n";
+	std::string sbuf {}; sbuf.reserve( 32 );
+	sbuf += sop_str;
+	sbuf += sx_str; sbuf += ",";
+	sbuf += w_str; sbuf += "\n";
+	return std::move( sbuf );
 
 }
 
@@ -424,7 +467,11 @@ iVisitor::operator()( const L1::iSOpNode &i_sop_n )
 		N_str   { std::visit( L1::NVisitor{}, i_sop_n.N_n ) },
 		w_str   { std::visit( L1::wVisitor{}, i_sop_n.w_n ) };
 
-	return sop_str + N_str + "," + w_str + "\n";
+	std::string sbuf {}; sbuf.reserve( 32 );
+	sbuf += sop_str;
+	sbuf += N_str; sbuf += ",";
+	sbuf += w_str; sbuf += "\n";
+	return std::move( sbuf );
 
 }
 
@@ -445,7 +492,13 @@ iVisitor::operator()( const L1::iAddStoreNode &i_add_store_n )
 		M_str { L1::MVisitor{}( i_add_store_n.M_n ) },
 		x_str { std::visit( L1::xVisitor{}, i_add_store_n.x_n ) };	
 
-	return std::string { L1::Instr::ADDQ } + t_str + "," + M_str + "(" + x_str + ")\n";
+	std::string sbuf {}; sbuf.reserve( 32 );
+	sbuf += L1::Instr::ADDQ;
+	sbuf += t_str; sbuf += ",";
+	sbuf += M_str; sbuf += "(";
+	sbuf += x_str; sbuf += ")\n";
+	return std::move( sbuf );
+
 }
 
 std::string
@@ -465,7 +518,13 @@ iVisitor::operator()( const L1::iSubStoreNode &i_sub_store_n )
 		M_str { L1::MVisitor{}( i_sub_store_n.M_n ) },	
 		x_str { std::visit( L1::xVisitor{}, i_sub_store_n.x_n ) };
 
-	return std::string { L1::Instr::SUBQ } + t_str + "," + M_str + "(" + x_str + ")\n";
+	std::string sbuf {}; sbuf.reserve( 32 );
+	sbuf += L1::Instr::SUBQ;
+	sbuf += t_str; sbuf += ",";
+	sbuf += M_str; sbuf += "(";
+	sbuf += x_str; sbuf += ")\n";
+	return std::move( sbuf );
+
 }
 
 std::string
@@ -485,7 +544,13 @@ iVisitor::operator()( const L1::iLoadSubNode &i_load_sub_n )
 		x_str { std::visit( L1::xVisitor{}, i_load_sub_n.x_n ) },	
 		w_str { std::visit( L1::wVisitor{}, i_load_sub_n.w_n ) };
 
-	return std::string { L1::Instr::SUBQ } + M_str + "(" + x_str + ")," + w_str + "\n";
+	std::string sbuf {}; sbuf.reserve( 32 );
+	sbuf += L1::Instr::SUBQ;
+	sbuf += M_str; sbuf += "(";
+	sbuf += x_str; sbuf += "),";
+	sbuf += w_str; sbuf += "\n";
+	return std::move( sbuf );
+
 }
 
 std::string
@@ -500,13 +565,17 @@ iVisitor::operator()( const L1::iLoadAddNode &i_load_add_n )
 	// addq M(x),w
 	//
 
-
 	const std::string
 		M_str { L1::MVisitor{}( i_load_add_n.M_n ) },
 		x_str { std::visit( L1::xVisitor{}, i_load_add_n.x_n ) },	
 		w_str { std::visit( L1::wVisitor{}, i_load_add_n.w_n ) };
 
-	return std::string{ L1::Instr::ADDQ } + M_str + "(" + x_str + ")," + w_str + "\n";
+	std::string sbuf {}; sbuf.reserve( 32 );
+	sbuf += L1::Instr::ADDQ;
+	sbuf += M_str; sbuf += "(";
+	sbuf += x_str; sbuf += "),";
+	sbuf += w_str; sbuf += "\n";
+	return std::move( sbuf );
 
 }
 
@@ -516,7 +585,10 @@ iVisitor::operator()( const L1::iIncrNode &i_incr_n )
 {
 	const std::string w_str { std::visit( L1::wVisitor{}, i_incr_n.w_n ) };
 
-	return std::string{ L1::Instr::INC } + w_str + "\n";
+	std::string sbuf {}; sbuf.reserve( 16 );
+	sbuf += L1::Instr::INC;
+	sbuf += w_str; sbuf += "\n";
+	return std::move( sbuf );
 }
 
 std::string
@@ -525,7 +597,11 @@ iVisitor::operator()( const L1::iDecrNode &i_decr_n )
 {
 	const std::string w_str { std::visit( L1::wVisitor{}, i_decr_n.w_n ) };
 
-	return std::string{ L1::Instr::DEC } + w_str + "\n";
+	std::string sbuf {}; sbuf.reserve( 16 );
+	sbuf += L1::Instr::DEC;
+	sbuf += w_str; sbuf += "\n";
+	return std::move( sbuf );
+
 }
 
 std::string
@@ -534,7 +610,10 @@ iVisitor::operator()( const L1::iLabelNode &i_label_n )
 {
 	const std::string label_str { L1::labelVisitor{}( i_label_n.label_n ) };
 
-	return std::string { "\t" } + label_str + ":\n";
+	std::string sbuf {}; sbuf.reserve( 32 );
+	sbuf += "\t";
+	sbuf += label_str; sbuf += ":\n";
+	return std::move( sbuf );
 }
 
 std::string
@@ -543,7 +622,11 @@ iVisitor::operator()( const L1::iGotoNode &i_goto_n )
 {
 	const std::string label_str { L1::labelVisitor{}( i_goto_n.label_n ) };
 
-	return std::string{ L1::Instr::JMP } + label_str + "\n";
+	std::string sbuf {}; sbuf.reserve( 32 );
+	sbuf += L1::Instr::JMP;
+	sbuf += label_str; sbuf += "\n";
+	return std::move( sbuf );
+
 }
 
 std::string
@@ -572,8 +655,14 @@ iVisitor::operator()( const L1::iLEANode &i_lea_n )
 		w3_str { std::visit( L1::wVisitor{}, i_lea_n.w3_n ) },
 		E_str  { std::to_string( std::visit( L1::EVisitor{}, i_lea_n.E_n ) ) };
 
-	return std::string{ L1::Instr::LEA } + "(" 
-		+ w2_str + "," + w3_str + "," + E_str + ")," + w1_str + "\n";
+	std::string sbuf {}; sbuf.reserve( 32 );
+	sbuf += L1::Instr::LEA;
+	sbuf += "(";
+	sbuf += w2_str; sbuf += ",";
+	sbuf += w3_str; sbuf += ",";
+	sbuf += E_str;  sbuf += "),";
+	sbuf += w1_str; sbuf += "\n";
+	return std::move( sbuf );
 
 }
 
@@ -590,10 +679,15 @@ iVisitor::operator()( const L1::iCallUNode &i_call_u_n )
 	rsp_delta *= 8;
 
 	std::string sbuf {}; sbuf.reserve( 64 );
-	sbuf += std::string { L1::Instr::SUBQ }
-		+ "$" + std::to_string( rsp_delta )
-		+ ",%rsp\n";
-	sbuf += std::string { L1::Instr::JMP } + u_str + "\n";
+
+	// grow stk
+	sbuf += L1::Instr::SUBQ;
+	sbuf += "$";
+	sbuf += std::to_string( rsp_delta ); sbuf += ",%rsp\n";
+
+	sbuf += L1::Instr::JMP;
+	sbuf += u_str; sbuf += "\n";
+
 	return std::move( sbuf );
 }
 
@@ -602,7 +696,12 @@ L1::
 iVisitor::operator()( const L1::iCallPrintNode &i_call_print_n )
 {
 	static constexpr std::string_view name { L1::LibCall::PRINT };
-	return std::string { L1::Instr::CALL } + std::string { name } + "\n";
+
+	std::string sbuf {}; sbuf.reserve( 16 );
+	sbuf += L1::Instr::CALL;
+	sbuf += name; sbuf += "\n";
+	return std::move( sbuf );
+
 }
 
 std::string
@@ -610,16 +709,23 @@ L1::
 iVisitor::operator()( const L1::iCallInputNode &i_call_input_n )
 {
 	static constexpr std::string_view name { L1::LibCall::INPUT };
-	return std::string { L1::Instr::CALL } + std::string { name } + "\n";
+	std::string sbuf {}; sbuf.reserve( 16 );
+	sbuf += L1::Instr::CALL;
+	sbuf += name; sbuf += "\n";
+	return std::move( sbuf );
+
 }
 
 std::string
 L1::
 iVisitor::operator()( const L1::iCallAllocateNode &i_call_allocate_n )
 {
-
 	static constexpr std::string_view name { L1::LibCall::ALLOCATE };
-	return std::string { L1::Instr::CALL } + std::string { name } + "\n";
+	std::string sbuf {}; sbuf.reserve( 16 );
+	sbuf += L1::Instr::CALL;
+	sbuf += name; sbuf += "\n";
+	return std::move( sbuf );
+
 }
 
 std::string
@@ -628,7 +734,11 @@ iVisitor::operator()( const L1::iCallTupleErrorNode &i_call_tuple_error_n )
 {
 
 	static constexpr std::string_view name { L1::LibCall::TUPLE_ERROR };
-	return std::string { L1::Instr::CALL } + std::string { name } + "\n";
+	std::string sbuf {}; sbuf.reserve( 16 );
+	sbuf += L1::Instr::CALL;
+	sbuf += name; sbuf += "\n";
+	return std::move( sbuf );
+
 }
 
 std::string
@@ -653,7 +763,11 @@ iVisitor::operator()( const L1::iCallTensorErrorNode &i_call_tensor_error_n )
 		break;
 	}
 
-	return std::string { L1::Instr::CALL } + std::string { name } + "\n";
+	std::string sbuf {}; sbuf.reserve( 32 );
+	sbuf += L1::Instr::CALL;
+	sbuf += name; sbuf += "\n";
+	return std::move( sbuf );
+
 }
 
 
@@ -711,7 +825,7 @@ pVisitor::operator()( const L1::pNode &p_n )
 	// emit functions
 	for ( const L1::fNode &f_n: p_n.f_ns )
 	{
-		sbuf += fVisitor{}( f_n );
+		sbuf += L1::fVisitor{}( f_n );
 	}
 
 	return std::move( sbuf );
@@ -724,4 +838,6 @@ CodeGenerator::emit( std::ostream &os, const L1::pNode &ast )
 {
 	os << L1::pVisitor{}( ast );
 }
+
+//int main() {}
 

@@ -2,7 +2,8 @@
 (@go
 	(@go
 		0 0
-		rdi <- 1
+		//rdx @ rsi rsi 4
+		cjump rax < 5 :primetime_sexcrime
 		return
 	)
 )
