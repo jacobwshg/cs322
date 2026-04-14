@@ -534,7 +534,7 @@ iVisitor::operator()( const L1::iLabelNode &i_label_n )
 {
 	const std::string label_str { L1::labelVisitor{}( i_label_n.label_n ) };
 
-	return label_str + ":\n";
+	return std::string { "\t" } + label_str + ":\n";
 }
 
 std::string

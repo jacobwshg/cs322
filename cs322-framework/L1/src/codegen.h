@@ -182,7 +182,7 @@ namespace L1
 		template< typename RegNode > requires L1::IsKWNode< RegNode >
 		std::string operator()( const RegNode &reg_n )
 		{
-			return std::string { "%%" } + std::string { LowRegVisitor::low< RegNode > };
+			return std::string { "%" } + std::string { LowRegVisitor::low< RegNode > };
 		}
 	};
 
