@@ -15,7 +15,7 @@ namespace L1
 	namespace Instr
 	{
 		static constexpr std::string_view
-			CALLQ { "\tcallq " }, RETQ { "\tretq " },
+			CALL { "\tcall " }, RETQ { "\tretq " },
 			PUSHQ { "\tpushq " }, POPQ { "\tpopq " },
 			MOVQ { "\tmovq " }, MOVZBQ { "\tmovzbq " },
 			ADDQ { "\taddq " }, SUBQ { "\tsubq " }, IMULQ { "\timulq " }, ANDQ { "\tandq " },
@@ -25,6 +25,38 @@ namespace L1
 			JMP { "\tjmp " },
 			JE { "\tje " }, JL { "\tjl " }, JG { "\tjg " }, JLE { "\tjle " }, JGE { "\tjge " },
 			LEA { "\tlea " }
+			;
+
+		static constexpr std::string_view
+			PROLOG
+			{
+				"\tpushq %rbx\n"
+				"\tpushq %rbp\n"
+				"\tpushq %r12\n"
+				"\tpushq %r13\n"
+				"\tpushq %r14\n"
+				"\tpushq %r15\n"
+			},
+			EPILOG
+			{
+				"\tpopq %r15\n"
+				"\tpopq %r14\n"
+				"\tpopq %r13\n"
+				"\tpopq %r12\n"
+				"\tpopq %rbp\n"
+				"\tpopq %rbx\n"
+			};
+
+	}
+
+	namespace LibCall
+	{
+		static constexpr std::string_view
+			PRINT { "print" }, ALLOCATE { "allocate" }, INPUT { "input" },
+			TUPLE_ERROR { "tuple_error" },
+			ARRAY_TENSOR_ERROR_NULL { "array_tensor_error_null" },
+			ARRAY_ERROR { "array_error" },
+			TENSOR_ERROR { "tensor_error" }
 			;
 	}
 
@@ -96,14 +128,14 @@ namespace L1
 
 	struct FVisitor: Visitor
 	{
-		template< typename F > requires L1::IsKWNode< F >
-		std::string_view operator()( const F &F_n ) { return F::kw; }
+		template< typename F > requires L1::IsNumConstNode< F >
+		long long operator()( const F &F_n ) { return F::val; }
 	};
 
 	struct EVisitor: Visitor
 	{
-		template< typename E > requires L1::IsKWNode< E >
-		std::string_view operator()( const E &E_n ) { return E::kw; }
+		template< typename E > requires L1::IsNumConstNode< E >
+		long long operator()( const E &E_n ) { return E::val; }
 	};
 
 	struct RegVisitor: Visitor
@@ -200,7 +232,7 @@ namespace L1
 
 	struct uVisitor: Visitor
 	{
-		std::string operator()( const L1::wNode &w_n ) { return std::visit( wVisitor{}, w_n ); }
+		std::string operator()( const L1::wNode &w_n ) { return std::string { "*" } + std::visit( wVisitor{}, w_n ); }
 		std::string operator()( const L1::lNode &l_n ) { return lVisitor{}( l_n ); }
 	};
 
@@ -257,6 +289,10 @@ namespace L1
 		std::string operator()( const L1::iLEANode & );
 	};
 
+	struct fVisitor: Visitor
+	{
+		std::string operator()( const L1::fNode & );
+	};	
 
 }
 

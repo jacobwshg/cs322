@@ -241,7 +241,7 @@ namespace L1
 				cmp_line = std::string { L1::Instr::CMPQ } + t2_str + "," + t1_str + "\n";
 			}
 
-			std::string j_instr {};
+			std::string_view j_instr {};
 			switch ( this->cmptag )
 			{
 			case L1::CmpTag::LT:
@@ -261,7 +261,7 @@ namespace L1
 			}
 			const std::string j_line
 			{
-				j_instr + std::string { this->label_sv } + "\n"
+				std::string { j_instr } + std::string { this->label_sv } + "\n"
 			};
 
 			return cmp_line + j_line;
@@ -550,7 +550,8 @@ std::string
 L1::
 iVisitor::operator()( const L1::iReturnNode &i_return_n )
 {
-	return std::string { L1::Instr::RETQ } + "\n";
+	// leave to fVisitor, because it needs to shrink stk before `retq`
+	return std::string {};
 }
 
 std::string
@@ -569,23 +570,131 @@ iVisitor::operator()( const L1::iLEANode &i_lea_n )
 		w1_str { std::visit( L1::wVisitor{}, i_lea_n.w1_n ) },
 		w2_str { std::visit( L1::wVisitor{}, i_lea_n.w2_n ) },
 		w3_str { std::visit( L1::wVisitor{}, i_lea_n.w3_n ) },
-		E_str  { std::visit( L1::EVisitor{}, i_lea_n.E_n ) };
+		E_str  { std::to_string( std::visit( L1::EVisitor{}, i_lea_n.E_n ) ) };
 
 	return std::string{ L1::Instr::LEA } + "(" 
 		+ w2_str + "," + w3_str + "," + E_str + ")," + w1_str + "\n";
 
 }
 
-/*
+std::string
+L1::
+iVisitor::operator()( const L1::iCallUNode &i_call_u_n )
+{
+	const long long N_val { std::visit( L1::NViewer{}, i_call_u_n.N_n ) };
+	assert( N_val >= 0 );
+	std::string u_str { std::visit( L1::uVisitor{}, i_call_u_n.u_n ) };
 
-		std::string operator()( const L1::iCJumpNode & );
-		std::string operator()( const L1::iCallUNode & );
-		std::string operator()( const L1::iCallPrintNode & );
-		std::string operator()( const L1::iCallInputNode & );
-		std::string operator()( const L1::iCallAllocateNode & );
-		std::string operator()( const L1::iCallTupleErrorNode & );
-		std::string operator()( const L1::iCallTensorErrorNode & );
-*/
+	long long rsp_delta { 1LL }; // leave a qword for ret addr
+	if ( N_val > 6 ) { rsp_delta += ( N_val-6 ); }
+	rsp_delta *= 8;
+
+	std::string sbuf {}; sbuf.reserve( 64 );
+	sbuf += std::string { L1::Instr::SUBQ }
+		+ "$" + std::to_string( rsp_delta )
+		+ ",%rsp\n";
+	sbuf += std::string { L1::Instr::JMP } + u_str + "\n";
+	return std::move( sbuf );
+}
+
+std::string
+L1::
+iVisitor::operator()( const L1::iCallPrintNode &i_call_print_n )
+{
+	static constexpr std::string_view name { L1::LibCall::PRINT };
+	return std::string { L1::Instr::CALL } + std::string { name } + "\n";
+}
+
+std::string
+L1::
+iVisitor::operator()( const L1::iCallInputNode &i_call_input_n )
+{
+	static constexpr std::string_view name { L1::LibCall::INPUT };
+	return std::string { L1::Instr::CALL } + std::string { name } + "\n";
+}
+
+std::string
+L1::
+iVisitor::operator()( const L1::iCallAllocateNode &i_call_allocate_n )
+{
+
+	static constexpr std::string_view name { L1::LibCall::ALLOCATE };
+	return std::string { L1::Instr::CALL } + std::string { name } + "\n";
+}
+
+std::string
+L1::
+iVisitor::operator()( const L1::iCallTupleErrorNode &i_call_tuple_error_n )
+{
+
+	static constexpr std::string_view name { L1::LibCall::TUPLE_ERROR };
+	return std::string { L1::Instr::CALL } + std::string { name } + "\n";
+}
+
+std::string
+L1::
+iVisitor::operator()( const L1::iCallTensorErrorNode &i_call_tensor_error_n )
+{
+	std::string_view name {};
+	const long long F_val { std::visit( L1::FVisitor{}, i_call_tensor_error_n.F_n ) };
+	switch ( F_val )
+	{
+	case L1::_1Node::val:
+		name = L1::LibCall::ARRAY_TENSOR_ERROR_NULL;
+		break;
+	case L1::_3Node::val:
+		name = L1::LibCall::ARRAY_ERROR;
+		break;
+	case L1::_4Node::val:
+		name = L1::LibCall::TENSOR_ERROR;
+		break;
+	default:
+		assert( false );
+		break;
+	}
+
+	return std::string { L1::Instr::CALL } + std::string { name } + "\n";
+}
+
+
+std::string
+L1::
+fVisitor::operator()( const L1::fNode &f_n )
+{
+	std::string sbuf {}; sbuf.reserve( 512 );
+
+	const std::string l_str { L1::lVisitor{}( f_n.l_n ) };
+	sbuf += l_str; sbuf += ":\n";
+
+	const long long
+		N_arg { std::visit( L1::NViewer{}, f_n.N1_n ) },
+		N_stk { std::visit( L1::NViewer{}, f_n.N2_n ) };
+	assert( N_arg>=0 && N_stk>=0 );
+
+	long long rsp_delta { N_stk };
+	if ( N_arg>6 ) { rsp_delta += ( N_arg-6 ); }
+	rsp_delta *= 8;
+
+	// grow stk
+	sbuf += std::string { L1::Instr::SUBQ }
+		+ "$" + std::to_string( rsp_delta ) + ",%rsp\n";
+
+	// emit instrs
+	for ( const L1::iNode &i_n : f_n.i_ns )
+	{
+		sbuf += std::visit( L1::iVisitor{}, i_n );
+	}
+
+	// shrink stk
+	sbuf += std::string { L1::Instr::ADDQ }
+		+ "$" + std::to_string( rsp_delta ) + ",%rsp\n";
+
+	// emit return
+	sbuf += std::string { L1::Instr::RETQ } + "\n";
+
+	return std::move( sbuf );
+}
+
 
 int main(){}
 

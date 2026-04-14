@@ -71,6 +71,13 @@ namespace L1
 		{ NodeT::kw } -> std::convertible_to< std::string_view >;
 	};
 
+	// whether a node represents a numeric constant
+	template< typename NodeT >
+	concept IsNumConstNode = requires
+	{
+		{ NodeT::val } -> std::convertible_to< long long >;
+	};
+
 	// whether a node represents an identifier token that matches a regular expression
 	// ( namely, a `name` or nonzero `N` token )
 	template< typename NodeT >
@@ -218,12 +225,12 @@ namespace L1
 	struct R14Node { static constexpr sv_t kw { KW::R14 }; };
 	struct R15Node { static constexpr sv_t kw { KW::R15 }; };
 
-	struct _0Node { static constexpr sv_t kw { "0" }; };
-	struct _1Node { static constexpr sv_t kw { "1" }; };
-	struct _2Node { static constexpr sv_t kw { "2" }; };
-	struct _3Node { static constexpr sv_t kw { "3" }; };
-	struct _4Node { static constexpr sv_t kw { "4" }; };
-	struct _8Node { static constexpr sv_t kw { "8" }; };
+	struct _0Node { static constexpr sv_t kw { "0" }; static constexpr long long val { 0LL }; };
+	struct _1Node { static constexpr sv_t kw { "1" }; static constexpr long long val { 1LL }; };
+	struct _2Node { static constexpr sv_t kw { "2" }; static constexpr long long val { 2LL }; };
+	struct _3Node { static constexpr sv_t kw { "3" }; static constexpr long long val { 3LL }; };
+	struct _4Node { static constexpr sv_t kw { "4" }; static constexpr long long val { 4LL }; };
+	struct _8Node { static constexpr sv_t kw { "8" }; static constexpr long long val { 8LL }; };
 
 	struct NNZNode
 	{
