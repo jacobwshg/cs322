@@ -55,18 +55,6 @@ namespace L1
 
 			//std::printf( "Token idx %0lu ", this->tok_idx  );
 
-			/*
-			if constexpr ( std::is_same_v< NodeT, L1::pNode > )
-			{
-				return this->make_p_node();
-			}
-
-			if constexpr ( std::is_same_v< NodeT, L1::fNode > )
-			{
-				return this->make_f_node();
-			}
-			*/
-
 			if constexpr ( std::is_same_v< NodeT, L1::MNode > )
 			{
 				//std::printf( "making M node\n" );

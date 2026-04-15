@@ -105,6 +105,7 @@ namespace L1
 			RPAR { ")" },
 			AT    { "@" },
 			COLON { ":" },
+			PERCENT { "%" },
 
 			OP_ADD     { "+" },
 			OP_SUB     { "-" },
@@ -121,6 +122,7 @@ namespace L1
 			OP_LEQ     { "<=" },
 			OP_EQ      { "=" },
 
+			STACK_ARG { "stack-arg" },
 			MEM { "mem" },
 
 			CJUMP  { "cjump" },
@@ -180,6 +182,7 @@ namespace L1
 	struct RParNode  { static constexpr sv_t kw { KW::RPAR }; };
 	struct AtNode    { static constexpr sv_t kw { KW::AT }; };
 	struct ColonNode { static constexpr sv_t kw { KW::COLON }; };
+	struct PercentNode { static constexpr sv_t kw { KW::PERCENT }; };
 
 	struct OpAssignNode { static constexpr sv_t kw { KW::OP_ASSIGN }; };
 	struct OpAddNode    { static constexpr sv_t kw { KW::OP_ADD }; };
@@ -195,6 +198,8 @@ namespace L1
 	struct OpLtNode     { static constexpr sv_t kw { KW::OP_LT }; };
 	struct OpLEqNode    { static constexpr sv_t kw { KW::OP_LEQ }; };
 	struct OpEqNode     { static constexpr sv_t kw { KW::OP_EQ }; };
+
+	struct StackArgNode { static constexpr sv_t kw { KW::STACK_ARG }; };
 
 	struct MemNode    { static constexpr sv_t kw { KW::MEM }; };
 	struct CJumpNode  { static constexpr sv_t kw { KW::CJUMP }; };
@@ -241,19 +246,22 @@ namespace L1
 	struct nameNode
 	{
 		static inline const std::regex re { "[a-zA-Z_][a-zA-z_0-9]*" };
-		std::string_view val;
+		std::string_view val; // outlived by actual token in Parser::srcbuf
 	};
+	struct varNode
+	{
+		using fields_t = std::tuple< PercentNode, nameNode >;
+		PercentNode percent_n; nameNode name_n;
+	}
 	struct labelNode
 	{
 		using fields_t = std::tuple< ColonNode, nameNode >;
-		ColonNode colon_n;
-		nameNode name_n;
+		ColonNode colon_n; nameNode name_n;
 	};
 	struct lNode
 	{
 		using fields_t = std::tuple< AtNode, nameNode >;
-		AtNode at_n;
-		nameNode name_n;
+		AtNode at_n; nameNode name_n;
 	};
 
 	using NNode = std::variant< _0Node, NNZNode >;
@@ -265,9 +273,9 @@ namespace L1
 	using sopNode = std::variant< OpLShEqNode, OpRShEqNode >;
 	using aopNode = std::variant< OpAddEqNode, OpSubEqNode, OpMulEqNode, OpBAndEqNode >;
 
-	using sxNode = std::variant< RcxNode >;
+	using sxNode = std::variant< RcxNode, varNode >;
 	using aNode = std::variant< RdiNode, RsiNode, sxNode, RdxNode, R8Node, R9Node >;
-	using wNode = std::variant< aNode, RaxNode, RbxNode, RbpNode, R10Node, R11Node, R12Node, R13Node, R14Node, R15Node >;
+	using wNode = std::variant< aNode, RaxNode >;
 
 	using xNode = std::variant< wNode, RspNode >;
 	using uNode = std::variant< wNode, lNode >;
@@ -295,6 +303,14 @@ namespace L1
 		MemNode mem_n; xNode x_n; MNode M_n;
 		OpAssignNode op_assign_n;
 		sNode s_n;
+	};
+	// w <- stack-arg M
+	struct iStackArgNode
+	{
+		using fields_t = std::tuple< wNode, OpAssignNode, StackArgNode, MNode >;
+		wNode w_n;
+		OpAssignNode op_assign_n;
+		StackArgNode stack_arg_n; MNode M_n;
 	};
 	// w aop t
 	struct iAOpNode
@@ -447,6 +463,9 @@ namespace L1
 		iAssignNode,
 
 		iLoadNode, iStoreNode,
+
+		iStackArgNode,
+
 		iAOpNode, iSxNode, iSOpNode,
 		iAddStoreNode, iSubStoreNode, iLoadAddNode, iLoadSubNode,
 
@@ -462,7 +481,7 @@ namespace L1
 
 		LParNode lpar_n;
 		lNode l_n;
-		NNode N1_n; NNode N2_n;
+		NNode N_n;
 		std::vector< iNode > i_ns;
 		RParNode rpar_n;
 	};
