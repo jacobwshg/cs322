@@ -114,7 +114,8 @@ namespace L2
 		template< typename I > requires std::integral< I >
 		VarIdSet &operator+=( const I i )
 		{
-			if ( i < 0 ) { return *this; }
+			// ignore invalid var IDs
+			if ( i <= 0 ) { return *this; }
 
 			// required size ( number of 64-bit blocks ) to reach and accommodate var ID i
 			const std::size_t req_sz { static_cast< std::size_t > ( (i + 63) / 64 ) };
@@ -137,6 +138,11 @@ namespace L2
 		std::vector< VarIdSet > kill_sets {};
 		std::vector< VarIdSet > in_sets   {};
 		std::vector< VarIdSet > out_sets  {};
+
+		FuncVarIdSets( void ) =default;
+
+		FuncVarIdSets( const std::size_t instr_cnt );
+
 	};
 
 	// visits nodes representing variables ( GPRs or named variables ) in a function
@@ -165,7 +171,7 @@ namespace L2
 
 		VarVisitor( void );
 
-		var_id_t get_new_var_id( void );
+		var_id_t new_var_id( void );
 
 		//
 		// given ID, retrieve variable name 
@@ -243,6 +249,8 @@ namespace L2
 
 		instr_id_t next_instr_id { 0 };
 
+		FuncVarIdSets var_id_sets {};
+
 		//
 		// [ i ] = successor instr IDs of instr with ID i
 		//
@@ -264,6 +272,19 @@ namespace L2
 			SVUtil::TransparentHash, SVUtil::TransparentEq
 		> requests_tbl {};
 
+		InstrVisitor( void ) =default;
+
+		explicit InstrVisitor( const std::size_t );
+
+		// allocate and return new instr ID
+		instr_id_t new_instr_id( void );
+
+		//
+		// add the serial-execution successor 
+		// ( the instr immediately after the current one )
+		//
+		void add_serial_succ( const instr_id_t );
+
 		//
 		// for cjump and goto instructions:
 		// if label has been encountered and thus has instr ID, 
@@ -272,13 +293,13 @@ namespace L2
 		// register a request for successor instr ID with 
 		// name of label to look for and current instr ID
 		//
-		void try_request_succ( const std::string_view, const instr_id_t );	
+		void try_add_label_succ( const std::string_view, const instr_id_t );	
 
 		//
 		// for pure labels: if the name had been requested as a successor,
 		// resolve the request with the current instr ID
 		//
-		void try_resolve_succ( const instr_id_t, const std::string_view );
+		void resolve_label_succ( const instr_id_t, const std::string_view );
 
 		void operator()( const L2::iAssignNode & );
 		void operator()( const L2::iLoadNode & );
