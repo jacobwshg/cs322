@@ -10,6 +10,7 @@
 #include <string_view>
 #include <concepts>
 #include <cstdint>
+#include <array>
 
 namespace L2
 {
@@ -60,7 +61,19 @@ namespace L2
 			{ std::string { KW::R14 }, 14, },
 			{ std::string { KW::R15 }, 15, },
 		};
+
+		static inline constexpr std::array< std::string_view, 16 >
+			ID_GPR_TBL
+		{
+			L2::EMPTYTOK,
+			KW::RAX, KW::RBX, KW::RCX, KW::RDX,
+			KW::RDI, KW::RSI, KW::RBP,
+			KW::R8,  KW::R9,  KW::R10, KW::R11,
+			KW::R12, KW::R13, KW::R14, KW::R15,
+		};
+
 	};
+
 
 	template< typename Node >
 	concept IsGPR = (
@@ -94,16 +107,18 @@ namespace L2
 
 		VarVisitor( void );
 
+		var_id_t get_new_var_id( void );
+
 		//
 		// given ID, retrieve variable name 
 		//
-		std::string_view var_by_id( const var_id_t var_id );
+		std::string_view var_by_id( const var_id_t var_id ) const;
 
 		//
 		// retrieve variable ID of GPR
 		//
 		template< typename GPRNode > requires IsGPR< GPRNode >
-		var_id_t operator()( const GPRNode &gpr_n )
+		var_id_t operator()( const GPRNode &gpr_n ) const
 		{
 			return LivenessGPRId::val< GPRNode >;
 		}
@@ -114,7 +129,8 @@ namespace L2
 		var_id_t operator()( const nameNode &name_n );
 
 		//
-		// retrieve variable ID of the name wrapped in a varNode
+		// retrieve variable ID of the name wrapped in a varNode,
+		// creating one if necessary
 		//
 		var_id_t operator()( const varNode &var_n );
 
@@ -141,7 +157,12 @@ namespace L2
 	};
 
 	//
-	// visits nodes carrying labels and extracts them to help determine successor relations
+	// visits nodes carrying labels and extracts them to help determine successor relations.
+	//
+	// LabelVisitor is much simpler and doesn't manage label state within a function, because
+	// label state is closely coupled with instruction ID, and is thus more conveniently
+	// managed by InstrVisitor. if we were to manage it wihtin LabelVisitor, InstrVisitor
+	// will have to pass in a current instr ID and whether the instruction is a jump or a pure label.
 	//
 	struct LabelVisitor
 	{
@@ -160,10 +181,9 @@ namespace L2
 		// for w <-s : assign( w ), assign( s )
 		// for cjump t1 cmp t2 label: assign( t1 ), assign( t2 )
 		//
-		//VarVisitor var_vis {};
+		VarVisitor var_vis {};
 
 		instr_id_t next_instr_id { 0 };
-		var_id_t next_var_id     { 0 };
 
 		//
 		// [ i ] = successor instr IDs of instr with ID i

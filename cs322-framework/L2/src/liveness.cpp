@@ -13,11 +13,22 @@ VarVisitor::VarVisitor( void )
 	this->id_var_tbl.reserve( 8 );
 }
 
+L2::var_id_t
+L2::
+VarVisitor::get_new_var_id( void )
+{
+	const var_id_t var_id { this->next_var_id };
+	++this->next_var_id;
+	return var_id;
+}
+
 // given ID, retrieve variable name 
 std::string_view
 L2::
-VarVisitor::var_by_id( const L2::var_id_t var_id )
+VarVisitor::var_by_id( const L2::var_id_t var_id ) const
 {
+
+	/*
 	using GPRId = L2::LivenessGPRId;
 
 	switch ( var_id )
@@ -79,11 +90,31 @@ VarVisitor::var_by_id( const L2::var_id_t var_id )
 		else { return L2::EMPTYTOK; }
 		break;
 	}
+	*/
+
+	if ( var_id > 0 && var_id < VarVisitor::BASE_VAR_ID )
+	{
+		// var ID is that of a GPR
+		return LivenessGPRId::ID_GPR_TBL[ var_id ];
+	}
+	else if (
+		var_id >= VarVisitor::BASE_VAR_ID
+		&& var_id < this->next_var_id
+	)
+	{
+		// var ID is that of a named variable
+		// to index id_var_tbl, convert logical id to physical id
+		return std::string_view { this->id_var_tbl[ var_id - BASE_VAR_ID ] };
+	}
 
 	return L2::EMPTYTOK;
 }
 
 
+//
+// return the var ID of a named variable. 
+// if the variable is previously unknown, assign the next available ID to it.
+//
 L2::var_id_t
 L2::
 VarVisitor::operator()( const L2::nameNode &name_n )
@@ -97,8 +128,7 @@ VarVisitor::operator()( const L2::nameNode &name_n )
 	else
 	{
 		// if named variable is new, assign an ID, register it, and return the new ID
-		const var_id_t var_id { this->next_var_id };
-		++this->next_var_id;
+		const var_id_t var_id { this->get_new_var_id() };
 
 		// var_id_tbl uses logical id: [ var1 ] = 16, [ var2 ] = 17, ...
 		this->var_id_tbl.insert( { std::string { name_n.val }, var_id } );
@@ -110,6 +140,7 @@ VarVisitor::operator()( const L2::nameNode &name_n )
 	}
 }
 
+
 L2::var_id_t
 L2::
 VarVisitor::operator()( const L2::varNode &var_n )
@@ -119,6 +150,9 @@ VarVisitor::operator()( const L2::varNode &var_n )
 	return ( *this )( var_n.name_n );
 }
 
+//
+// extract the name in a labelNode
+//
 std::string_view
 L2::
 LabelVisitor::operator()( const L2::labelNode &label_n )
