@@ -252,7 +252,7 @@ namespace L2
 	{
 		using fields_t = std::tuple< PercentNode, nameNode >;
 		PercentNode percent_n; nameNode name_n;
-	}
+	};
 	struct labelNode
 	{
 		using fields_t = std::tuple< ColonNode, nameNode >;
