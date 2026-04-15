@@ -6,6 +6,132 @@
 #include <variant>
 #include <string>
 #include <string_view>
+#include <cstdint>
+#include <algorithm>
+
+//
+// compute var ID set union in place
+//
+L2::VarIdSet &
+L2::
+VarIdSet::operator|=( const VarIdSet &that )
+{
+	std::size_t
+		this_sz { this->data.size() };
+	const std::size_t 
+		that_sz { that.data.size() };
+
+	//
+	// extend `this` to be as long as `that`, so `this` can
+	// collect `that`'s extra set bits
+	//
+	if ( this_sz < that_sz )
+	{
+		this->data.resize( this_sz, 0x0ULL );
+		this_sz = that_sz;
+	}
+
+	std::size_t blk_id { 0 };
+	for ( std::uint64_t &blk : this->data )
+	{
+		if ( blk_id >= that_sz ) { break; }
+		blk |= that.data[ blk_id ];
+
+		++blk_id;
+	}
+
+	return *this;
+}
+
+//
+// compute var ID set intersection in place
+//
+L2::VarIdSet &
+L2::
+VarIdSet::operator&=( const VarIdSet &that )
+{
+	const std::size_t
+		this_sz { this->data.size() },
+		that_sz { that.data.size() };
+
+	std::size_t blk_id { 0 };
+	for ( std::uint64_t &blk : this->data )
+	{
+		if ( blk_id < that_sz ) { blk &= that.data[ blk_id ]; }
+		//
+		// if `this` has more blocks than `that`, the intersection
+		// must be cleared of elements ( set bits ) exclusive to `this`
+		//
+		else { blk = 0x0ULL; }
+
+		++blk_id;
+	}
+
+	return *this;
+}
+
+//
+// compute var ID set subtraction in place
+//
+L2::VarIdSet &
+L2::
+VarIdSet::operator-=( const VarIdSet &that )
+{
+	const std::size_t
+		this_sz { this->data.size() },
+		that_sz { that.data.size() };
+
+	std::size_t blk_id { 0 };
+	for ( std::uint64_t &blk: this->data )
+	{
+		// 
+		// if `this` has more blocks than `that`, the blocks missing from `that`
+		// have no impact on blocks exclusive to `this`
+		//
+		if ( blk_id >= that_sz ) { break; }
+
+		//
+		// suppose `this` has block `1111`,`that` has block `0101`
+		// `that` block flipped is `1010`
+		// `this` block becomes `1010` after AND with flipped `that` block
+		// shared elements are cleared
+		//
+		blk &= ~( that.data[ blk_id ] );
+
+		++blk_id;
+	}
+
+	return *this;
+}
+
+L2::VarIdSet
+L2::
+operator|( const L2::VarIdSet &lhs, const L2::VarIdSet &rhs )
+{
+	L2::VarIdSet lhs_new { lhs }; // copy
+	lhs_new |= rhs;
+	return std::move( lhs );
+}
+
+
+L2::VarIdSet
+L2::
+operator&( const L2::VarIdSet &lhs, const L2::VarIdSet &rhs )
+{
+	L2::VarIdSet lhs_new { lhs }; 
+	lhs_new &= rhs;
+	return std::move( lhs );
+}
+
+L2::VarIdSet
+L2::
+operator-( const L2::VarIdSet &lhs, const L2::VarIdSet &rhs )
+{
+	L2::VarIdSet lhs_new { lhs };
+	lhs_new -= rhs;
+	return std::move( lhs );
+}
+
 
 L2::
 VarVisitor::VarVisitor( void )
@@ -208,6 +334,8 @@ InstrVisitor::try_resolve_succ(
 		}
 	}
 }
+
+
 
 int
 main()

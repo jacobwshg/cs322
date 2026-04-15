@@ -81,6 +81,23 @@ namespace L2
 		&& !std::is_same_v< Node, RspNode >
 	);
 
+	struct VarIdSet
+	{
+		std::vector< std::uint64_t > data {};
+
+		VarIdSet &operator|=( const VarIdSet & );
+		VarIdSet &operator&=( const VarIdSet & );
+		VarIdSet &operator-=( const VarIdSet & );
+
+		friend VarIdSet operator|( const VarIdSet &, const VarIdSet & );
+		friend VarIdSet operator&( const VarIdSet &, const VarIdSet & );
+		friend VarIdSet operator-( const VarIdSet &, const VarIdSet & );
+	};
+
+	VarIdSet operator|( const VarIdSet &, const VarIdSet & );
+	VarIdSet operator&( const VarIdSet &, const VarIdSet & );
+	VarIdSet operator-( const VarIdSet &, const VarIdSet & );
+
 	// visits nodes representing variables ( GPRs or named variables ) in a function
 	// and maintains IDs for them in the order of appearance
 	struct VarVisitor
@@ -223,21 +240,6 @@ namespace L2
 		void try_resolve_succ( const instr_id_t, const std::string_view );
 
 	};
-
-	struct VarIdSet
-	{
-		std::vector< std::uint64_t > data {};
-
-		VarIdSet &operator|=( const VarIdSet &that );
-		VarIdSet &operator&=( const VarIdSet &that );
-		VarIdSet &operator-=( const VarIdSet &that );
-
-		VarIdSet operator|( const VarIdSet &that ) const;
-		VarIdSet operator&( const VarIdSet &that ) const;
-		VarIdSet operator-( const VarIdSet &that ) const;
-
-	};
-
 }
 
 #endif
