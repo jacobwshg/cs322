@@ -63,7 +63,10 @@ namespace L2
 	};
 
 	template< typename Node >
-	concept IsGPR = ( ( LivenessGPRId::val< Node > ) > 0 );
+	concept IsGPR = (
+		( requires { typename Node::is_reg; } )
+		&& !std::is_same_v< Node, RspNode >
+	);
 
 	// visits nodes representing variables ( GPRs or named variables ) in a function
 	// and maintains IDs for them in the order of appearance
