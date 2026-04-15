@@ -16,7 +16,7 @@ VarVisitor::VarVisitor( void )
 // given ID, retrieve variable name 
 std::string_view
 L2::
-VarVisitor::var_by_id( const var_id_t var_id )
+VarVisitor::var_by_id( const L2::var_id_t var_id )
 {
 	using GPRId = L2::LivenessGPRId;
 
@@ -86,7 +86,7 @@ VarVisitor::var_by_id( const var_id_t var_id )
 
 L2::var_id_t
 L2::
-VarVisitor::operator()( const nameNode &name_n )
+VarVisitor::operator()( const L2::nameNode &name_n )
 {
 	const auto tbl_it { this->var_id_tbl.find( name_n.val ) };
 	if ( tbl_it != this->var_id_tbl.end() )
@@ -112,9 +112,67 @@ VarVisitor::operator()( const nameNode &name_n )
 
 L2::var_id_t
 L2::
-VarVisitor::operator()( const varNode &var_n )
+VarVisitor::operator()( const L2::varNode &var_n )
 {
+	// recurse on variants that are alternatives of another variant
+	// ( sx for a, a for w, ... )
 	return ( *this )( var_n.name_n );
+}
+
+std::string_view
+L2::
+LabelVisitor::operator()( const L2::labelNode &label_n )
+{
+	return label_n.name_n.val; 
+}
+
+void
+L2::
+InstrVisitor::try_request_succ(
+	const std::string_view succ_label,
+	const instr_id_t jmp_instr_id
+)
+{
+	const auto tbl_it { this->label_id_tbl.find( succ_label ) };
+	if ( tbl_it != this->label_id_tbl.end() )
+	{
+		// label is known, add to own successor instr IDs
+		this->succs_tbl[ jmp_instr_id ].emplace_back( tbl_it->second );
+	}
+	else
+	{
+		// label is unknown, add request to resolve
+		this->requests_tbl[ std::string { succ_label } ].emplace_back( jmp_instr_id );
+	}
+}
+
+void
+L2::
+InstrVisitor::try_resolve_succ(
+	const instr_id_t label_instr_id,
+	const std::string_view label_sv
+)
+{
+	//
+	// add instr ID for label, regardless of whether it has been requested
+	//
+	this->label_id_tbl.insert(
+		{
+			std::string { label_sv },
+			label_instr_id,
+		}
+	);
+	const auto tbl_it { this->requests_tbl.find( label_sv ) };
+	if ( tbl_it != this->requests_tbl.end() )
+	{
+		//
+		// label had been requested as succ; resolve requests
+		//
+		for ( const instr_id_t jmp_instr_id: tbl_it->second )
+		{
+			this->succs_tbl[ jmp_instr_id ].emplace_back( label_instr_id );
+		}
+	}
 }
 
 int
