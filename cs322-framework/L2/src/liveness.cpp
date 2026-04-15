@@ -8,45 +8,15 @@
 #include <string_view>
 
 L2::
-LivenessVisitor::LivenessVisitor( void )
+VarVisitor::VarVisitor( void )
 {
-	this->id_var_mp.reserve( 8 );
+	this->id_var_tbl.reserve( 8 );
 }
 
-L2::var_id_t
-L2::
-LivenessVisitor::operator()( const nameNode &name_n )
-{
-	const auto mpit { this->var_id_mp.find( name_n.val ) };
-	if ( mpit != this->var_id_mp.end() )
-	{
-		return mpit->second;
-	}
-	else
-	{
-		const var_id_t var_id { this->next_var_id };
-		++this->next_var_id;
-
-		// var_id_mp uses logical id: [ var1 ] = 16, [ var2 ] = 17, ...
-		this->var_id_mp.insert( { std::string { name_n.val }, var_id } );
-
-		// id_var_mp has no padding for GPRs to save space, 
-		// uses physical id: [ 0 ] = var1, [ 1 ] = var2, ...
-		this->id_var_mp.emplace_back( std::string { name_n.val } );
-		return var_id;
-	}
-}
-
-L2::var_id_t
-L2::
-LivenessVisitor::operator()( const varNode &var_n )
-{
-	return ( *this )( var_n.name_n );
-}
-
+// given ID, retrieve variable name 
 std::string_view
 L2::
-LivenessVisitor::var_by_id( const var_id_t var_id )
+VarVisitor::var_by_id( const var_id_t var_id )
 {
 	using GPRId = L2::LivenessGPRId;
 
@@ -101,10 +71,10 @@ LivenessVisitor::var_by_id( const var_id_t var_id )
 		break;
 
 	default:
-		if ( var_id >= L2::LivenessVisitor::BASE_VAR_ID )
+		if ( var_id >= L2::VarVisitor::BASE_VAR_ID )
 		{
-			// to index id_var_mp, convert logical id to physical id
-			return std::string_view { this->id_var_mp[ var_id - BASE_VAR_ID ] };
+			// to index id_var_tbl, convert logical id to physical id
+			return std::string_view { this->id_var_tbl[ var_id - BASE_VAR_ID ] };
 		}
 		else { return L2::EMPTYTOK; }
 		break;
@@ -113,10 +83,44 @@ LivenessVisitor::var_by_id( const var_id_t var_id )
 	return L2::EMPTYTOK;
 }
 
+
+L2::var_id_t
+L2::
+VarVisitor::operator()( const nameNode &name_n )
+{
+	const auto tbl_it { this->var_id_tbl.find( name_n.val ) };
+	if ( tbl_it != this->var_id_tbl.end() )
+	{
+		// if named variable is known, return previously assigned ID
+		return tbl_it->second;
+	}
+	else
+	{
+		// if named variable is new, assign an ID, register it, and return the new ID
+		const var_id_t var_id { this->next_var_id };
+		++this->next_var_id;
+
+		// var_id_tbl uses logical id: [ var1 ] = 16, [ var2 ] = 17, ...
+		this->var_id_tbl.insert( { std::string { name_n.val }, var_id } );
+
+		// id_var_tbl has no padding for GPRs to save space, 
+		// uses physical id: [ 0 ] = var1, [ 1 ] = var2, ...
+		this->id_var_tbl.emplace_back( std::string { name_n.val } );
+		return var_id;
+	}
+}
+
+L2::var_id_t
+L2::
+VarVisitor::operator()( const varNode &var_n )
+{
+	return ( *this )( var_n.name_n );
+}
+
 int
 main()
 {
-	L2::LivenessVisitor lv {};
+	L2::VarVisitor lv {};
 	std::printf(
 		"%d %d\n",
 		lv( L2::RdxNode{} ),

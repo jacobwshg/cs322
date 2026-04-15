@@ -7,9 +7,9 @@
 #include <variant>
 #include <vector>
 #include <unordered_map>
-
 #include <string_view>
 #include <concepts>
+#include <cstdint>
 
 namespace L2
 {
@@ -43,35 +43,74 @@ namespace L2
 	template< typename Node >
 	concept IsGPR = ( ( LivenessGPRId::val< Node > ) > 0 );
 
-	struct LivenessVisitor
+	struct VarVisitor
 	{
 		// smallest id for named, non-GPR variables
 		static constexpr var_id_t BASE_VAR_ID { 16 };
 		var_id_t next_var_id { BASE_VAR_ID };
 
-		std::vector< std::string > id_var_mp {};
+		//
+		// we don't initialize these tables with default mappings between GPRs and their IDs
+		// because for the analysis of each new function, the visitor will:
+		// - be cleared, in which case the default mappings will be lost;
+		// - or be reinstantiated, in which case the overhead of instantiating default mappings
+		//   is incurred again.
+		// 
+		std::vector< std::string > id_var_tbl {};
 		std::unordered_map<
 			std::string, var_id_t,
-			//std::hash< std::string_view >,
-			//std::equal_to< std::string_view >
+			// enable indexing by std::string_view
 			SVUtil::TransparentHash, SVUtil::TransparentEq
-		> var_id_mp {};
+		> var_id_tbl {};
 
-		LivenessVisitor( void );
+		VarVisitor( void );
 
+		// given ID, retrieve variable name 
+		std::string_view var_by_id( const var_id_t var_id );
+
+		// retrieve variable ID of GPR
 		template< typename GPRNode > requires IsGPR< GPRNode >
 		var_id_t operator()( const GPRNode &gpr_n )
 		{
 			return LivenessGPRId::val< GPRNode >;
 		}
 
+		// retrieve variable ID of named variable, creating one if necessary
 		var_id_t operator()( const nameNode &name_n );
 
+		// retrieve variable ID of the name wrapped in a varNode
 		var_id_t operator()( const varNode &var_n );
 
-		std::string_view var_by_id( const var_id_t var_id );
+		// recurse on variants ( such as aNode encountered when vising wNode )
+		template< typename VariantNode > requires ::is_variant_v< VariantNode >
+		var_id_t operator()( const VariantNode &variant_n )
+		{
+			return std::visit( *this, variant_n );
+		}
+
+		// default, for nodes that don't express variables
+		template< typename Node >
+		var_id_t operator()( const Node &n )
+		{
+			return VAR_ID_INVAL;
+		}
 
 	};
+
+	struct VarIdSet
+	{
+		std::vector< std::uint64_t > data {};
+
+		VarIdSet &operator|=( const VarIdSet &that );
+		VarIdSet &operator&=( const VarIdSet &that );
+		VarIdSet &operator-=( const VarIdSet &that );
+
+		VarIdSet operator|( const VarIdSet &that ) const;
+		VarIdSet operator&( const VarIdSet &that ) const;
+		VarIdSet operator-( const VarIdSet &that ) const;
+
+	};
+
 }
 
 #endif
