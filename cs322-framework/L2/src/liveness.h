@@ -20,7 +20,33 @@ namespace L2
 
 	static constexpr var_id_t VAR_ID_INVAL { -1 };
 
-	struct LivenessGPRId
+	namespace Liv
+	{
+		template< typename Node >
+		concept IsGPR = (
+			( requires { typename Node::is_reg; } )
+			&& !std::is_same_v< Node, RspNode >
+		);
+
+		struct LivenessGPRId;
+
+		struct VarIdSet;
+		VarIdSet operator|( const VarIdSet &, const VarIdSet & );
+		VarIdSet operator&( const VarIdSet &, const VarIdSet & );
+		VarIdSet operator-( const VarIdSet &, const VarIdSet & );
+
+		struct FuncVarIdSets;
+
+		struct VarVisitor;
+
+		struct LabelVisitor;
+
+		struct InstrVisitor;
+
+		struct FuncVisitor;
+	}
+
+	struct Liv::LivenessGPRId
 	{
 		template < typename Node > static inline constexpr var_id_t val { VAR_ID_INVAL };
 		template<> inline constexpr var_id_t val< RaxNode > { 1 };
@@ -74,14 +100,7 @@ namespace L2
 
 	};
 
-
-	template< typename Node >
-	concept IsGPR = (
-		( requires { typename Node::is_reg; } )
-		&& !std::is_same_v< Node, RspNode >
-	);
-
-	struct VarIdSet
+	struct Liv::VarIdSet
 	{
 		std::vector< std::uint64_t > data {};
 
@@ -112,13 +131,17 @@ namespace L2
 		friend VarIdSet operator-( const VarIdSet &, const VarIdSet & );
 	};
 
-	VarIdSet operator|( const VarIdSet &, const VarIdSet & );
-	VarIdSet operator&( const VarIdSet &, const VarIdSet & );
-	VarIdSet operator-( const VarIdSet &, const VarIdSet & );
+	struct Liv::FuncVarIdSets
+	{
+		std::vector< VarIdSet > gen_sets  {};
+		std::vector< VarIdSet > kill_sets {};
+		std::vector< VarIdSet > in_sets   {};
+		std::vector< VarIdSet > out_sets  {};
+	};
 
 	// visits nodes representing variables ( GPRs or named variables ) in a function
 	// and maintains IDs for them in the order of appearance
-	struct VarVisitor
+	struct Liv::VarVisitor
 	{
 		//
 		// smallest id for named, non-GPR variables
@@ -199,13 +222,13 @@ namespace L2
 	// managed by InstrVisitor. if we were to manage it wihtin LabelVisitor, InstrVisitor
 	// will have to pass in a current instr ID and whether the instruction is a jump or a pure label.
 	//
-	struct LabelVisitor
+	struct Liv::LabelVisitor
 	{
 		std::string_view operator()( const labelNode &label_n );
 	};
 
 	// 
-	struct InstrVisitor
+	struct Liv::InstrVisitor
 	{
 		// 
 		// delegate variable ID assignment to variable visitor, because we are 
@@ -257,6 +280,38 @@ namespace L2
 		//
 		void try_resolve_succ( const instr_id_t, const std::string_view );
 
+		void operator()( const L2::iAssignNode & );
+		void operator()( const L2::iLoadNode & );
+		void operator()( const L2::iStoreNode & );
+		void operator()( const L2::iStackArgNode & );
+
+		void operator()( const L2::iAOpNode & );
+		void operator()( const L2::iSxNode & );
+		void operator()( const L2::iSOpNode & );
+
+		void operator()( const L2::iAddStoreNode & );
+		void operator()( const L2::iSubStoreNode & );
+		void operator()( const L2::iLoadAddNode & );
+		void operator()( const L2::iLoadSubNode & );
+
+		void operator()( const L2::iCmpAssignNode & );
+		void operator()( const L2::iCJumpNode & );
+
+		void operator()( const L2::iLabelNode & );
+		void operator()( const L2::iGotoNode & );
+		void operator()( const L2::iReturnNode & );
+
+		void operator()( const L2::iCallUNode & );
+		void operator()( const L2::iCallPrintNode & );
+		void operator()( const L2::iCallInputNode & );
+		void operator()( const L2::iCallAllocateNode & );
+		void operator()( const L2::iCallTupleErrorNode & );
+		void operator()( const L2::iCallTensorErrorNode & );
+
+		void operator()( const L2::iIncrNode & );
+		void operator()( const L2::iDecrNode & );
+
+		void operator()( const L2::iLEANode & );
 	};
 }
 

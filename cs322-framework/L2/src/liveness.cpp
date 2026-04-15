@@ -12,8 +12,8 @@
 //
 // compute var ID set union in place
 //
-L2::VarIdSet &
-L2::
+L2::Liv::VarIdSet &
+L2::Liv::
 VarIdSet::operator|=( const VarIdSet &that )
 {
 	std::size_t
@@ -46,8 +46,8 @@ VarIdSet::operator|=( const VarIdSet &that )
 //
 // compute var ID set intersection in place
 //
-L2::VarIdSet &
-L2::
+L2::Liv::VarIdSet &
+L2::Liv::
 VarIdSet::operator&=( const VarIdSet &that )
 {
 	const std::size_t
@@ -73,8 +73,8 @@ VarIdSet::operator&=( const VarIdSet &that )
 //
 // compute var ID set subtraction in place
 //
-L2::VarIdSet &
-L2::
+L2::Liv::VarIdSet &
+L2::Liv::
 VarIdSet::operator-=( const VarIdSet &that )
 {
 	const std::size_t
@@ -104,43 +104,43 @@ VarIdSet::operator-=( const VarIdSet &that )
 	return *this;
 }
 
-L2::VarIdSet
-L2::
-operator|( const L2::VarIdSet &lhs, const L2::VarIdSet &rhs )
+L2::Liv::VarIdSet
+L2::Liv::
+operator|( const VarIdSet &lhs, const L2::Liv::VarIdSet &rhs )
 {
-	L2::VarIdSet lhs_new { lhs }; // copy
+	L2::Liv::VarIdSet lhs_new { lhs }; // copy
 	lhs_new |= rhs;
 	return std::move( lhs );
 }
 
 
-L2::VarIdSet
-L2::
-operator&( const L2::VarIdSet &lhs, const L2::VarIdSet &rhs )
+L2::Liv::VarIdSet
+L2::Liv::
+operator&( const L2::Liv::VarIdSet &lhs, const L2::Liv::VarIdSet &rhs )
 {
-	L2::VarIdSet lhs_new { lhs }; 
+	L2::Liv::VarIdSet lhs_new { lhs }; 
 	lhs_new &= rhs;
 	return std::move( lhs );
 }
 
-L2::VarIdSet
-L2::
-operator-( const L2::VarIdSet &lhs, const L2::VarIdSet &rhs )
+L2::Liv::VarIdSet
+L2::Liv::
+operator-( const L2::Liv::VarIdSet &lhs, const L2::Liv::VarIdSet &rhs )
 {
-	L2::VarIdSet lhs_new { lhs };
+	L2::Liv::VarIdSet lhs_new { lhs };
 	lhs_new -= rhs;
 	return std::move( lhs );
 }
 
 
-L2::
+L2::Liv::
 VarVisitor::VarVisitor( void )
 {
 	this->id_var_tbl.reserve( 8 );
 }
 
 L2::var_id_t
-L2::
+L2::Liv::
 VarVisitor::get_new_var_id( void )
 {
 	const var_id_t var_id { this->next_var_id };
@@ -150,7 +150,7 @@ VarVisitor::get_new_var_id( void )
 
 // given ID, retrieve variable name 
 std::string_view
-L2::
+L2::Liv::
 VarVisitor::var_by_id( const L2::var_id_t var_id ) const
 {
 
@@ -208,7 +208,7 @@ VarVisitor::var_by_id( const L2::var_id_t var_id ) const
 		break;
 
 	default:
-		if ( var_id >= L2::VarVisitor::BASE_VAR_ID )
+		if ( var_id >= L2::Liv::VarVisitor::BASE_VAR_ID )
 		{
 			// to index id_var_tbl, convert logical id to physical id
 			return std::string_view { this->id_var_tbl[ var_id - BASE_VAR_ID ] };
@@ -242,7 +242,7 @@ VarVisitor::var_by_id( const L2::var_id_t var_id ) const
 // if the variable is previously unknown, assign the next available ID to it.
 //
 L2::var_id_t
-L2::
+L2::Liv::
 VarVisitor::operator()( const L2::nameNode &name_n )
 {
 	const auto tbl_it { this->var_id_tbl.find( name_n.val ) };
@@ -268,7 +268,7 @@ VarVisitor::operator()( const L2::nameNode &name_n )
 
 
 L2::var_id_t
-L2::
+L2::Liv::
 VarVisitor::operator()( const L2::varNode &var_n )
 {
 	// recurse on variants that are alternatives of another variant
@@ -280,14 +280,14 @@ VarVisitor::operator()( const L2::varNode &var_n )
 // extract the name in a labelNode
 //
 std::string_view
-L2::
+L2::Liv::
 LabelVisitor::operator()( const L2::labelNode &label_n )
 {
 	return label_n.name_n.val; 
 }
 
 void
-L2::
+L2::Liv::
 InstrVisitor::try_request_succ(
 	const std::string_view succ_label,
 	const instr_id_t jmp_instr_id
@@ -307,7 +307,7 @@ InstrVisitor::try_request_succ(
 }
 
 void
-L2::
+L2::Liv::
 InstrVisitor::try_resolve_succ(
 	const instr_id_t label_instr_id,
 	const std::string_view label_sv
@@ -336,11 +336,57 @@ InstrVisitor::try_resolve_succ(
 }
 
 
+void
+L2::Liv::
+InstrVisitor::operator()( const L2::iAssignNode &i_assign_n )
+{
+	const L2::var_id_t
+		w_var_id { std::visit( this->var_vis, i_assign_n.w_n ) },
+		s_var_id { std::visit( this->var_vis, i_assign_n.s_n ) };
+
+}
+
+/*
+void
+L2::InstrVisitor::operator()( const L2::iLoadNode & );
+void L2::InstrVisitor::operator()( const L2::iStoreNode & );
+void L2::InstrVisitor::operator()( const L2::iStackArgNode & );
+
+
+		void L2::InstrVisitor::operator()( const L2::iAOpNode & );
+		void L2::InstrVisitor::operator()( const L2::iSxNode & );
+		void L2::InstrVisitor::operator()( const L2::iSOpNode & );
+
+		void L2::InstrVisitor::operator()( const L2::iAddStoreNode & );
+		void L2::InstrVisitor::operator()( const L2::iSubStoreNode & );
+		void L2::InstrVisitor::operator()( const L2::iLoadAddNode & );
+		void L2::InstrVisitor::operator()( const L2::iLoadSubNode & );
+
+		void L2::InstrVisitor::operator()( const L2::iCmpAssignNode & );
+		void L2::InstrVisitor::operator()( const L2::iCJumpNode & );
+
+		void L2::InstrVisitor::operator()( const L2::iLabelNode & );
+		void L2::InstrVisitor::operator()( const L2::iGotoNode & );
+		void L2::InstrVisitor::operator()( const L2::iReturnNode & );
+
+		void L2::InstrVisitor::operator()( const L2::iCallUNode & );
+		void L2::InstrVisitor::operator()( const L2::iCallPrintNode & );
+		void L2::InstrVisitor::operator()( const L2::iCallInputNode & );
+		void L2::InstrVisitor::operator()( const L2::iCallAllocateNode & );
+		void L2::InstrVisitor::operator()( const L2::iCallTupleErrorNode & );
+		void L2::InstrVisitor::operator()( const L2::iCallTensorErrorNode & );
+
+		void L2::InstrVisitor::operator()( const L2::iIncrNode & );
+		void L2::InstrVisitor::operator()( const L2::iDecrNode & );
+
+		void L2::InstrVisitor::operator()( const L2::iLEANode & );
+
+*/
 
 int
 main()
 {
-	L2::VarVisitor lv {};
+	L2::Liv::VarVisitor lv {};
 	std::printf(
 		"%d %d\n",
 		lv( L2::RdxNode{} ),
