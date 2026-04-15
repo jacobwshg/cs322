@@ -3,6 +3,7 @@
 #define L2_LIVENESS_H
 
 #include "ast.h"
+#include "svutil.h"
 #include <variant>
 #include <vector>
 #include <unordered_map>
@@ -16,9 +17,11 @@ namespace L2
 	using var_id_t = int;
 	using instr_id_t = int;
 
-	namespace LivenessRegId
+	static constexpr var_id_t VAR_ID_INVAL { -1 };
+
+	struct LivenessGPRId
 	{
-		template < typename Node > static inline constexpr var_id_t val { -1 };
+		template < typename Node > static inline constexpr var_id_t val { VAR_ID_INVAL };
 		template<> inline constexpr var_id_t val< RaxNode > { 1 };
 		template<> inline constexpr var_id_t val< RbxNode > { 2 };
 		template<> inline constexpr var_id_t val< RcxNode > { 3 };
@@ -35,21 +38,39 @@ namespace L2
 		template<> inline constexpr var_id_t val< R13Node > { 13 };	
 		template<> inline constexpr var_id_t val< R14Node > { 14 };	
 		template<> inline constexpr var_id_t val< R15Node > { 15 };	
-	}
+	};
 
 	template< typename Node >
-	concept IsGPR = ( ( LivenessRegId::val< Node > ) > 0 );
+	concept IsGPR = ( ( LivenessGPRId::val< Node > ) > 0 );
 
 	struct LivenessVisitor
 	{
+		// smallest id for named, non-GPR variables
+		static constexpr var_id_t BASE_VAR_ID { 16 };
+		var_id_t next_var_id { BASE_VAR_ID };
+
 		std::vector< std::string > id_var_mp {};
-		std::unordered_map< std::string, var_id_t > var_id_mp {};
+		std::unordered_map<
+			std::string, var_id_t,
+			//std::hash< std::string_view >,
+			//std::equal_to< std::string_view >
+			SVUtil::TransparentHash, SVUtil::TransparentEq
+		> var_id_mp {};
+
+		LivenessVisitor( void );
 
 		template< typename GPRNode > requires IsGPR< GPRNode >
 		var_id_t operator()( const GPRNode &gpr_n )
 		{
-			return LivenessRegId::val< GPRNode >;
+			return LivenessGPRId::val< GPRNode >;
 		}
+
+		var_id_t operator()( const nameNode &name_n );
+
+		var_id_t operator()( const varNode &var_n );
+
+		std::string_view var_by_id( const var_id_t var_id );
+
 	};
 }
 
