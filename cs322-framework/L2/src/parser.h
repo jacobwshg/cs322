@@ -1,6 +1,6 @@
 
-#ifndef L1_PARSER_H
-#define L1_PARSER_H
+#ifndef L2_PARSER_H
+#define L2_PARSER_H
 
 #include "ast.h"
 #include <cxxabi.h>
@@ -16,14 +16,14 @@
 #include <cstdio>
 #include <typeinfo>
 
-namespace L1
+namespace L2
 {
 	template< typename T > struct node_tag {};
 
 	class Parser
 	{
 	private:
-		// In-memory buffer for L1 source code file being lexed;
+		// In-memory buffer for L2 source code file being lexed;
 		// null-terminators will be inserted after tokens
 		std::string srcbuf {};
 		// Token base indices in buffer with null-terminated tokens
@@ -44,7 +44,7 @@ namespace L1
 		gettok( void );
 
 		// parse tokens into AST
-		std::optional< L1::pNode >
+		std::optional< L2::pNode >
 		parse( void );
 
 		// dispatcher
@@ -55,7 +55,7 @@ namespace L1
 
 			//std::printf( "Token idx %0lu ", this->tok_idx  );
 
-			if constexpr ( std::is_same_v< NodeT, L1::MNode > )
+			if constexpr ( std::is_same_v< NodeT, L2::MNode > )
 			{
 				//std::printf( "making M node\n" );
 				return this->make_M_node();
@@ -67,19 +67,19 @@ namespace L1
 				return this->make_variant_node< NodeT >();
 			}
 
-			if constexpr ( L1::IsKWNode< NodeT > )
+			if constexpr ( L2::IsKWNode< NodeT > )
 			{
 				//std::printf( "making kw node %s\n", typeid( NodeT{} ).name() );
 				return this->make_kw_node< NodeT >();
 			}
 
-			if constexpr ( L1::IsIdentNode< NodeT > )
+			if constexpr ( L2::IsIdentNode< NodeT > )
 			{
 				//std::printf( "making identifier node %s\n", typeid( NodeT{} ).name() );
 				return this->make_ident_node< NodeT >();
 			}
 
-			if constexpr ( L1::IsRecNode< NodeT > )
+			if constexpr ( L2::IsRecNode< NodeT > )
 			{
 				//std::printf( "making record node %s\n", typeid( NodeT{} ).name() );
 				return this->make_record_node< NodeT >();
@@ -152,7 +152,7 @@ namespace L1
 
 		// for terminal kw nodes
 		template< typename KWNodeT >
-			requires L1::IsKWNode< KWNodeT >
+			requires L2::IsKWNode< KWNodeT >
 		std::optional< KWNodeT >
 		make_kw_node( void )
 		{
@@ -173,7 +173,7 @@ namespace L1
 
 		// for terminal identifier nodes with regex
 		template< typename IdentNodeT >
-			requires L1::IsIdentNode< IdentNodeT >
+			requires L2::IsIdentNode< IdentNodeT >
 		std::optional< IdentNodeT >
 		make_ident_node( void )
 		{
@@ -188,12 +188,12 @@ namespace L1
 
 			//std::printf( "identifier `%s` match success\n", tok.data() );
 
-			if constexpr ( std::is_same_v< IdentNodeT, L1::nameNode > )
+			if constexpr ( std::is_same_v< IdentNodeT, L2::nameNode > )
 			{
 				// name ( val should be a token )
 				return IdentNodeT { .val = tok };
 			}
-			if constexpr ( std::is_same_v< IdentNodeT, L1::NNZNode > )
+			if constexpr ( std::is_same_v< IdentNodeT, L2::NNZNode > )
 			{
 				// nonzero N ( value should be an integer )
 				errno = 0;
@@ -206,7 +206,7 @@ namespace L1
 
 		// for a vector of nodes of a given type; namely,
 		// the `f+` field in p nodes and `i+` in f nodes
-		template< typename ElemT, typename RDelimT = L1::RParNode >
+		template< typename ElemT, typename RDelimT = L2::RParNode >
 		std::optional< std::vector< ElemT > >
 		make_node_vector( void )
 		{
@@ -300,7 +300,7 @@ namespace L1
 
 		// for most record (struct) nodes
 		template< typename RecNodeT >
-			requires L1::IsRecNode< RecNodeT >
+			requires L2::IsRecNode< RecNodeT >
 		std::optional< RecNodeT >
 		make_record_node( void )
 		{

@@ -1,6 +1,6 @@
 
-#ifndef L1_AST_H
-#define L1_AST_H
+#ifndef L2_AST_H
+#define L2_AST_H
 
 #include <string_view>
 #include <concepts>
@@ -59,7 +59,7 @@ namespace
 	inline constexpr bool is_vector_v = is_vector< T >::value;
 }
 
-namespace L1
+namespace L2
 {
 
 	using sv_t = std::string_view;

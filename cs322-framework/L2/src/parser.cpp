@@ -10,7 +10,7 @@
 #include <cctype>
 #include <cstdlib>
 
-namespace L1
+namespace L2
 {
  	/* 
  	 * @brief
@@ -38,7 +38,7 @@ namespace L1
  *   that is, is alphanumeric or underscore.
  */
 bool
-L1::
+L2::
 isident( const char c )
 {
 	return std::isalnum( c ) || c=='_';
@@ -54,14 +54,14 @@ isident( const char c )
  *   true exactly if the character is a parenthesis.
  */
 bool
-L1::
+L2::
 isparen( const char c )
 {
-	return c==L1::KW::LPAR[ 0 ] || c==L1::KW::RPAR[ 0 ];
+	return c==L2::KW::LPAR[ 0 ] || c==L2::KW::RPAR[ 0 ];
 }
 
 
-L1::
+L2::
 Parser::Parser( void )
 {
 	this->srcbuf.reserve( 1024 );
@@ -70,7 +70,7 @@ Parser::Parser( void )
 }
 
 void
-L1::
+L2::
 Parser::lex( std::istream &src_is )
 {
 	enum class State
@@ -94,7 +94,7 @@ Parser::lex( std::istream &src_is )
 
 		// non-space token break condition
 		bool tokbrk { false };
-		if ( L1::isident( prv ) != L1::isident( cur ) )
+		if ( L2::isident( prv ) != L2::isident( cur ) )
 		{
 			// one of the most recent 2 tokens can appear in an identifier; the other cannot
 			// generally, we have a token break
@@ -116,7 +116,7 @@ Parser::lex( std::istream &src_is )
 			// however, a parenthesis must be its own token even if 
 			// neighboring chars are non-identifier
 			//
-			if ( L1::isparen( prv ) || L1::isparen( cur ) )
+			if ( L2::isparen( prv ) || L2::isparen( cur ) )
 			{
 				tokbrk = true;
 			}
@@ -222,7 +222,7 @@ Parser::lex( std::istream &src_is )
 }
 
 void
-L1::
+L2::
 Parser::print_toks( void ) const
 {
 	std::printf( "Tokens\n" );
@@ -233,12 +233,12 @@ Parser::print_toks( void ) const
 }
 
 std::string_view
-L1::
+L2::
 Parser::gettok( void )
 {
 	if ( this->tok_idx >= this->tok_base_idxs.size() )
 	{
-		return L1::EMPTYTOK;
+		return L2::EMPTYTOK;
 	}
 	else
 	{
@@ -248,8 +248,8 @@ Parser::gettok( void )
 	}
 }
 
-std::optional< L1::MNode >
-L1::
+std::optional< L2::MNode >
+L2::
 Parser::make_M_node( void )
 {
 	const std::size_t cur_idx { this->tok_idx };
@@ -259,14 +259,14 @@ Parser::make_M_node( void )
 
 	if ( 0LL == ( val & ( 0x8LL-1 ) ) ) // multiple of 8
 	{
-		return L1::MNode { .val = val };
+		return L2::MNode { .val = val };
 	}
 	this->tok_idx = cur_idx;
 	return std::nullopt;
 }
 
-std::optional< L1::pNode >
-L1::
+std::optional< L2::pNode >
+L2::
 Parser::parse( void )
 {
 	return this->make_node< pNode >();
