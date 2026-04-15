@@ -89,6 +89,24 @@ namespace L2
 		VarIdSet &operator&=( const VarIdSet & );
 		VarIdSet &operator-=( const VarIdSet & );
 
+		//
+		// add a var ID to the set
+		//
+		template< typename I > requires std::integral< I >
+		VarIdSet &operator+=( const I i )
+		{
+			if ( i < 0 ) { return *this; }
+
+			// required size ( number of 64-bit blocks ) to reach and accommodate var ID i
+			const std::size_t req_sz { static_cast< std::size_t > ( (i + 63) / 64 ) };
+			if ( req_sz > this->data.size() )
+			{
+				this->data.resize( req_sz, 0x0ULL );
+			}
+			this->data[ i / 64 ] &= ( 0x1ULL << ( i % 64 ) );
+			return *this;
+		}
+
 		friend VarIdSet operator|( const VarIdSet &, const VarIdSet & );
 		friend VarIdSet operator&( const VarIdSet &, const VarIdSet & );
 		friend VarIdSet operator-( const VarIdSet &, const VarIdSet & );
