@@ -44,7 +44,6 @@ VarIdSet::operator|=( const VarIdSet &that )
 	//
 	if ( this_sz < that_sz )
 	{
-		std::printf( "VarIdSet |=, `this` is shorter\n" );
 		this->data.resize( that_sz, 0x0UL );
 		this_sz = that_sz;
 	}
@@ -75,12 +74,20 @@ VarIdSet::operator&=( const VarIdSet &that )
 	std::size_t blk_id { 0 };
 	for ( std::uint64_t &blk : this->data )
 	{
-		if ( blk_id < that_sz ) { blk &= that.data[ blk_id ]; }
+		if ( blk_id < that_sz )
+		{
+			//std::printf( "VarIdSet &=  shared blk %0ld\n", blk_id );
+			blk &= that.data[ blk_id ];
+		}
 		//
 		// if `this` has more blocks than `that`, the intersection
 		// must be cleared of elements ( set bits ) exclusive to `this`
 		//
-		else { blk = 0x0ULL; }
+		else
+		{
+			//std::printf( "VarIdSet &= this-only block %0ld = 0x%016lx\n", blk_id, blk );
+			blk = 0x0UL;
+		}
 
 		++blk_id;
 	}
@@ -127,9 +134,9 @@ L2::Liv::VarIdSet
 L2::Liv::
 operator|( const VarIdSet &lhs, const L2::Liv::VarIdSet &rhs )
 {
-	L2::Liv::VarIdSet lhs_new { lhs }; // copy
-	lhs_new |= rhs;
-	return std::move( lhs );
+	L2::Liv::VarIdSet new_lhs { lhs }; // copy
+	new_lhs |= rhs;
+	return std::move( new_lhs );
 }
 
 
@@ -137,18 +144,18 @@ L2::Liv::VarIdSet
 L2::Liv::
 operator&( const L2::Liv::VarIdSet &lhs, const L2::Liv::VarIdSet &rhs )
 {
-	L2::Liv::VarIdSet lhs_new { lhs }; 
-	lhs_new &= rhs;
-	return std::move( lhs );
+	L2::Liv::VarIdSet new_lhs { lhs }; 
+	new_lhs &= rhs;
+	return std::move( new_lhs );
 }
 
 L2::Liv::VarIdSet
 L2::Liv::
 operator-( const L2::Liv::VarIdSet &lhs, const L2::Liv::VarIdSet &rhs )
 {
-	L2::Liv::VarIdSet lhs_new { lhs };
-	lhs_new -= rhs;
-	return std::move( lhs );
+	L2::Liv::VarIdSet new_lhs { lhs };
+	new_lhs -= rhs;
+	return std::move( new_lhs );
 }
 
 
