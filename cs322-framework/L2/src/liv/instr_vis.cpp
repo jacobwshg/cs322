@@ -210,9 +210,14 @@ void
 L2::Liv::
 InstrVisitor::run_liveness( void )
 {
+
+	long long int _iter { 0 };
+
 	bool changed { false };
 	do
 	{
+		std::printf( "liveness iter %0lld\n", ++_iter );	
+
 		changed = false;
 		//
 		// one backward pass through all instructions

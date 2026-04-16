@@ -12,52 +12,36 @@
 
 namespace L2
 {
- 	/* 
- 	 * @brief
- 	 *   Returns whether a character can be used in an identifier (name).
-	 */
-	bool
-	isident( const char c );
+ 	//
+ 	// returns whether a character can be used in an identifier (name)
+	//
+	inline bool
+	isident( const char c )
+	{
+		return std::isalnum( c ) || c=='_';
+	}
 
- 	/* 
- 	 * @brief
- 	 *   Returns whether a character is a parenthesis.
-	 */
-	bool
-	isparen( const char c );
+	//
+ 	// returns whether a character forms its own token
+	//
+	inline bool
+	is_singleton( const char c )
+	{
+		switch ( c )
+		{
+		case L2::KW::LPAR   [ 0 ]:
+		case L2::KW::RPAR   [ 0 ]:
+		case L2::KW::AT     [ 0 ]:
+		case L2::KW::COLON  [ 0 ]:
+		case L2::KW::PERCENT[ 0 ]:
+			return true;
+			break;
+		default:
+			break;
+		}
+		return false;
+	}
 
-}
-
-/*
- * @brief
- *   Returns whether a character can be used in an identifier (name).
- * @param
- *   c: a character
- * @returns
- *   true exactly if the character can be used in an identifier, 
- *   that is, is alphanumeric or underscore.
- */
-bool
-L2::
-isident( const char c )
-{
-	return std::isalnum( c ) || c=='_';
-}
-
-
-/*
- * @brief
- *   Returns whether a character is a parenthesis.
- * @param
- *   c: a character
- * @returns
- *   true exactly if the character is a parenthesis.
- */
-bool
-L2::
-isparen( const char c )
-{
-	return c==L2::KW::LPAR[ 0 ] || c==L2::KW::RPAR[ 0 ];
 }
 
 
@@ -94,17 +78,23 @@ Parser::lex( std::istream &src_is )
 
 		// non-space token break condition
 		bool tokbrk { false };
-		if ( L2::isident( prv ) != L2::isident( cur ) )
+		if ( isident( prv ) != isident( cur ) )
 		{
-			// one of the most recent 2 tokens can appear in an identifier; the other cannot
+			// one of the most recent 2 tokens can appear in an identifier; the other cannot.
 			// generally, we have a token break
 			//
 			tokbrk = true;
 			// but don't break up a sign and the following number ( non-zero M )
 			//
-			if ( ( prv=='+'||prv=='-' ) && std::isdigit( cur ) )
+			if ( ( prv=='+' || prv=='-' ) && std::isdigit( cur ) )
 			{
 				tokbrk = false;
+			}
+			// an arrow is its own token; for cases such as `<-6`, this rule
+			// overrides the above
+			if ( pprv=='<' && prv=='-' )
+			{
+				tokbrk = true;
 			}
 		}
 		else
@@ -113,13 +103,14 @@ Parser::lex( std::istream &src_is )
 			// generally, there's no token break
 			//
 			tokbrk = false;
-			// however, a parenthesis must be its own token even if 
-			// neighboring chars are non-identifier
 			//
-			if ( L2::isparen( prv ) || L2::isparen( cur ) )
+			// force breaks on both sides of a single-char token
+			//
+			if ( is_singleton( prv ) || is_singleton( cur ) )
 			{
 				tokbrk = true;
 			}
+
 		}
 
 		cur_isspace = std::isspace( cur );
@@ -223,7 +214,7 @@ Parser::lex( std::istream &src_is )
 
 void
 L2::
-Parser::print_toks( void ) const
+Parser::printtoks( void ) const
 {
 	std::printf( "Tokens\n" );
 	for ( const int tokbase : this->tok_base_idxs )

@@ -80,6 +80,9 @@ int main(
 
 	L2::Parser prsr {};
 	prsr.lex( ifs );
+
+	prsr.printtoks();
+
 	std::optional< L2::pNode > ast {  prsr.parse() };
 
 	const bool success { ast.operator bool() };

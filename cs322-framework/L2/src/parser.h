@@ -37,7 +37,7 @@ namespace L2
 		lex( std::istream &src_is );
 
 		void
-		print_toks( void ) const;
+		printtoks( void ) const;
 
 		// extract one lexed token and advance position
 		std::string_view
