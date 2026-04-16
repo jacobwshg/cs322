@@ -20,9 +20,13 @@ main( int argc, char *argv[] )
 		return 2;
 	}
 
-	const std::string_view a1v { argv[ 1 ] };
-	const bool test_f { a1v == "-f" };
-	const bool test_i { a1v == "-i" };
+	enum class TestMode { I, F, P, };
+	TestMode mode { TestMode::P };
+
+	const std::string_view a1_sv { argv[ 1 ] };
+	if ( a1_sv[ 1 ] == 'i' ) { mode = TestMode::I; }
+	else if ( a1_sv[ 1 ] == 'f' ) { mode = TestMode::F; }
+
 
 	std::ifstream test_ifs { argv[ argc-1 ], std::ios_base::in };
 	if ( test_ifs.fail() )
@@ -48,35 +52,40 @@ main( int argc, char *argv[] )
 	prsr.lex( test_ifs );
 	prsr.print_toks();
 
-	std::optional< L1::pNode > ast_opt { prsr.parse() };
-	const bool parse_success { ast_opt ? true : false };
-	std::cout << "parse success: " << parse_success << "\n";
-	if ( !parse_success ) { return( 2 ); }
+	//std::optional< L1::pNode > ast_opt { prsr.parse() };
+	//const bool parse_success { ast_opt ? true : false };
+	//std::cout << "parse success: " << parse_success << "\n";
 
-	const L1::pNode &ast { *ast_opt };
-	L1::CodeGenerator cgr {};
-	cgr.emit( std::cout, ast );
-
-	/*
-	bool success {};
-	if ( test_f )
+	if ( mode == TestMode::I )
 	{
-		// test function
-		success = prsr.make_node< L1::fNode >()? true: false;
+		// test instr
+		std::printf( "instruction test\n" );
+		const bool success { prsr.make_node< L1::iNode >().operator bool() };
+		std::cout << "parse success: " << success << "\n";
+		if ( !success ) { return 2; }
 	}
-	else if ( test_i )
+	else if ( mode == TestMode::F )
 	{
-		// test instruction
-		success = prsr.make_node< L1::iNode >()? true :false;
+		// test function 
+		std::printf( "function test\n" );
+		const bool success { prsr.make_node< L1::fNode >().operator bool() };
+		std::cout << "parse success: " << success << "\n";
+		if ( !success ) { return 2; }
 	}
 	else
 	{
 		// test program
-		success = prsr.make_node< L1::pNode >()? true: false;
+		std::printf( "program test\n" );
+		std::optional< L1::pNode > ast_opt { prsr.make_node< L1::pNode >() };
+		const bool success { ast_opt.operator bool() };
+		std::cout << "parse success: " << success << "\n";
+		if ( !success ) { return 2; }
+	
+		const L1::pNode &ast { *ast_opt };
+		L1::CodeGenerator cgr {};
+		cgr.emit( std::cout, ast );
+
 	}
 
-	std::cout << "parse() success: " << success << "\n";
-
-	*/
 }
 
