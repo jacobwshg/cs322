@@ -1,5 +1,4 @@
 
-#include "liveness.h"
 #include "../ast.h"
 
 #include <cstdio>
@@ -479,16 +478,4 @@ InstrVisitor::operator()( const L2::iLEANode &i_lea_n )
 }
 
 
-
-int
-main()
-{
-	L2::Liv::VarVisitor varv {};
-	std::printf(
-		"%d %d\n",
-		varv( L2::RdxNode{} ),
-		//lv( L2::RspNode{} ) // should fail to compile
-		varv( L2::R13Node() )
-	);
-}
 

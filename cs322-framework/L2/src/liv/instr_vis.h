@@ -1,6 +1,6 @@
 
-#ifndef L2_LIVENESS_H
-#define L2_LIVENESS_H
+#ifndef L2_LIV_INSTRVIS_H
+#define L2_LIV_INSTRVIS_H
 
 #include "../ast.h"
 #include "../svutil.h"
@@ -16,31 +16,27 @@
 namespace L2
 {
 
-	using var_id_t = int;
-	using instr_id_t = int;
-
-	static constexpr var_id_t VAR_ID_INVAL { -1 };
+	using instr_id_t = std::int32_t;
 
 	namespace Liv
 	{
-
-		struct LivenessGPRId;
 
 		struct LabelVisitor;
 
 		struct InstrVisitor;
 
-		struct FuncVisitor;
 	}
 
-
 	//
-	// visits nodes carrying labels and extracts them to help determine successor relations.
+	// visits nodes carrying labels and extracts them to help
+	// determine successor relations.
 	//
-	// LabelVisitor is much simpler and doesn't manage label state within a function, because
-	// label state is closely coupled with instruction ID, and is thus more conveniently
-	// managed by InstrVisitor. if we were to manage it wihtin LabelVisitor, InstrVisitor
-	// will have to pass in a current instr ID and whether the instruction is a jump or a pure label.
+	// LabelVisitor is much simpler and doesn't manage label state
+	// within a function, because label state is closely coupled 
+	// with instruction ID, and is thus more conveniently
+	// managed by InstrVisitor. if we were to manage it wihtin 
+	// LabelVisitor, InstrVisitor will have to pass in a current 
+	// instr ID and whether the instruction is a jump or a pure label.
 	//
 	struct Liv::LabelVisitor
 	{
@@ -51,11 +47,13 @@ namespace L2
 	struct Liv::InstrVisitor
 	{
 		// 
-		// delegate variable ID assignment to variable visitor, because we are 
-		// dealing with instrs of various shapes and thus various variable slots.
-		// if we tried to manage variable IDs in InstrVisitor, the VarVisitor 
-		// must be modified to return std::string_views for var names, then
-		// for each instruction type, we'd have to manually handle each slot:
+		// delegate variable ID assignment to variable visitor,
+		// because we are dealing with instrs of various shapes 
+		// and thus various variable slots. if we tried to manage
+		// variable IDs in InstrVisitor, the VarVisitor must be 
+		// modified to return std::string_views for var names, then
+		// for each instruction type, we'd have to manually handle 
+		// each slot:
 		// for w <-s : assign( w ), assign( s )
 		// for cjump t1 cmp t2 label: assign( t1 ), assign( t2 )
 		//
