@@ -56,7 +56,7 @@ int main(
 		}
 
 		std::printf( "vars:\n" );
-		var_vis.display_vars();
+		var_vis.display();
 
 	}
 

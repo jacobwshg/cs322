@@ -105,7 +105,7 @@ namespace L2
 
 			var_id_t new_var_id( void );
 
-			void display_vars( void ) const;
+			void display( void ) const;
 
 			//
 			// given ID, retrieve variable name 
@@ -118,7 +118,7 @@ namespace L2
 			template< typename GPRNode > requires IsGPR< GPRNode >
 			var_id_t operator()( const GPRNode &gpr_n )
 			{
-				std::printf( "VarVisitor: visiting GPR node\n" );
+				//std::printf( "VarVisitor: visiting GPR node\n" );
 				return LivenessGPRId::val< GPRNode >;
 			}
 
@@ -151,7 +151,7 @@ namespace L2
 			template< typename Node >
 			var_id_t operator()( const Node &n )
 			{
-				std::printf( "VarVisitor: visiting non-variable node\n" );
+				//std::printf( "VarVisitor: visiting non-variable node\n" );
 				return VAR_ID_INVAL;
 			}
 

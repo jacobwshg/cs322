@@ -23,7 +23,7 @@ VarIdSet::display( void ) const
 		);
 		blk_base += 64;
 	}
-	std::printf( "\n" );
+	//std::printf( "\n" );
 }
 
 //

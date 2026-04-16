@@ -29,23 +29,23 @@ FnVarIdSets::display( void ) const
 
 	instr_id_t instr_id { -1 };
 
-	std::printf( "var id set vectors\n" );
+	std::printf( "function var id sets\n" );
 
 	for ( const VarIdSet &gen_st : this->gen_sets )
 	{
 		++instr_id;
 		std::printf( "instruction ID %0d\n", instr_id );
 
-		std::printf( "\tGEN\n" );
+		std::printf( "GEN\n" );
 		gen_st.display();
 
-		std::printf( "\tKILL\n" );
+		std::printf( "KILL\n" );
 		this->kill_sets[ instr_id ].display();
 
-		std::printf( "\tIN\n" );
+		std::printf( "IN\n" );
 		this->in_sets[ instr_id ].display();
 
-		std::printf( "\tOUT\n" );
+		std::printf( "OUT\n" );
 		this->out_sets[ instr_id ].display();
 
 	}
@@ -82,9 +82,14 @@ InstrVisitor::display( void ) const
 	instr_id_t instr_id { -1 };
 
 	//
+	// print variable visitor
+	//
+	this->var_vis.display();
+
+	//
 	// print succ ID table
 	//
-	std::printf( "InstrVisitor" );
+	std::printf( "InstrVisitor\n" );
 	std::printf( "succs table\n" );
 	for ( const std::vector< instr_id_t > &succ_id_vec : this->succs_tbl )
 	{

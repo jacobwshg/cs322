@@ -22,9 +22,11 @@ VarVisitor::new_var_id( void )
 
 void
 L2::Liv::
-VarVisitor::display_vars( void ) const
+VarVisitor::display( void ) const
 {
 	var_id_t var_id { -1 };
+
+	std::printf( "variable visitor\n" );
 	for ( const std::string_view gpr_sv : LivenessGPRId::ID_GPR_TBL )
 	{
 		++var_id;
