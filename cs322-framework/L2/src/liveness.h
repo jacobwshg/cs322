@@ -11,6 +11,7 @@
 #include <concepts>
 #include <cstdint>
 #include <array>
+#include <cstdio>
 
 namespace L2
 {
@@ -184,7 +185,14 @@ namespace L2
 		template< typename GPRNode > requires IsGPR< GPRNode >
 		var_id_t operator()( const GPRNode &gpr_n ) const
 		{
+			std::printf( "VarVisitor: visiting GPR node\n" );
 			return LivenessGPRId::val< GPRNode >;
+		}
+
+		// dbg
+		var_id_t operator()( const RdxNode &rdx_n ) const
+		{
+			return LivenessGPRId::val< RdxNode >;
 		}
 
 		//
@@ -215,6 +223,7 @@ namespace L2
 		template< typename Node >
 		var_id_t operator()( const Node &n )
 		{
+			std::printf( "VarVisitor: visiting non-variable node\n" );
 			return VAR_ID_INVAL;
 		}
 
