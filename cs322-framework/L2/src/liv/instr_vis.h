@@ -156,8 +156,10 @@ namespace L2
 		void resolve_label_succ( const instr_id_t, const std::string_view );
 
 		//
-		// run one iteration of the liveness algorithm
-		// and return termination status
+		// run one iteration of the liveness algorithm;
+		// return true if we were able to step.
+		// ( note: this would be the logical _opposite_ of
+		// whether we reached termination. )
 		// 
 		bool step_liveness( void );
 

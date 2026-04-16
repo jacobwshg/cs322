@@ -280,7 +280,7 @@ bool
 L2::Liv::
 InstrVisitor::step_liveness( void )
 {
-	bool done { true };
+	bool canstep { false };
 
 	//
 	// do a backward pass through all instrs 
@@ -325,7 +325,7 @@ InstrVisitor::step_liveness( void )
 		}
 		if ( new_out_set != this->var_id_sets.OUT[ instr_id ] )
 		{
-			done = false;
+			canstep = true;
 		}
 
 		//
@@ -337,7 +337,7 @@ InstrVisitor::step_liveness( void )
 		);
 		if ( new_in_set != this->var_id_sets.IN[ instr_id ] )
 		{
-			done = false;
+			canstep = true;
 		}
 
 		this->var_id_sets.OUT[ instr_id ] = std::move( new_out_set );
@@ -345,7 +345,7 @@ InstrVisitor::step_liveness( void )
 
 	}
 
-	return done;
+	return canstep;
 
 }
 
@@ -354,8 +354,7 @@ void
 L2::Liv::
 InstrVisitor::run_liveness( void )
 {
-	while ( !this->step_liveness() )
-	{}
+	while ( this->step_liveness() ) {}
 }
 
 
