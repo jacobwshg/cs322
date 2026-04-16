@@ -10,6 +10,9 @@ VarIdSet::VarIdSet( void )
 	this->data.resize( 1, 0x0UL );
 }
 
+//
+// print data in hex format, one line per 64-bit block
+//
 void
 L2::Liv::
 VarIdSet::display( void ) const

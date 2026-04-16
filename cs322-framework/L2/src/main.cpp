@@ -20,7 +20,7 @@ int main(
 
 	std::printf( "basic var visitor test\n" );
 
-	//{
+	{
 		L2::Liv::VarVisitor var_vis {};
 
 		constexpr int CNT { 5 };
@@ -58,7 +58,7 @@ int main(
 		std::printf( "vars:\n" );
 		var_vis.display();
 
-	//}
+	}
 
 	std::printf( "file test\n" );
 
@@ -81,7 +81,7 @@ int main(
 	L2::Parser prsr {};
 	prsr.lex( ifs );
 
-	prsr.printtoks();
+	//prsr.printtoks();
 
 	std::optional< L2::pNode > ast {  prsr.parse() };
 
@@ -94,6 +94,8 @@ int main(
 
 	for ( const L2::fNode &f_n: ( *ast ).f_ns )
 	{
+		std::printf( "\n*** function @%s\n", f_n.l_n.name_n.val.data() );
+
 		const std::size_t instr_cnt { f_n.i_ns.size() };
 		L2::Liv::InstrVisitor fn_instr_vis { instr_cnt };
 
@@ -115,5 +117,4 @@ int main(
 
 }
 
-	
 

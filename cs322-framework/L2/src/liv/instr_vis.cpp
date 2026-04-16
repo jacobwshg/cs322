@@ -90,7 +90,7 @@ InstrVisitor::display( void ) const
 	//
 	// print succ ID table
 	//
-	std::printf( "InstrVisitor\n" );
+	std::printf( "instructions visitor\n" );
 	std::printf( "succs table\n" );
 	for ( const std::vector< instr_id_t > &succ_id_vec : this->succs_tbl )
 	{
@@ -129,9 +129,14 @@ InstrVisitor::display( void ) const
 	}
 
 	//
-	// print var ID sets
+	// print var ID sets ( dbg )
 	//
-	this->var_id_sets.display();
+	//this->var_id_sets.display();
+
+	//
+	// print instruction var sets
+	//
+	this->display_all_instr_var_sets();
 	std::printf( "\n" );
 
 }
@@ -149,9 +154,11 @@ InstrVisitor::display_var_set( const L2::Liv::VarIdSet &var_id_set ) const
 	{
 		if ( var_id_set.has( var_id ) )
 		{
+			// print `%` for named vars
+			if ( var_id >= VarVisitor::BASE_VAR_ID ) { std::printf( "%s", L2::KW::PERCENT.data() ); }
+
 			std::printf(
-				"%s%s, ",
-				L2::KW::PERCENT.data(),
+				"%s, ",
 				this->var_vis.var_by_id( var_id ).data()
 			);
 		}

@@ -21,6 +21,9 @@ namespace L2
 
 			VarIdSet( void );
 
+			//
+			// print var ID set raw data in hex format
+			//
 			void display( void ) const;
 
 			//
