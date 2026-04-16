@@ -477,7 +477,7 @@ namespace L2
 
 	struct fNode
 	{
-		using fields_t = std::tuple< LParNode, lNode, NNode, NNode, std::vector<iNode>, RParNode >;
+		using fields_t = std::tuple< LParNode, lNode, NNode, std::vector<iNode>, RParNode >;
 
 		LParNode lpar_n;
 		lNode l_n;
