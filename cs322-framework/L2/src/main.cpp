@@ -101,6 +101,11 @@ int main(
 
 		fn_instr_vis.display();		
 
+		//
+		// run liveness alg
+		//
+		fn_instr_vis.run_liveness();
+
 	}
 
 }

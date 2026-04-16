@@ -24,6 +24,24 @@ namespace L2
 			void display( void ) const;
 
 			//
+			// test whether a var ID is present in the set
+			//
+			template< typename I > requires std::integral< I >
+			bool has( const I i )
+			{
+				if ( i < 0 ) { return false; }
+				if ( this->data.size() * 64 <= i ) { return false; }
+
+				const std::uint64_t blk { this->data[ i / 64 ] };
+				if ( 0x1UL & ( blk >> ( i % 64 ) ) )
+				{
+					return true;
+				}
+				return false;
+				
+			}
+
+			//
 			// add a var ID to the set
 			//
 			template< typename I > requires std::integral< I >

@@ -16,23 +16,23 @@ L2::Liv::
 FnVarIdSets::FnVarIdSets( const std::size_t instr_cnt )
 {
 	const std::size_t safe_cnt { instr_cnt + 1 };
-	this->gen_sets  .resize( safe_cnt, {} );
-	this->kill_sets .resize( safe_cnt, {} );
-	this->in_sets   .resize( safe_cnt, {} );
-	this->out_sets  .resize( safe_cnt, {} );
+	this->GEN  .resize( safe_cnt, {} );
+	this->KILL .resize( safe_cnt, {} );
+	this->IN   .resize( safe_cnt, {} );
+	this->OUT  .resize( safe_cnt, {} );
 }
 
 void
 L2::Liv::
 FnVarIdSets::display( void ) const
 {
-	const std::size_t sz { this->gen_sets.size() };
+	const std::size_t sz { this->GEN.size() };
 
 	instr_id_t instr_id { -1 };
 
 	std::printf( "function var id sets\n" );
 
-	for ( const VarIdSet &gen_st : this->gen_sets )
+	for ( const VarIdSet &gen_st : this->GEN )
 	{
 		++instr_id;
 		std::printf( "instruction ID %0d\n", instr_id );
@@ -41,13 +41,13 @@ FnVarIdSets::display( void ) const
 		gen_st.display();
 
 		std::printf( "KILL\n" );
-		this->kill_sets[ instr_id ].display();
+		this->KILL[ instr_id ].display();
 
 		std::printf( "IN\n" );
-		this->in_sets[ instr_id ].display();
+		this->IN[ instr_id ].display();
 
 		std::printf( "OUT\n" );
-		this->out_sets[ instr_id ].display();
+		this->OUT[ instr_id ].display();
 
 	}
 
@@ -208,6 +208,70 @@ InstrVisitor::resolve_label_succ (
 
 void
 L2::Liv::
+InstrVisitor::run_liveness( void )
+{
+	bool changed { false };
+	do
+	{
+		changed = false;
+		//
+		// one backward pass through all instructions
+		//
+		
+		for (
+			instr_id_t instr_id { this->next_instr_id - 1 };
+			instr_id >= 0;
+			--instr_id
+		)
+		{
+			VarIdSet new_out_set {};
+			//
+			// loop over all successors of current instr 
+			//
+			for ( const instr_id_t succ_id : this->succs_tbl[ instr_id ] )
+			{
+				//
+				// iterative over IDs of all encountered variables;
+				// if any is in the current successor's IN set, 
+				// add it to our new OUT set
+				//
+				for (
+					var_id_t var_id { 0 };
+					var_id < this->var_vis.next_var_id;
+					++var_id 
+				)
+				{
+
+					if ( this->var_id_sets.IN[ succ_id ].has( var_id ) )
+					{
+						new_out_set += var_id;
+					}
+				}
+			}
+			if ( new_out_set != this->var_id_sets.OUT[ instr_id ] )
+			{
+				changed = true;
+			}
+
+			VarIdSet new_in_set { this->var_id_sets.GEN[ instr_id ] };
+			new_in_set |= (
+				new_out_set - this->var_id_sets.KILL[ instr_id ]
+			);
+			if ( new_in_set != this->var_id_sets.IN[ instr_id ] )
+			{
+				changed = true;
+			}
+
+			this->var_id_sets.OUT[ instr_id ] = std::move( new_out_set );
+			this->var_id_sets.IN [ instr_id ] = std::move( new_in_set );
+		}
+	}
+	while ( changed );
+}
+
+
+void
+L2::Liv::
 InstrVisitor::operator()( const L2::iAssignNode &i_assign_n )
 {
 	// w <- s
@@ -218,9 +282,9 @@ InstrVisitor::operator()( const L2::iAssignNode &i_assign_n )
 		s_var_id { std::visit( this->var_vis, i_assign_n.s_n ) };
 
 	// s is read from, add to GEN set
-	this->var_id_sets.gen_sets[ instr_id ] += s_var_id;
+	this->var_id_sets.GEN[ instr_id ] += s_var_id;
 	// w is written to, add to KILL set
-	this->var_id_sets.kill_sets[ instr_id ] += w_var_id;
+	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -238,8 +302,8 @@ InstrVisitor::operator()( const L2::iLoadNode &i_load_n )
 		w_var_id { std::visit( this->var_vis, i_load_n.w_n ) },
 		x_var_id { std::visit( this->var_vis, i_load_n.x_n ) };
 
-	this->var_id_sets.gen_sets[ instr_id ]  += x_var_id;
-	this->var_id_sets.kill_sets[ instr_id ] += w_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += x_var_id;
+	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -256,8 +320,8 @@ InstrVisitor::operator()( const L2::iStoreNode &i_store_n )
 		x_var_id { std::visit( this->var_vis, i_store_n.x_n ) },
 		s_var_id { std::visit( this->var_vis, i_store_n.s_n ) };
 	
-	this->var_id_sets.gen_sets[ instr_id ]  += s_var_id;
-	this->var_id_sets.kill_sets[ instr_id ] += x_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += s_var_id;
+	this->var_id_sets.KILL[ instr_id ] += x_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -274,7 +338,7 @@ InstrVisitor::operator()( const L2::iStackArgNode &i_stack_arg_n )
 	const var_id_t
 		w_var_id { std::visit( this->var_vis, i_stack_arg_n.w_n ) };
 
-	this->var_id_sets.kill_sets[ instr_id ] += w_var_id;
+	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -291,10 +355,10 @@ InstrVisitor::operator()( const L2::iAOpNode &i_aop_n )
 		w_var_id { std::visit( this->var_vis, i_aop_n.w_n ) },
 		t_var_id { std::visit( this->var_vis, i_aop_n.t_n ) };
 
-	this->var_id_sets.gen_sets[ instr_id ]  += t_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += t_var_id;
 	// w is both read from and written to
-	this->var_id_sets.gen_sets[ instr_id ]  += w_var_id;
-	this->var_id_sets.kill_sets[ instr_id ] += w_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += w_var_id;
+	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -312,9 +376,9 @@ InstrVisitor::operator()( const L2::iSxNode &i_sx_n )
 		w_var_id  { std::visit( this->var_vis, i_sx_n.w_n ) },
 		sx_var_id { std::visit( this->var_vis, i_sx_n.sx_n ) };
 
-	this->var_id_sets.gen_sets[ instr_id ]  += sx_var_id;
-	this->var_id_sets.gen_sets[ instr_id ]  += w_var_id;
-	this->var_id_sets.kill_sets[ instr_id ] += w_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += sx_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += w_var_id;
+	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -330,8 +394,8 @@ InstrVisitor::operator()( const L2::iSOpNode &i_sop_n )
 	const var_id_t
 		w_var_id { std::visit( this->var_vis, i_sop_n.w_n ) };
 
-	this->var_id_sets.gen_sets[ instr_id ]  += w_var_id;
-	this->var_id_sets.kill_sets[ instr_id ] += w_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += w_var_id;
+	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -349,9 +413,9 @@ InstrVisitor::operator()( const L2::iAddStoreNode &i_add_store_n )
 		x_var_id { std::visit( this->var_vis, i_add_store_n.x_n ) },
 		t_var_id { std::visit( this->var_vis, i_add_store_n.t_n ) };
 
-	this->var_id_sets.gen_sets[ instr_id ]  += t_var_id;
-	this->var_id_sets.gen_sets[ instr_id ]  += x_var_id;
-	this->var_id_sets.kill_sets[ instr_id ] += x_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += t_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += x_var_id;
+	this->var_id_sets.KILL[ instr_id ] += x_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -367,9 +431,9 @@ InstrVisitor::operator()( const L2::iSubStoreNode &i_sub_store_n )
 		x_var_id { std::visit( this->var_vis, i_sub_store_n.x_n ) },
 		t_var_id { std::visit( this->var_vis, i_sub_store_n.t_n ) };
 
-	this->var_id_sets.gen_sets[ instr_id ]  += t_var_id;
-	this->var_id_sets.gen_sets[ instr_id ]  += x_var_id;
-	this->var_id_sets.kill_sets[ instr_id ] += x_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += t_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += x_var_id;
+	this->var_id_sets.KILL[ instr_id ] += x_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -386,9 +450,9 @@ InstrVisitor::operator()( const L2::iLoadAddNode &i_load_add_n )
 		w_var_id { std::visit( this->var_vis, i_load_add_n.w_n ) },
 		x_var_id { std::visit( this->var_vis, i_load_add_n.x_n ) };
 
-	this->var_id_sets.gen_sets[ instr_id ]  += x_var_id;
-	this->var_id_sets.gen_sets[ instr_id ]  += w_var_id;
-	this->var_id_sets.kill_sets[ instr_id ] += w_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += x_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += w_var_id;
+	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -405,9 +469,9 @@ InstrVisitor::operator()( const L2::iLoadSubNode &i_load_sub_n )
 		w_var_id { std::visit( this->var_vis, i_load_sub_n.w_n ) },
 		x_var_id { std::visit( this->var_vis, i_load_sub_n.x_n ) };
 
-	this->var_id_sets.gen_sets[ instr_id ]  += x_var_id;
-	this->var_id_sets.gen_sets[ instr_id ]  += w_var_id;
-	this->var_id_sets.kill_sets[ instr_id ] += w_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += x_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += w_var_id;
+	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -426,9 +490,9 @@ InstrVisitor::operator()( const L2::iCmpAssignNode &i_cmp_assign_n )
 		t1_var_id { std::visit( this->var_vis, i_cmp_assign_n.t1_n ) },
 		t2_var_id { std::visit( this->var_vis, i_cmp_assign_n.t2_n ) };
 
-	this->var_id_sets.gen_sets[ instr_id ]  += t1_var_id;
-	this->var_id_sets.gen_sets[ instr_id ]  += t2_var_id;
-	this->var_id_sets.kill_sets[ instr_id ] += w_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += t1_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += t2_var_id;
+	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -447,8 +511,8 @@ InstrVisitor::operator()( const L2::iCJumpNode &i_cjump_n )
 		t1_var_id { std::visit( this->var_vis, i_cjump_n.t1_n ) },
 		t2_var_id { std::visit( this->var_vis, i_cjump_n.t2_n ) };
 
-	this->var_id_sets.gen_sets[ instr_id ]  += t1_var_id;
-	this->var_id_sets.gen_sets[ instr_id ]  += t2_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += t1_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += t2_var_id;
 
 	// one succ is next in sequence ( false br )
 	this->add_serial_succ( instr_id );
@@ -497,7 +561,7 @@ InstrVisitor::operator()( const L2::iReturnNode & )
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	this->var_id_sets.gen_sets[ instr_id ] += GPRId::val< RaxNode >;
+	this->var_id_sets.GEN[ instr_id ] += GPRId::val< RaxNode >;
 	// TODO gen add callee-save regs
 	//assert( false );
 
@@ -527,7 +591,7 @@ InstrVisitor::operator()( const L2::iCallUNode &i_call_u_n )
 	};
 
 	// add u
-	this->var_id_sets.gen_sets[ instr_id ] += u_var_id;
+	this->var_id_sets.GEN[ instr_id ] += u_var_id;
 	// add args regs ( at most 6 )
 	for (
 		std::size_t arg_id { 0 };
@@ -535,12 +599,12 @@ InstrVisitor::operator()( const L2::iCallUNode &i_call_u_n )
 		++arg_id
 	)
 	{
-		this->var_id_sets.gen_sets[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
+		this->var_id_sets.GEN[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
 	}
 	// add caller save regs
 	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
 	{
-		this->var_id_sets.kill_sets[ instr_id ] += sav_id;
+		this->var_id_sets.KILL[ instr_id ] += sav_id;
 	}
 
 	this->add_serial_succ( instr_id );
@@ -563,12 +627,12 @@ InstrVisitor::operator()( const L2::iCallPrintNode &i_call_print_n )
 		++arg_id
 	)
 	{
-		this->var_id_sets.gen_sets[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
+		this->var_id_sets.GEN[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
 	}
 	// add caller save regs
 	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
 	{
-		this->var_id_sets.kill_sets[ instr_id ] += sav_id;
+		this->var_id_sets.KILL[ instr_id ] += sav_id;
 	}
 
 	this->add_serial_succ( instr_id );
@@ -589,7 +653,7 @@ InstrVisitor::operator()( const L2::iCallInputNode &i_call_input_n )
 	// add caller save regs
 	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
 	{
-		this->var_id_sets.kill_sets[ instr_id ] += sav_id;
+		this->var_id_sets.KILL[ instr_id ] += sav_id;
 	}
 
 	this->add_serial_succ( instr_id );
@@ -612,12 +676,12 @@ InstrVisitor::operator()( const L2::iCallAllocateNode &i_call_allocate_node )
 		++arg_id
 	)
 	{
-		this->var_id_sets.gen_sets[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
+		this->var_id_sets.GEN[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
 	}
 	// add caller save regs
 	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
 	{
-		this->var_id_sets.kill_sets[ instr_id ] += sav_id;
+		this->var_id_sets.KILL[ instr_id ] += sav_id;
 	}
 
 	this->add_serial_succ( instr_id );
@@ -640,12 +704,12 @@ InstrVisitor::operator()( const L2::iCallTupleErrorNode &i_call_tuple_error_n )
 		++arg_id
 	)
 	{
-		this->var_id_sets.gen_sets[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
+		this->var_id_sets.GEN[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
 	}
 	// add caller save regs
 	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
 	{
-		this->var_id_sets.kill_sets[ instr_id ] += sav_id;
+		this->var_id_sets.KILL[ instr_id ] += sav_id;
 	}
 
 	// no succ
@@ -674,12 +738,12 @@ InstrVisitor::operator()( const L2::iCallTensorErrorNode &i_call_tensor_error_n 
 	// add args
 	for ( std::size_t arg_id { 0 }; arg_id < argcnt; ++arg_id )
 	{
-		this->var_id_sets.gen_sets[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
+		this->var_id_sets.GEN[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
 	}
 	// add caller save regs
 	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
 	{
-		this->var_id_sets.kill_sets[ instr_id ] += sav_id;
+		this->var_id_sets.KILL[ instr_id ] += sav_id;
 	}
 
 
@@ -697,8 +761,8 @@ InstrVisitor::operator()( const L2::iIncrNode &i_incr_n )
 	const var_id_t
 		w_var_id { std::visit( this->var_vis, i_incr_n.w_n ) };
 
-	this->var_id_sets.gen_sets[ instr_id ]  += w_var_id;
-	this->var_id_sets.kill_sets[ instr_id ] += w_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += w_var_id;
+	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -714,8 +778,8 @@ InstrVisitor::operator()( const L2::iDecrNode &i_decr_n )
 	const var_id_t
 		w_var_id { std::visit( this->var_vis, i_decr_n.w_n ) };
 
-	this->var_id_sets.gen_sets[ instr_id ]  += w_var_id;
-	this->var_id_sets.kill_sets[ instr_id ] += w_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += w_var_id;
+	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -733,9 +797,9 @@ InstrVisitor::operator()( const L2::iLEANode &i_lea_n )
 		w2_var_id { std::visit( this->var_vis, i_lea_n.w2_n ) },
 		w3_var_id { std::visit( this->var_vis, i_lea_n.w3_n ) };
 
-	this->var_id_sets.gen_sets[ instr_id ]  += w2_var_id;
-	this->var_id_sets.gen_sets[ instr_id ]  += w3_var_id;
-	this->var_id_sets.kill_sets[ instr_id ] += w1_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += w2_var_id;
+	this->var_id_sets.GEN[ instr_id ]  += w3_var_id;
+	this->var_id_sets.KILL[ instr_id ] += w1_var_id;
 
 	this->add_serial_succ( instr_id );
 

@@ -38,10 +38,10 @@ namespace L2
 	//
 	struct Liv::FnVarIdSets
 	{
-		std::vector< VarIdSet > gen_sets  {};
-		std::vector< VarIdSet > kill_sets {};
-		std::vector< VarIdSet > in_sets   {};
-		std::vector< VarIdSet > out_sets  {};
+		std::vector< VarIdSet > GEN  {};
+		std::vector< VarIdSet > KILL {};
+		std::vector< VarIdSet > IN   {};
+		std::vector< VarIdSet > OUT  {};
 
 		FnVarIdSets( void ) =default;
 
@@ -138,6 +138,11 @@ namespace L2
 		// resolve the request with the current instr ID
 		//
 		void resolve_label_succ( const instr_id_t, const std::string_view );
+
+		//
+		// run the liveness algorithm
+		// 
+		void run_liveness( void );
 
 		void operator()( const L2::iAssignNode & );
 		void operator()( const L2::iLoadNode & );
