@@ -46,13 +46,17 @@ namespace L2
 			friend VarIdSet operator&( const VarIdSet &, const VarIdSet & );
 			friend VarIdSet operator-( const VarIdSet &, const VarIdSet & );
 
+			friend bool operator==( const VarIdSet &, const VarIdSet & );
+			friend bool operator!=( const VarIdSet &, const VarIdSet & );
+
 		};
 
 		VarIdSet operator|( const VarIdSet &, const VarIdSet & );
-
 		VarIdSet operator&( const VarIdSet &, const VarIdSet & );
-
 		VarIdSet operator-( const VarIdSet &, const VarIdSet & );
+
+		bool operator==( const VarIdSet &, const VarIdSet & );
+		bool operator!=( const VarIdSet &, const VarIdSet & );
 
 	}
 

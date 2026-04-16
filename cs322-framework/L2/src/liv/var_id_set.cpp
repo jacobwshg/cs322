@@ -159,3 +159,43 @@ operator-( const L2::Liv::VarIdSet &lhs, const L2::Liv::VarIdSet &rhs )
 }
 
 
+bool
+L2::Liv::
+operator!=( const VarIdSet &lhs, const VarIdSet &rhs )
+{
+	const std::size_t
+		lsz { lhs.data.size() }, rsz { rhs.data.size() };
+
+	// ensure lsz>=rsz to simplify logic
+	if ( rsz > lsz )
+	{
+		return rhs != lhs;
+	}
+
+	std::size_t blk_id { 0 };
+	for ( const std::uint64_t blk : lhs.data )
+	{
+		if ( blk_id >= rsz )
+		{
+			// unequal if lhs has any set bit 
+			// in its exclusive blocks
+			if ( blk != 0x0UL ) { return true; }
+		}
+		else
+		{
+			// unequal if any shared block differs
+			if ( blk != rhs.data[ blk_id ] ) { return true; }
+		}
+
+		++blk_id;
+	}
+	return false;
+}
+
+bool
+L2::Liv::
+operator==( const VarIdSet &lhs, const VarIdSet &rhs )
+{
+	return !( lhs != rhs );
+}
+

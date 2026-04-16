@@ -17,8 +17,12 @@ namespace L2
 	namespace Liv
 	{
 
-		struct LivenessGPRId
+		struct GPRId
 		{
+			//
+			// use these compile-time expanded values in lieu of a hashtable
+			// for faster runtime access
+			//
 			template < typename Node > static inline constexpr var_id_t val { VAR_ID_INVAL };
 			template<> inline constexpr var_id_t val< RaxNode > { 1 };
 			template<> inline constexpr var_id_t val< RbxNode > { 2 };
@@ -37,6 +41,7 @@ namespace L2
 			template<> inline constexpr var_id_t val< R14Node > { 14 };	
 			template<> inline constexpr var_id_t val< R15Node > { 15 };	
 
+			/*
 			static inline const std::unordered_map< std::string, var_id_t >
 				GPR_ID_TBL
 			{
@@ -58,6 +63,7 @@ namespace L2
 				{ std::string { KW::R14 }, 14, },
 				{ std::string { KW::R15 }, 15, },
 			};
+			*/
 
 			static inline constexpr std::array< std::string_view, 16 >
 				ID_GPR_TBL
@@ -119,7 +125,7 @@ namespace L2
 			var_id_t operator()( const GPRNode &gpr_n )
 			{
 				//std::printf( "VarVisitor: visiting GPR node\n" );
-				return LivenessGPRId::val< GPRNode >;
+				return GPRId::val< GPRNode >;
 			}
 
 			//

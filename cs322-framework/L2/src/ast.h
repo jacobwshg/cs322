@@ -475,6 +475,14 @@ namespace L2
 		iIncrNode, iDecrNode, iLEANode
 	>;
 
+	struct builtin_argcnt
+	{
+		template< typename Node > static inline constexpr std::size_t val { 0 };
+		template<> inline constexpr std::size_t val< iCallPrintNode >      { 1 };
+		template<> inline constexpr std::size_t val< iCallAllocateNode >   { 2 };
+		template<> inline constexpr std::size_t val< iCallTupleErrorNode > { 3 };
+	};
+
 	struct fNode
 	{
 		using fields_t = std::tuple< LParNode, lNode, NNode, std::vector<iNode>, RParNode >;

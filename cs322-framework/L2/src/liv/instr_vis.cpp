@@ -1,6 +1,7 @@
 
 #include "instr_vis.h"
 #include "../ast.h"
+#include "../callconv.h"
 
 #include <cstdio>
 #include <variant>
@@ -496,7 +497,7 @@ InstrVisitor::operator()( const L2::iReturnNode & )
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	this->var_id_sets.gen_sets[ instr_id ] += LivenessGPRId::val< RaxNode >;
+	this->var_id_sets.gen_sets[ instr_id ] += GPRId::val< RaxNode >;
 	// TODO gen add callee-save regs
 	//assert( false );
 
@@ -510,13 +511,37 @@ InstrVisitor::operator()( const L2::iCallUNode &i_call_u_n )
 {
 	// call u N
 
+	struct NVisitor
+	{
+		long long operator()( const _0Node &_0_n ) { return _0Node::val; }
+		long long operator()( const NNZNode &N_nz_n ) { return N_nz_n.val; }
+	};
+
 	const instr_id_t instr_id { this->new_instr_id() };
 	const var_id_t	
 		u_var_id { std::visit( this->var_vis, i_call_u_n.u_n ) };
 
+	std::size_t argcnt
+	{
+		static_cast< std::size_t >( std::visit( NVisitor{}, i_call_u_n.N_n ) )
+	};
+
+	// add u
 	this->var_id_sets.gen_sets[ instr_id ] += u_var_id;
-	// TODO gen add args
-	// TODO kill add caller save regs
+	// add args regs ( at most 6 )
+	for (
+		std::size_t arg_id { 0 };
+		arg_id < std::min( argcnt, CallConv::ARG_REG_CNT );
+		++arg_id
+	)
+	{
+		this->var_id_sets.gen_sets[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
+	}
+	// add caller save regs
+	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
+	{
+		this->var_id_sets.kill_sets[ instr_id ] += sav_id;
+	}
 
 	this->add_serial_succ( instr_id );
 
@@ -531,8 +556,20 @@ InstrVisitor::operator()( const L2::iCallPrintNode &i_call_print_n )
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	// TODO gen add args
-	// TODO kill add caller save regs
+	// add args
+	for (
+		std::size_t arg_id { 0 };
+		arg_id < builtin_argcnt::val< iCallPrintNode >;
+		++arg_id
+	)
+	{
+		this->var_id_sets.gen_sets[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
+	}
+	// add caller save regs
+	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
+	{
+		this->var_id_sets.kill_sets[ instr_id ] += sav_id;
+	}
 
 	this->add_serial_succ( instr_id );
 
@@ -547,8 +584,13 @@ InstrVisitor::operator()( const L2::iCallInputNode &i_call_input_n )
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	// TODO gen add args
-	// TODO kill add caller save regs
+	// no args to add
+
+	// add caller save regs
+	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
+	{
+		this->var_id_sets.kill_sets[ instr_id ] += sav_id;
+	}
 
 	this->add_serial_succ( instr_id );
 
@@ -563,8 +605,20 @@ InstrVisitor::operator()( const L2::iCallAllocateNode &i_call_allocate_node )
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	// TODO gen add args
-	// TODO kill add caller save regs
+	// add args
+	for (
+		std::size_t arg_id { 0 };
+		arg_id < builtin_argcnt::val< iCallAllocateNode >;
+		++arg_id
+	)
+	{
+		this->var_id_sets.gen_sets[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
+	}
+	// add caller save regs
+	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
+	{
+		this->var_id_sets.kill_sets[ instr_id ] += sav_id;
+	}
 
 	this->add_serial_succ( instr_id );
 
@@ -573,14 +627,26 @@ InstrVisitor::operator()( const L2::iCallAllocateNode &i_call_allocate_node )
 
 void
 L2::Liv::
-InstrVisitor::operator()( const L2::iCallTupleErrorNode &i_call_tuple_error_node )
+InstrVisitor::operator()( const L2::iCallTupleErrorNode &i_call_tuple_error_n )
 {
 	// call tuple-error 3
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	// TODO gen add args
-	// TODO kill add caller save regs
+	// add args
+	for (
+		std::size_t arg_id { 0 };
+		arg_id < builtin_argcnt::val< iCallTupleErrorNode >;
+		++arg_id
+	)
+	{
+		this->var_id_sets.gen_sets[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
+	}
+	// add caller save regs
+	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
+	{
+		this->var_id_sets.kill_sets[ instr_id ] += sav_id;
+	}
 
 	// no succ
 
@@ -592,10 +658,30 @@ InstrVisitor::operator()( const L2::iCallTensorErrorNode &i_call_tensor_error_n 
 {
 	// call tensor-error F
 
+	struct FVisitor
+	{
+		long long operator()( const _1Node &_1_n ) { return _1Node::val; }
+		long long operator()( const _3Node &_3_n ) { return _3Node::val; }
+		long long operator()( const _4Node &_4_n ) { return _4Node::val; }
+	};
+
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	// TODO gen add args
-	// TODO kill add caller save regs
+	const std::size_t argcnt
+	{
+		static_cast< std::size_t >( std::visit( FVisitor{}, i_call_tensor_error_n.F_n ) )
+	};
+	// add args
+	for ( std::size_t arg_id { 0 }; arg_id < argcnt; ++arg_id )
+	{
+		this->var_id_sets.gen_sets[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
+	}
+	// add caller save regs
+	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
+	{
+		this->var_id_sets.kill_sets[ instr_id ] += sav_id;
+	}
+
 
 	// no succ	
 
