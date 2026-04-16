@@ -9,6 +9,49 @@
 #include <algorithm>
 #include <cassert>
 
+
+L2::Liv::
+FnVarIdSets::FnVarIdSets( const std::size_t instr_cnt )
+{
+	const std::size_t safe_cnt { instr_cnt + 1 };
+	this->gen_sets  .resize( safe_cnt, {} );
+	this->kill_sets .resize( safe_cnt, {} );
+	this->in_sets   .resize( safe_cnt, {} );
+	this->out_sets  .resize( safe_cnt, {} );
+}
+
+void
+L2::Liv::
+FnVarIdSets::display( void ) const
+{
+	const std::size_t sz { this->gen_sets.size() };
+
+	instr_id_t instr_id { -1 };
+
+	std::printf( "var id set vectors\n" );
+
+	for ( const std::vector< VarIdSet > &gen_st : this->gen_sets )
+	{
+		++instr_id;
+		std::printf( "instruction ID %0d\n", instr_id );
+
+		std::printf( "\tGEN\n" );
+		gen_st.display();
+
+		std::printf( "\tKILL\n" );
+		this->kill_sets[ instr_id ].display();
+
+		std::printf( "\tIN\n" );
+		this->in_sets[ instr_id ].display();
+
+		std::printf( "\tOUT\n" );
+		this->out_sets[ instr_id ].display();
+
+	}
+
+}
+
+
 //
 // extract the name in a labelNode
 //
@@ -27,8 +70,63 @@ InstrVisitor::InstrVisitor( const std::size_t instr_cnt )
 	// if the final instr is not return, accessing its nonexistent "serial successor"
 	// will not cause an indexing error
 	//
-	this->var_id_sets = FuncVarIdSets { instr_cnt + 1 };
+	this->var_id_sets = FnVarIdSets { instr_cnt + 1 };
 	this->succs_tbl.resize( instr_cnt + 1, {} );
+}
+
+void
+L2::Liv::
+InstrVisitor::display( void ) const
+{
+	instr_id_t instr_id { -1 };
+
+	//
+	// print succ ID table
+	//
+	std::printf( "InstrVisitor" );
+	std::printf( "succs table\n" );
+	for ( const std::vector< instr_id_t > &succ_id_vec : this->succs_tbl )
+	{
+		++instr_id;
+		std::printf( "\tinstr %0d successors: ", instr_id );
+
+		for ( const instr_id_t succ_instr_id : succ_id_vec )
+		{
+			std::printf( "%0d ", succ_instr_id );
+		}
+
+		std::printf( "\n" );
+	}
+
+	//
+	// print label to instr ID table
+	//
+	std::printf( "label ID table\n" );
+	for ( const auto &[ label_str, label_instr_id ] : this->label_id_tbl )
+	{
+		std::printf( "\t'%s': %0d\n", label_str.data(), label_instr_id );
+	}
+
+	//
+	// print succ request table
+	//
+	std::printf( "succ request table\n" );
+	for ( const auto &[ label_str, pred_id_vec ] : this->requests_tbl )
+	{
+		std::printf( "\t'%s' requested by ", label_str.data() );
+		for ( const pred_instr_id : pred_id_vec )
+		{
+			std::printf( "%0d " );
+		}
+		std::printf( "\n" );
+	}
+
+	//
+	// print var ID sets
+	//
+	this->var_id_sets.display();
+	std::printf( "\n" );
+
 }
 
 L2::instr_id_t
@@ -90,6 +188,7 @@ InstrVisitor::resolve_label_succ (
 	{
 		//
 		// label had been requested as succ; resolve requests
+		// and add self as succ on behalf of predecessor
 		//
 		for ( const instr_id_t jmp_instr_id: tbl_it->second )
 		{
@@ -392,8 +491,10 @@ InstrVisitor::operator()( const L2::iReturnNode & )
 	const instr_id_t instr_id { this->new_instr_id() };
 
 	this->var_id_sets.gen_sets[ instr_id ] += LivenessGPRId::val< RaxNode >;
-	// TODO add callee-save regs
+	// TODO gen add callee-save regs
 	//assert( false );
+
+	// no succ
 
 }
 
@@ -408,20 +509,91 @@ InstrVisitor::operator()( const L2::iCallUNode &i_call_u_n )
 		u_var_id { std::visit( this->var_vis, i_call_u_n.u_n ) };
 
 	this->var_id_sets.gen_sets[ instr_id ] += u_var_id;
-	// TODO add args
+	// TODO gen add args
+	// TODO kill add caller save regs
+
+	this->add_serial_succ( instr_id );
 
 }
 
 
-/*
+void
+L2::Liv::
+InstrVisitor::operator()( const L2::iCallPrintNode &i_call_print_n )
+{
+	// call print 1
 
-		void L2::InstrVisitor::operator()( const L2::iCallPrintNode & );
-		void L2::InstrVisitor::operator()( const L2::iCallInputNode & );
-		void L2::InstrVisitor::operator()( const L2::iCallAllocateNode & );
-		void L2::InstrVisitor::operator()( const L2::iCallTupleErrorNode & );
-		void L2::InstrVisitor::operator()( const L2::iCallTensorErrorNode & );
+	const instr_id_t instr_id { this->new_instr_id() };
 
-*/
+	// TODO gen add args
+	// TODO kill add caller save regs
+
+	this->add_serial_succ( instr_id );
+
+}
+
+
+void
+L2::Liv::
+InstrVisitor::operator()( const L2::iCallInputNode &i_call_input_n )
+{
+	// call input 0
+
+	const instr_id_t instr_id { this->new_instr_id() };
+
+	// TODO gen add args
+	// TODO kill add caller save regs
+
+	this->add_serial_succ( instr_id );
+
+}
+
+
+void
+L2::Liv::
+InstrVisitor::operator()( const L2::iCallAllocateNode &i_call_allocate_node )
+{
+	// call allocate 2
+
+	const instr_id_t instr_id { this->new_instr_id() };
+
+	// TODO gen add args
+	// TODO kill add caller save regs
+
+	this->add_serial_succ( instr_id );
+
+}
+
+
+void
+L2::Liv::
+InstrVisitor::operator()( const L2::iCallTupleErrorNode &i_call_tuple_error_node )
+{
+	// call tuple-error 3
+
+	const instr_id_t instr_id { this->new_instr_id() };
+
+	// TODO gen add args
+	// TODO kill add caller save regs
+
+	// no succ
+
+}
+
+void
+L2::Liv::
+InstrVisitor::operator()( const L2::iCallTensorErrorNode &i_call_tensor_error_n )
+{
+	// call tensor-error F
+
+	const instr_id_t instr_id { this->new_instr_id() };
+
+	// TODO gen add args
+	// TODO kill add caller save regs
+
+	// no succ	
+
+}
 
 void
 L2::Liv::
@@ -476,6 +648,4 @@ InstrVisitor::operator()( const L2::iLEANode &i_lea_n )
 	this->add_serial_succ( instr_id );
 
 }
-
-
 

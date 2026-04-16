@@ -3,6 +3,7 @@
 #include "parser.h"
 #include "liv/var_id_set.h"
 #include "liv/var_vis.h"
+#include "liv/instr_vis.h"
 
 #include <cstdio>
 #include <fstream>
@@ -75,7 +76,7 @@ int main(
 		return 2;
 	}
 
-/*
+
 	L2::Parser prsr {};
 	prsr.lex( ifs );
 	std::optional< L2::pNode > ast {  prsr.parse() };
@@ -89,10 +90,17 @@ int main(
 
 	for ( const L2::fNode &f_n: ( *ast ).f_ns )
 	{
-		L2::Liv::VarVisitor varvis {};
-	}
-*/
+		const std::size_t instr_cnt { f_n.i_ns.size() };
+		L2::Liv::InstrVisitor fn_instr_vis { instr_cnt };
 
+		for ( const L2::iNode &i_n : f_n.i_ns )
+		{
+			std::visit( fn_instr_vis, i_n );
+		}
+
+		fn_instr_vis.display();		
+
+	}
 
 }
 

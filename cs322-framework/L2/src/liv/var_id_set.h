@@ -54,19 +54,6 @@ namespace L2
 
 		VarIdSet operator-( const VarIdSet &, const VarIdSet & );
 
-		struct FuncVarIdSets
-		{
-			std::vector< VarIdSet > gen_sets  {};
-			std::vector< VarIdSet > kill_sets {};
-			std::vector< VarIdSet > in_sets   {};
-			std::vector< VarIdSet > out_sets  {};
-
-			FuncVarIdSets( void ) =default;
-
-			FuncVarIdSets( const std::size_t instr_cnt );
-
-		};
-
 	}
 
 }

@@ -2,8 +2,10 @@
 #ifndef L2_LIV_INSTRVIS_H
 #define L2_LIV_INSTRVIS_H
 
+#include "var_id_set.h"
 #include "../ast.h"
 #include "../svutil.h"
+
 #include <variant>
 #include <vector>
 #include <unordered_map>
@@ -21,11 +23,32 @@ namespace L2
 	namespace Liv
 	{
 
+		struct FnVarIdSets;
+
 		struct LabelVisitor;
 
 		struct InstrVisitor;
 
 	}
+
+	//
+	// stores the GEN/KILL/IN/OUT variable sets
+	// for all instructions in a given scope
+	//
+	struct Liv::FnVarIdSets
+	{
+		std::vector< VarIdSet > gen_sets  {};
+		std::vector< VarIdSet > kill_sets {};
+		std::vector< VarIdSet > in_sets   {};
+		std::vector< VarIdSet > out_sets  {};
+
+		FnVarIdSets( void ) =default;
+
+		FnVarIdSets( const std::size_t instr_cnt );
+
+		void display( void ) const;
+
+	};
 
 	//
 	// visits nodes carrying labels and extracts them to help
@@ -61,7 +84,7 @@ namespace L2
 
 		instr_id_t next_instr_id { 0 };
 
-		FuncVarIdSets var_id_sets {};
+		FnVarIdSets var_id_sets {};
 
 		//
 		// [ i ] = successor instr IDs of instr with ID i
@@ -87,6 +110,8 @@ namespace L2
 		InstrVisitor( void ) =default;
 
 		explicit InstrVisitor( const std::size_t );
+
+		void display( void ) const;
 
 		// allocate and return new instr ID
 		instr_id_t new_instr_id( void );
@@ -146,6 +171,9 @@ namespace L2
 
 		void operator()( const L2::iLEANode & );
 	};
+
+
+
 }
 
 #endif

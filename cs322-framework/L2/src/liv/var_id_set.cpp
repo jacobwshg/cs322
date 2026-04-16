@@ -159,16 +159,3 @@ operator-( const L2::Liv::VarIdSet &lhs, const L2::Liv::VarIdSet &rhs )
 }
 
 
-
-L2::Liv::
-FuncVarIdSets::FuncVarIdSets( const std::size_t instr_cnt )
-{
-	const std::size_t safe_cnt { instr_cnt + 1 };
-	this->gen_sets  .resize( safe_cnt, {} );
-	this->kill_sets .resize( safe_cnt, {} );
-	this->in_sets   .resize( safe_cnt, {} );
-	this->out_sets  .resize( safe_cnt, {} );
-}
-
-
-
