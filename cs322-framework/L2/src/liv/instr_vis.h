@@ -3,6 +3,7 @@
 #define L2_LIV_INSTRVIS_H
 
 #include "var_id_set.h"
+#include "var_vis.h"
 #include "../ast.h"
 #include "../svutil.h"
 

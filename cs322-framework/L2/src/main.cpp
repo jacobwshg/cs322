@@ -1,9 +1,10 @@
 
 #include "ast.h"
 #include "parser.h"
-#include "liv/var_id_set.h"
-#include "liv/var_vis.h"
-#include "liv/instr_vis.h"
+//#include "liv/var_id_set.h"
+//#include "liv/var_vis.h"
+//#include "liv/instr_vis.h"
+#include "liveness.h"
 
 #include <cstdio>
 #include <fstream>

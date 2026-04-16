@@ -1,4 +1,5 @@
 
+#include "instr_vis.h"
 #include "../ast.h"
 
 #include <cstdio>
@@ -30,7 +31,7 @@ FnVarIdSets::display( void ) const
 
 	std::printf( "var id set vectors\n" );
 
-	for ( const std::vector< VarIdSet > &gen_st : this->gen_sets )
+	for ( const VarIdSet &gen_st : this->gen_sets )
 	{
 		++instr_id;
 		std::printf( "instruction ID %0d\n", instr_id );
@@ -114,9 +115,9 @@ InstrVisitor::display( void ) const
 	for ( const auto &[ label_str, pred_id_vec ] : this->requests_tbl )
 	{
 		std::printf( "\t'%s' requested by ", label_str.data() );
-		for ( const pred_instr_id : pred_id_vec )
+		for ( const instr_id_t pred_instr_id : pred_id_vec )
 		{
-			std::printf( "%0d " );
+			std::printf( "%0d ", pred_instr_id );
 		}
 		std::printf( "\n" );
 	}
