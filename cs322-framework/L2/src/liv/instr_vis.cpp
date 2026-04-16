@@ -305,23 +305,8 @@ InstrVisitor::step_liveness( void )
 		//
 		for ( const instr_id_t succ_id : this->succs_tbl[ instr_id ] )
 		{
-			//
-			// iterative over IDs of all encountered variables;
-			// if any is in the current successor's IN set, 
-			// add it to our new OUT set
-			//
-			for (
-				var_id_t var_id { 0 };
-				var_id < this->var_vis.next_var_id;
-				++var_id 
-			)
-			{
-
-				if ( this->var_id_sets.IN[ succ_id ].has( var_id ) )
-				{
-					new_out_set += var_id;
-				}
-			}
+			// add succ's IN set to our OUT set
+			new_out_set |= this->var_id_sets.IN[ succ_id ];
 		}
 		if ( new_out_set != this->var_id_sets.OUT[ instr_id ] )
 		{
