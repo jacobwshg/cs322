@@ -136,6 +136,70 @@ InstrVisitor::display( void ) const
 
 }
 
+
+void
+L2::Liv::
+InstrVisitor::display_var_set( const L2::Liv::VarIdSet &var_id_set ) const
+{
+	for (
+		var_id_t var_id { GPRId::val< RaxNode > };
+		var_id < this->var_vis.next_var_id;
+		++var_id
+	)
+	{
+		if ( var_id_set.has( var_id ) )
+		{
+			std::printf(
+				"%s%s, ",
+				L2::KW::PERCENT.data(),
+				this->var_vis.var_by_id( var_id ).data()
+			);
+		}
+	}
+	std::printf( "\n" );
+}
+
+
+void
+L2::Liv::
+InstrVisitor::display_instr_var_sets( const instr_id_t instr_id ) const
+{
+	std::printf( "\n" );
+	if ( instr_id >= this->next_instr_id )
+	{
+		std::printf( "instr %0d out of range\n", instr_id  );
+		return;
+	}
+	std::printf( "instr %0d var sets:\n", instr_id );
+
+	std::printf( "\tGEN:\t" );
+	this->display_var_set( this->var_id_sets.GEN [ instr_id ] );
+
+	std::printf( "\tKILL:\t" );
+	this->display_var_set( this->var_id_sets.KILL[ instr_id ] );
+
+	std::printf( "\tIN:\t" );
+	this->display_var_set( this->var_id_sets.IN  [ instr_id ] );
+
+	std::printf( "\tOUT\t" );
+	this->display_var_set( this->var_id_sets.OUT [ instr_id ] );
+
+}
+
+void
+L2::Liv::
+InstrVisitor::display_all_instr_var_sets( void ) const
+{
+	for (
+		instr_id_t instr_id { 0 };
+		instr_id < this->next_instr_id; ++instr_id
+	)
+	{
+		this->display_instr_var_sets( instr_id );
+	}
+}
+
+
 L2::instr_id_t
 L2::Liv::
 InstrVisitor::new_instr_id( void )

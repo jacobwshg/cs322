@@ -114,6 +114,22 @@ namespace L2
 
 		void display( void ) const;
 
+		//
+		// retrieve and display all variables represented in a single var id set
+		// ( one of a single instr's GEN/KILL/IN/OUT )
+		//
+		void display_var_set( const VarIdSet & ) const;
+
+		//
+		// display variables in all four sets of a single instruction
+		//
+		void display_instr_var_sets( const instr_id_t ) const;
+
+		//
+		// display variable sets for all instructions
+		//
+		void display_all_instr_var_sets( void ) const;
+
 		// allocate and return new instr ID
 		instr_id_t new_instr_id( void );
 

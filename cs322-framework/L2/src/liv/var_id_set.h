@@ -27,7 +27,7 @@ namespace L2
 			// test whether a var ID is present in the set
 			//
 			template< typename I > requires std::integral< I >
-			bool has( const I i )
+			bool has( const I i ) const
 			{
 				if ( i < 0 ) { return false; }
 				if ( this->data.size() * 64 <= i ) { return false; }
@@ -56,7 +56,7 @@ namespace L2
 				{
 					this->data.resize( req_sz, 0x0UL );
 				}
-				this->data[ i / 64 ] |= ( 0x1ULL << ( i % 64 ) );
+				this->data[ i / 64 ] |= ( 0x1UL << ( i % 64 ) );
 				return *this;
 			}
 

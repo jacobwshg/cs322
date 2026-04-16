@@ -20,7 +20,7 @@ int main(
 
 	std::printf( "basic var visitor test\n" );
 
-	{
+	//{
 		L2::Liv::VarVisitor var_vis {};
 
 		constexpr int CNT { 5 };
@@ -58,7 +58,7 @@ int main(
 		std::printf( "vars:\n" );
 		var_vis.display();
 
-	}
+	//}
 
 	std::printf( "file test\n" );
 
@@ -102,7 +102,9 @@ int main(
 			std::visit( fn_instr_vis, i_n );
 		}
 
-		fn_instr_vis.display();		
+		fn_instr_vis.display();
+
+		fn_instr_vis.display_all_instr_var_sets();
 
 		//
 		// run liveness alg

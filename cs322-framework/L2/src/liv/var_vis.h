@@ -114,7 +114,14 @@ namespace L2
 			void display( void ) const;
 
 			//
-			// given ID, retrieve variable name 
+			// given ID, retrieve variable name.
+			// since this->id_var_tbl only stores named variables,
+			// if the ID is that of a named var rather than GPR,
+			// this function performs translation from logical ID
+			// to physical ID.
+			//
+			// bypassing this function and directly indexing 
+			// this->id_var_tbl will likely read garbage.
 			//
 			std::string_view var_by_id( const var_id_t var_id ) const;
 
