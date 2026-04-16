@@ -105,6 +105,8 @@ namespace L2
 
 			var_id_t new_var_id( void );
 
+			void display_vars( void ) const;
+
 			//
 			// given ID, retrieve variable name 
 			//

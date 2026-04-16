@@ -1,6 +1,10 @@
 
 #include "var_vis.h"
 
+#include <cstdio>
+#include <string_view>
+#include <string>
+
 L2::Liv::
 VarVisitor::VarVisitor( void )
 {
@@ -14,6 +18,23 @@ VarVisitor::new_var_id( void )
 	const var_id_t var_id { this->next_var_id };
 	++this->next_var_id;
 	return var_id;
+}
+
+void
+L2::Liv::
+VarVisitor::display_vars( void ) const
+{
+	var_id_t var_id { -1 };
+	for ( const std::string_view gpr_sv : LivenessGPRId::ID_GPR_TBL )
+	{
+		++var_id;
+		std::printf( "%d\t%s\n", var_id, gpr_sv.data() );
+	}
+	for ( const std::string &var_name: this->id_var_tbl )
+	{
+		std::printf( "%d\t%s%s\n", this->var_id_tbl.at( var_name ), L2::KW::PERCENT.data(), var_name.data() );
+	}
+	std::printf( "\n" );
 }
 
 // given ID, retrieve variable name 
@@ -139,8 +160,9 @@ L2::var_id_t
 L2::Liv::
 VarVisitor::operator()( const L2::varNode &var_n )
 {
-	// recurse on variants that are alternatives of another variant
-	// ( sx for a, a for w, ... )
+	//
+	// descend into name member of var node
+	//
 	return ( *this )( var_n.name_n );
 }
 
