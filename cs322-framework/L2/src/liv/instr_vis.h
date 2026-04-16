@@ -156,8 +156,14 @@ namespace L2
 		void resolve_label_succ( const instr_id_t, const std::string_view );
 
 		//
-		// run the liveness algorithm
+		// run one iteration of the liveness algorithm
+		// and return termination status
 		// 
+		bool step_liveness( void );
+
+		//
+		// run liveness until termination
+		//
 		void run_liveness( void );
 
 		void operator()( const L2::iAssignNode & );

@@ -111,8 +111,14 @@ int main(
 		//
 		// run liveness alg
 		//
-		fn_instr_vis.run_liveness();
-
+		//fn_instr_vis.run_liveness();
+		bool done { false };
+		for ( int iter { 1 }; !done; ++iter )
+		{
+			std::printf( "\nliveness iteration %0d\n", iter );	
+			done = fn_instr_vis.step_liveness();
+			fn_instr_vis.display_all_instr_var_sets();
+		}
 	}
 
 }

@@ -276,73 +276,86 @@ InstrVisitor::resolve_label_succ (
 
 }
 
+bool
+L2::Liv::
+InstrVisitor::step_liveness( void )
+{
+	bool done { true };
+
+	//
+	// do a backward pass through all instrs 
+	// to propagate variables faster
+	//
+	// this->next_instr_id increments in lockstep with actual
+	// instrs visited, so we won't iterate over the dummy guard
+	//
+	for (
+		instr_id_t instr_id { this->next_instr_id - 1 };
+		instr_id >= 0;
+		--instr_id
+	)
+	{
+		//
+		// update the current instr's OUT set first 
+		// so IN can use its updates
+		//
+		VarIdSet new_out_set {};
+		//
+		// loop over all successors of current instr 
+		//
+		for ( const instr_id_t succ_id : this->succs_tbl[ instr_id ] )
+		{
+			//
+			// iterative over IDs of all encountered variables;
+			// if any is in the current successor's IN set, 
+			// add it to our new OUT set
+			//
+			for (
+				var_id_t var_id { 0 };
+				var_id < this->var_vis.next_var_id;
+				++var_id 
+			)
+			{
+
+				if ( this->var_id_sets.IN[ succ_id ].has( var_id ) )
+				{
+					new_out_set += var_id;
+				}
+			}
+		}
+		if ( new_out_set != this->var_id_sets.OUT[ instr_id ] )
+		{
+			done = false;
+		}
+
+		//
+		// update IN set
+		//
+		VarIdSet new_in_set { this->var_id_sets.GEN[ instr_id ] };
+		new_in_set |= (
+			new_out_set - this->var_id_sets.KILL[ instr_id ]
+		);
+		if ( new_in_set != this->var_id_sets.IN[ instr_id ] )
+		{
+			done = false;
+		}
+
+		this->var_id_sets.OUT[ instr_id ] = std::move( new_out_set );
+		this->var_id_sets.IN [ instr_id ] = std::move( new_in_set );
+
+	}
+
+	return done;
+
+}
+
 
 void
 L2::Liv::
 InstrVisitor::run_liveness( void )
 {
-
-	long long int _iter { 0 };
-
-	bool changed { false };
-	do
-	{
-		std::printf( "liveness iter %0lld\n", ++_iter );	
-
-		changed = false;
-		//
-		// one backward pass through all instructions
-		//
-		
-		for (
-			instr_id_t instr_id { this->next_instr_id - 1 };
-			instr_id >= 0;
-			--instr_id
-		)
-		{
-			VarIdSet new_out_set {};
-			//
-			// loop over all successors of current instr 
-			//
-			for ( const instr_id_t succ_id : this->succs_tbl[ instr_id ] )
-			{
-				//
-				// iterative over IDs of all encountered variables;
-				// if any is in the current successor's IN set, 
-				// add it to our new OUT set
-				//
-				for (
-					var_id_t var_id { 0 };
-					var_id < this->var_vis.next_var_id;
-					++var_id 
-				)
-				{
-
-					if ( this->var_id_sets.IN[ succ_id ].has( var_id ) )
-					{
-						new_out_set += var_id;
-					}
-				}
-			}
-			if ( new_out_set != this->var_id_sets.OUT[ instr_id ] )
-			{
-				changed = true;
-			}
-
-			VarIdSet new_in_set { this->var_id_sets.GEN[ instr_id ] };
-			new_in_set |= (
-				new_out_set - this->var_id_sets.KILL[ instr_id ]
-			);
-			if ( new_in_set != this->var_id_sets.IN[ instr_id ] )
-			{
-				changed = true;
-			}
-
-			this->var_id_sets.OUT[ instr_id ] = std::move( new_out_set );
-			this->var_id_sets.IN [ instr_id ] = std::move( new_in_set );
-		}
-	}
-	while ( changed );
+	while ( !this->step_liveness() )
+	{}
 }
 
 
