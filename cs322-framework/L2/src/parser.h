@@ -321,7 +321,7 @@ namespace L2
 			{
 				// without expansion ( doesn't work )
 				//this->make_node_tuple< typename RecNodeT::fields_t >()
-				make_fields_tuple( ( typename RecNodeT::fields_t * ) {} )
+				make_fields_tuple( ( typename RecNodeT::fields_t * ) nullptr )
 			};
 			if ( ndtuple_opt )
 			{

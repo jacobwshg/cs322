@@ -68,7 +68,7 @@ L2::Liv::
 InstrVisitor::InstrVisitor( const std::size_t instr_cnt )
 {
 	//
-	// append sets for a dummy instr, which will stay empty
+	// append sets for a dummy instr, which will stay empty.
 	// if the final instr is not return, accessing its nonexistent "serial successor"
 	// will not cause an indexing error
 	//
@@ -146,6 +146,7 @@ void
 L2::Liv::
 InstrVisitor::display_var_set( const L2::Liv::VarIdSet &var_id_set ) const
 {
+	std::printf( "\t( " );
 	for (
 		var_id_t var_id { GPRId::val< RaxNode > };
 		var_id < this->var_vis.next_var_id;
@@ -158,12 +159,12 @@ InstrVisitor::display_var_set( const L2::Liv::VarIdSet &var_id_set ) const
 			if ( var_id >= VarVisitor::BASE_VAR_ID ) { std::printf( "%s", L2::KW::PERCENT.data() ); }
 
 			std::printf(
-				"%s, ",
+				"%s ",
 				this->var_vis.var_by_id( var_id ).data()
 			);
 		}
 	}
-	std::printf( "\n" );
+	std::printf( ")\n" );
 }
 
 
@@ -253,7 +254,8 @@ InstrVisitor::resolve_label_succ (
 )
 {
 	//
-	// add mapping from label to instr ID, regardless of whether it has been requested above
+	// add mapping from label to instr ID, regardless of whether
+	// it had been requested above
 	//
 	this->label_id_tbl.insert(
 		{
