@@ -130,6 +130,11 @@ namespace L2
 		//
 		void display_all_instr_var_sets( void ) const;
 
+		//
+		// display all IN sets, then OUT sets in test expected format
+		//
+		void display_test_in_out( void ) const;
+
 		// allocate and return new instr ID
 		instr_id_t new_instr_id( void );
 

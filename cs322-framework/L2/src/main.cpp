@@ -121,10 +121,9 @@ int main(
 			canstep = fn_instr_vis.step_liveness();
 			fn_instr_vis.display_all_instr_var_sets();
 		}
-		
 
-		//fn_instr_vis.run_liveness();
-		//fn_instr_vis.display_all_instr_var_sets();
+		fn_instr_vis.display_test_in_out();
+
 	}
 
 }

@@ -146,7 +146,7 @@ void
 L2::Liv::
 InstrVisitor::display_var_set( const L2::Liv::VarIdSet &var_id_set ) const
 {
-	std::printf( "\t( " );
+	std::printf( "( " );
 	for (
 		var_id_t var_id { GPRId::val< RaxNode > };
 		var_id < this->var_vis.next_var_id;
@@ -186,10 +186,10 @@ InstrVisitor::display_instr_var_sets( const instr_id_t instr_id ) const
 	std::printf( "\tKILL:\t" );
 	this->display_var_set( this->var_id_sets.KILL[ instr_id ] );
 
-	std::printf( "\tIN:\t" );
+	std::printf( "\tIN:\t\t" );
 	this->display_var_set( this->var_id_sets.IN  [ instr_id ] );
 
-	std::printf( "\tOUT\t" );
+	std::printf( "\tOUT:\t" );
 	this->display_var_set( this->var_id_sets.OUT [ instr_id ] );
 
 }
@@ -208,6 +208,40 @@ InstrVisitor::display_all_instr_var_sets( void ) const
 }
 
 
+void
+L2::Liv::
+InstrVisitor::display_test_in_out( void ) const
+{
+	instr_id_t instr_id { 0 };
+	std::printf( "(\n" );
+
+	//
+	// print IN sets
+	//
+	std::printf( "\t( in\n" );
+	for ( instr_id = 0; instr_id < this->next_instr_id; ++instr_id )	
+	{
+		std::printf( "\t\t" );
+		this->display_var_set( this->var_id_sets.IN[ instr_id ] );
+	}
+	std::printf( "\t)\n" );
+
+	//
+	// print OUT sets
+	//
+	std::printf( "\t( out\n" );
+	for ( instr_id = 0; instr_id < this->next_instr_id; ++instr_id )	
+	{
+		std::printf( "\t\t" );
+		this->display_var_set( this->var_id_sets.OUT[ instr_id ] );
+	}
+	std::printf( "\t)\n" );
+
+	std::printf( ")\n" );
+
+}
+
+
 L2::instr_id_t
 L2::Liv::
 InstrVisitor::new_instr_id( void )
@@ -216,7 +250,6 @@ InstrVisitor::new_instr_id( void )
 	++this->next_instr_id;
 	return instr_id;
 }
-
 
 void
 L2::Liv::
