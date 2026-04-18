@@ -217,6 +217,38 @@ namespace L2
 			void operator()( const iLoadNode & );
 			void operator()( const iStoreNode & );
 
+			void operator()( const iStackArgNode & );
+
+			void operator()( const iAOpNode & );
+			void operator()( const iSxNode & );
+			void operator()( const iSOpNode & );
+
+			void operator()( const iAddStoreNode & );
+			void operator()( const iSubStoreNode & );
+			void operator()( const iLoadAddNode & );
+			void operator()( const iLoadSubNode & );
+
+			void operator()( const iCmpAssignNode & );
+			void operator()( const iCJumpNode & );
+			void operator()( const iLabelNode & );
+			void operator()( const iGotoNode & );
+
+			void operator()( const iReturnNode & );
+	
+			void operator()( const iCallUNode & );
+			void operator()( const iCallPrintNode & );
+			void operator()( const iCallInputNode & );
+			void operator()( const iCallAllocateNode & );
+			void operator()( const iCallTupleErrorNode & );
+			void operator()( const iCallTensorErrorNode & );
+
+			void operator()( const iIncrNode & );
+			void operator()( const iDecrNode & );
+			void operator()( const iLEANode & );
+
+			void operator()( const fNode & );
+			void operator()( const pNode & );
+
 		};
 
 	}
