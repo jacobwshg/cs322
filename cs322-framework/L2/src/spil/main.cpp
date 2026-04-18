@@ -1,5 +1,6 @@
 
 #include "spiller.h"
+#include "variant_gen.h"
 #include "../parser.h"
 
 #include <cstdio>

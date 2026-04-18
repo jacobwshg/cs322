@@ -99,69 +99,74 @@ namespace L2
 			}
 
 			//
-			// check if var_name is the same as the variable to spill.
-			// if so, make a node with the latest alias name.
-			// else, make with the original var_name.
+			// make a varNode ( or its various wrappers ) with the latest alias name.
 			//
 			template< typename Node > Node
-			try_make_alias_node( const sv_t var_name ) { return Node {}; }
-
+			make_alias_node( void ) { return Node {}; }
 			template<> nameNode
-			try_make_alias_node< nameNode >( const sv_t var_name )
+			make_alias_node< nameNode >( void )
 			{
-				if ( this->is_spill_var_name( var_name ) )
+				return nameNode
 				{
-					return nameNode
-					{
-						.val = this->alias_prefix + std::to_string( this->next_alias_id )
-					};
-				}
-				else
-				{
-					return nameNode { .val = std::string { var_name } };
-				}
+					.val = this->alias_prefix + std::to_string( this->next_alias_id )
+				};
 			}
 			template<> varNode
-			try_make_alias_node< varNode >( const sv_t var_name )
+			make_alias_node< varNode >( void )
 			{
-				return varNode { .percent_n = {}, .name_n = this->try_make_alias_node< nameNode >( var_name ) };
+				return varNode
+				{	
+					.percent_n = {},
+					.name_n = this->make_alias_node< nameNode >(),
+				};
 			}
 			template<> sxNode
-			try_make_alias_node< sxNode >( const sv_t var_name )
+			make_alias_node< sxNode >( void )
 			{
-				return sxNode { this->try_make_alias_node< varNode >( var_name ) };
+				return sxNode { this->make_alias_node< varNode >() };
 			}
 			template<> aNode
-			try_make_alias_node< aNode >( const sv_t var_name )
+			make_alias_node< aNode >( void )
 			{
-				return aNode { this->try_make_alias_node< sxNode >( var_name ) };
+				return aNode { this->make_alias_node< sxNode >() };
 			}
 			template<> wNode
-			try_make_alias_node< wNode >( const sv_t var_name )
+			make_alias_node< wNode >( void )
 			{
-				return wNode { this->try_make_alias_node< aNode >( var_name ) };
+				return wNode { this->make_alias_node< aNode >() };
 			}
 			template<> uNode
-			try_make_alias_node< uNode >( const sv_t var_name )
+			make_alias_node< uNode >( void )
 			{
-				return uNode { this->try_make_alias_node< wNode >( var_name ) };
+				return uNode { this->make_alias_node< wNode >() };
 			}
 			template<> xNode
-			try_make_alias_node< xNode >( const sv_t var_name )
+			make_alias_node< xNode >( void )
 			{
-				return xNode { this->try_make_alias_node< wNode >( var_name ) };
+				return xNode { this->make_alias_node< wNode >() };
 			}
 			template<> tNode
-			try_make_alias_node< tNode >( const sv_t var_name )
+			make_alias_node< tNode >( void )
 			{
-				return tNode { this->try_make_alias_node< xNode >( var_name ) };
+				return tNode { this->make_alias_node< xNode >() };
 			}
 			template<> sNode
-			try_make_alias_node< sNode >( const sv_t var_name )
+			make_alias_node< sNode >( void )
 			{
-				return sNode { this->try_make_alias_node< tNode >( var_name ) };
+				return sNode { this->make_alias_node< tNode >() };
 			}
-		
+	
+			//
+			// if `spill` is true, make an alias node properly wrapped
+			// to the level of Node; else, simply copy the provided node.
+			//
+			template< typename Node > Node
+			try_make_alias_node( const Node &n, const bool spill )
+			{
+				if ( spill ) { return this->make_alias_node< Node >(); }
+				else { return n; }
+			}
+	
 			/*
 			inline L2::nameNode make_alias_nameNode( void )
 			{

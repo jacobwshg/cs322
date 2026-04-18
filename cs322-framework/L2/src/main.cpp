@@ -44,7 +44,7 @@ int main(
 					L2::varNode
 					{
 						.percent_n = L2::PercentNode{},
-						.name_n = L2::nameNode { .val = n, },
+						.name_n = L2::nameNode { .val = std::string { n }, },
 					}
 				}
 			);

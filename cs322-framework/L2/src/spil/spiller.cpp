@@ -61,7 +61,7 @@ Spiller::make_alias_iLoadNode( void )
 	return iLoadNode
 	{
 		// use the spill var name to force an aliased node
-		.w_n = this->try_make_alias_node< wNode >( this->spill_var_name ),
+		.w_n = this->make_alias_node< wNode >(),
 		.op_assign_n = {},
 		.mem_n = MemNode {},
 		.x_n = xNode { RspNode {} },
@@ -85,7 +85,7 @@ Spiller::make_alias_iStoreNode( void )
 		.x_n = xNode { RspNode {} },
 		.M_n = MNode { .val = stk_ofs },
 		.op_assign_n = {},
-		.s_n = this->try_make_alias_node< wNode >( this->spill_var_name ),
+		.s_n = this->make_alias_node< wNode >(),
 	};
 
 }
@@ -115,9 +115,9 @@ Spiller::operator()( const iAssignNode &n )
 
 		iAssignNode
 		{
-			.w_n = this->try_make_alias_node< wNode >( w_name ),
+			.w_n = this->try_make_alias_node< wNode >( n.w_n, spill_w ),
 			.op_assign_n = {},
-			.s_n = this->try_make_alias_node< sNode >( s_name ),
+			.s_n = this->try_make_alias_node< sNode >( n.s_n, spill_s ),
 		}
 
 	);
@@ -151,10 +151,10 @@ Spiller::operator()( const iLoadNode &n )
 	this->add_iNode(
 		iLoadNode
 		{
-			.w_n = this->try_make_alias_node< wNode >( w_name ),
+			.w_n = this->try_make_alias_node< wNode >( n.w_n, spill_w ),
 			.op_assign_n = {},
 			.mem_n = {},
-			.x_n = this->try_make_alias_node< xNode >( x_name ),
+			.x_n = this->try_make_alias_node< xNode >( n.x_n, spill_x ),
 			.M_n = n.M_n,
 		}
 	);
@@ -192,10 +192,10 @@ Spiller::operator()( const iStoreNode &n )
 		iStoreNode
 		{
 			.mem_n = {},
-			.x_n = this->try_make_alias_node< xNode >( x_name ),
+			.x_n = this->try_make_alias_node< xNode >( n.x_n, spill_x ),
 			.M_n = n.M_n,
 			.op_assign_n = {},
-			.s_n = this->try_make_alias_node< sNode >( s_name ),
+			.s_n = this->try_make_alias_node< sNode >( n.s_n, spill_s ),
 
 		}
 	);
@@ -224,7 +224,7 @@ Spiller::operator()( const iStackArgNode &n )
 	this->add_iNode(
 		iStackArgNode
 		{
-			.w_n = this->try_make_alias_node< wNode >( w_name ),
+			.w_n = this->try_make_alias_node< wNode >( n.w_n, spill_w ),
 			.op_assign_n = {},
 			.stack_arg_n = {},
 			.M_n = n.M_n,
@@ -263,9 +263,9 @@ Spiller::operator()( const iAOpNode &n )
 	this->add_iNode(
 		iAOpNode
 		{
-			.w_n = this->try_make_alias_node< wNode >( w_name ),
+			.w_n = this->try_make_alias_node< wNode >( n.w_n, spill_w ),
 			.aop_n = n.aop_n,
-			.t_n = this->try_make_alias_node< wNode >( t_name ),
+			.t_n = this->try_make_alias_node< tNode >( n.t_n, spill_t ),
 		}
 	);
 
@@ -298,9 +298,9 @@ Spiller::operator()( const iSxNode &n )
 	this->add_iNode(
 		iSxNode
 		{
-			.w_n = this->try_make_alias_node< wNode >( w_name ),
+			.w_n = this->try_make_alias_node< wNode >( n.w_n, spill_w ),
 			.sop_n = n.sop_n,
-			.sx_n = this->try_make_alias_node< sxNode >( sx_name ),
+			.sx_n = this->try_make_alias_node< sxNode >( n.sx_n, spill_sx ),
 		}
 	);
 
@@ -331,7 +331,7 @@ Spiller::operator()( const iSOpNode &n )
 	this->add_iNode(
 		iSOpNode
 		{
-			.w_n = this->try_make_alias_node< wNode >( w_name ),
+			.w_n = this->try_make_alias_node< wNode >( n.w_n, spill_w ),
 			.sop_n = n.sop_n,
 			.N_n = n.N_n,
 		}
@@ -366,10 +366,10 @@ Spiller::operator()( const iAddStoreNode &n )
 		iAddStoreNode
 		{
 			.mem_n = {},
-			.x_n = this->try_make_alias_node< xNode >( x_name ),
+			.x_n = this->try_make_alias_node< xNode >( n.x_n, spill_x ),
 			.M_n = n.M_n,
 			.op_add_eq_n = {},
-			.t_n = this->try_make_alias_node< tNode >( t_name ),
+			.t_n = this->try_make_alias_node< tNode >( n.t_n, spill_t ),
 		}
 	);
 
@@ -402,10 +402,10 @@ Spiller::operator()( const iSubStoreNode &n )
 		iSubStoreNode
 		{
 			.mem_n = {},
-			.x_n = this->try_make_alias_node< xNode >( x_name ),
+			.x_n = this->try_make_alias_node< xNode >( n.x_n, spill_x ),
 			.M_n = n.M_n,
 			.op_sub_eq_n = {},
-			.t_n = this->try_make_alias_node< tNode >( t_name ),
+			.t_n = this->try_make_alias_node< tNode >( n.t_n, spill_t ),
 		}
 	);
 
@@ -438,10 +438,10 @@ Spiller::operator()( const iLoadAddNode &n )
 	this->add_iNode(
 		iLoadAddNode
 		{
-			.w_n = this->try_make_alias_node< wNode >( w_name ),
+			.w_n = this->try_make_alias_node< wNode >( n.w_n, spill_w ),
 			.op_add_eq_n = {},
 			.mem_n = {},
-			.x_n = this->try_make_alias_node< xNode >( x_name ),
+			.x_n = this->try_make_alias_node< xNode >( n.x_n, spill_x ),
 			.M_n = n.M_n,
 		}
 	);
@@ -475,10 +475,10 @@ Spiller::operator()( const iLoadSubNode &n )
 	this->add_iNode(
 		iLoadSubNode
 		{
-			.w_n = this->try_make_alias_node< wNode >( w_name ),
+			.w_n = this->try_make_alias_node< wNode >( n.w_n, spill_w ),
 			.op_sub_eq_n = {},
 			.mem_n = {},
-			.x_n = this->try_make_alias_node< xNode >( x_name ),
+			.x_n = this->try_make_alias_node< xNode >( n.x_n, spill_x ),
 			.M_n = n.M_n,
 		}
 	);
@@ -514,11 +514,11 @@ Spiller::operator()( const iCmpAssignNode &n )
 	this->add_iNode(
 		iCmpAssignNode
 		{
-			.w_n = this->try_make_alias_node< wNode >( w_name ),
+			.w_n = this->try_make_alias_node< wNode >( n.w_n, spill_w ),
 			.op_assign_n = {},
-			.t1_n = this->try_make_alias_node< tNode >( t1_name ),
+			.t1_n = this->try_make_alias_node< tNode >( n.t1_n, spill_t1 ),
 			.cmp_n = n.cmp_n,
-			.t2_n = this->try_make_alias_node< tNode >( t2_name ),
+			.t2_n = this->try_make_alias_node< tNode >( n.t2_n, spill_t2 ),
 		}
 	);
 
@@ -551,9 +551,9 @@ Spiller::operator()( const iCJumpNode &n )
 		iCJumpNode
 		{
 			.cjump_n = {},
-			.t1_n = this->try_make_alias_node< tNode >( t1_name ),
+			.t1_n = this->try_make_alias_node< tNode >( n.t1_n, spill_t1 ),
 			.cmp_n = n.cmp_n,
-			.t2_n = this->try_make_alias_node< tNode >( t2_name ),
+			.t2_n = this->try_make_alias_node< tNode >( n.t2_n, spill_t2 ),
 			.label_n = n.label_n
 		}
 	);
@@ -613,7 +613,7 @@ Spiller::operator()( const iCallUNode &n )
 		iCallUNode
 		{
 			.call_n = {},
-			.u_n = this->try_make_alias_node< uNode >( u_name ),
+			.u_n = this->try_make_alias_node< uNode >( n.u_n, spill_u ),
 			.N_n = n.N_n,
 		}
 	);
@@ -693,7 +693,7 @@ Spiller::operator()( const iIncrNode &n )
 	this->add_iNode(
 		iIncrNode
 		{
-			.w_n = this->try_make_alias_node< wNode >( w_name ),
+			.w_n = this->try_make_alias_node< wNode >( n.w_n, spill_w ),
 			.op_incr_n = {},
 		}
 	);
@@ -725,7 +725,7 @@ Spiller::operator()( const iDecrNode &n )
 	this->add_iNode(
 		iDecrNode
 		{
-			.w_n = this->try_make_alias_node< wNode >( w_name ),
+			.w_n = this->try_make_alias_node< wNode >( n.w_n, spill_w ),
 			.op_decr_n = {},
 		}
 	);
@@ -764,10 +764,10 @@ Spiller::operator()( const iLEANode &n )
 	this->add_iNode(
 		iLEANode
 		{
-			.w1_n = this->try_make_alias_node< wNode >( w1_name ),
+			.w1_n = this->try_make_alias_node< wNode >( n.w1_n, spill_w1 ),
 			.at_n = {},
-			.w2_n = this->try_make_alias_node< wNode >( w2_name ),
-			.w3_n = this->try_make_alias_node< wNode >( w3_name ),
+			.w2_n = this->try_make_alias_node< wNode >( n.w2_n, spill_w2 ),
+			.w3_n = this->try_make_alias_node< wNode >( n.w3_n, spill_w3 ),
 			.E_n = n.E_n,
 		}
 	);
