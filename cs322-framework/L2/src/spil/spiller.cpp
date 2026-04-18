@@ -76,7 +76,12 @@ void
 L2::Spil::
 Spiller::operator()( const iAssignNode &n )
 {
+	// 
 	// w <- s
+	//
+	// read s
+	// write w
+	//
 
 	const std::string_view
 		w_name { std::visit( this->var_view, n.w_n ) },
