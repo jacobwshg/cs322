@@ -3,6 +3,8 @@
 #define L2_SPIL_SPILLER_H
 
 #include "../ast.h"
+#include "unparser.h"
+#include "var_view.h"
 
 #include <string>
 #include <cstdint>
@@ -12,30 +14,6 @@ namespace L2
 {
 	namespace Spil
 	{
-		//
-		// unlike the variable visitor in L2::Liv, the one we use for spilling
-		// doesn't need to maintain mapping state between variables and IDs;
-		// it only extracts the name
-		//
-		struct VarViewer
-		{
-			//
-			// we might encounter non-GPR KW nodes, but it's fine as long as the KW
-			// doesn't match the variable name we're looking for
-			//
-			template< typename KWNode > requires L2::IsKWNode< KWNode >
-			std::string_view operator()( const KWNode &kw_n ) { return KWNode::kw; }
-
-			std::string_view operator()( const nameNode &name_n ) { return name_n.val; }
-
-			std::string_view operator()( const varNode &var_n ) { return ( *this )( var_n.name_n ); }
-
-			std::string_view operator()( const VariantNode &variant_n ) { return ( *this )( variant_n ) };
-
-			template< typename Node >
-			std::string_view operator()( const Node &n ) { return L2::EMPTYTOK; }
-
-		};
 
 		//
 		// spills a variable from AST nodes ( primarily iNode alternatives, but can accept fNode as well )
@@ -127,7 +105,7 @@ namespace L2
 				}
 				else
 				{
-					return nameNode { .val = var_name };
+					return nameNode { .val = std::string { var_name } };
 				}
 			}
 			template<> varNode
@@ -139,34 +117,34 @@ namespace L2
 			try_make_alias_node< sxNode >( const sv_t var_name )
 			{
 				return sxNode { this->try_make_alias_node< varNode >( var_name ) };
-			0}
+			}
 			template<> aNode
 			try_make_alias_node< aNode >( const sv_t var_name )
 			{
 				return aNode { this->try_make_alias_node< sxNode >( var_name ) };
 			}
 			template<> wNode
-			try_make_alias_node< wNode >( void )
+			try_make_alias_node< wNode >( const sv_t var_name )
 			{
 				return wNode { this->try_make_alias_node< aNode >( var_name ) };
 			}
 			template<> uNode
-			try_make_alias_node< uNode >( void )
+			try_make_alias_node< uNode >( const sv_t var_name )
 			{
 				return uNode { this->try_make_alias_node< wNode >( var_name ) };
 			}
 			template<> xNode
-			try_make_alias_node< xNode >( void )
+			try_make_alias_node< xNode >( const sv_t var_name )
 			{
 				return xNode { this->try_make_alias_node< wNode >( var_name ) };
 			}
 			template<> tNode
-			try_make_alias_node< tNode >( void )
+			try_make_alias_node< tNode >( const sv_t var_name )
 			{
 				return tNode { this->try_make_alias_node< xNode >( var_name ) };
 			}
 			template<> sNode
-			try_make_alias_node< sNode >( void )
+			try_make_alias_node< sNode >( const sv_t var_name )
 			{
 				return sNode { this->try_make_alias_node< tNode >( var_name ) };
 			}
@@ -235,6 +213,9 @@ namespace L2
 			}
 
 			void operator()( const iAssignNode & );
+
+			void operator()( const iLoadNode & );
+			void operator()( const iStoreNode & );
 
 		};
 

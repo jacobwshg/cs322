@@ -18,7 +18,7 @@ Spiller::Spiller(
 
 std::size_t
 L2::Spil::
-Spiller::new_alias_id( void );
+Spiller::new_alias_id( void )
 {
 	const std::size_t id { this->next_alias_id };
 	++this->next_alias_id;
@@ -41,13 +41,11 @@ Spiller::make_alias_iLoadNode( void )
 	return iLoadNode
 	{
 		// use the spill var name to force an aliased node
-		.w_n = this->make_alias_node< wNode >( this->spill_var_name );
-
-		.op_assign_n = iOpAssignNode {},
-
+		.w_n = this->try_make_alias_node< wNode >( this->spill_var_name ),
+		.op_assign_n = {},
 		.mem_n = MemNode {},
-		.xNode = xNode { RspNode {} },
-		.MNode = MNode { .val = stk_ofs };
+		.x_n = xNode { RspNode {} },
+		.M_n = MNode { .val = stk_ofs },
 	};
 
 }
@@ -65,12 +63,10 @@ Spiller::make_alias_iStoreNode( void )
 	return iStoreNode
 	{
 		.mem_n = MemNode {},
-		.xNode = xNode { RspNode {} },
-		.MNode = MNode { .val = stk_ofs };
-
-		.op_assign_n = iOpAssignNode {},
-
-		.s_n = this->make_alias_node< wNode >( this->spill_var_name );
+		.x_n = xNode { RspNode {} },
+		.M_n = MNode { .val = stk_ofs },
+		.op_assign_n = {},
+		.s_n = this->try_make_alias_node< wNode >( this->spill_var_name ),
 	};
 
 }
@@ -97,7 +93,7 @@ Spiller::operator()( const iLoadNode &n )
 			.op_assign_n = {},
 			.mem_n = {},
 			.x_n = this->try_make_alias_node< xNode >( x_name ),
-			.M_n = w_n.M_n,
+			.M_n = n.M_n,
 		}
 	);
 
@@ -132,7 +128,7 @@ Spiller::operator()( const iStoreNode &n )
 		{
 			.mem_n = {},
 			.x_n = this->try_make_alias_node< xNode >( x_name ),
-			.M_n = w_n.M_n,
+			.M_n = n.M_n,
 			.op_assign_n = {},
 			.s_n = this->try_make_alias_node< sNode >( s_name ),
 
