@@ -81,6 +81,38 @@ namespace L2
 
 			std::string operator()( const iAssignNode & );
 
+			std::string operator()( const iLoadNode & );
+			std::string operator()( const iStoreNode & );
+
+			std::string operator()( const iStackArgNode & );
+
+			std::string operator()( const iAOpNode & );
+			std::string operator()( const iSxNode & );
+			std::string operator()( const iSOpNode & );
+
+			std::string operator()( const iAddStoreNode & );
+			std::string operator()( const iSubStoreNode & );
+			std::string operator()( const iLoadAddNode & );
+			std::string operator()( const iLoadSubNode & );
+
+			std::string operator()( const iCmpAssignNode & );
+			std::string operator()( const iCJumpNode & );
+			std::string operator()( const iLabelNode & );
+			std::string operator()( const iGotoNode & );
+
+			std::string operator()( const iReturnNode & );
+	
+			std::string operator()( const iCallUNode & );
+			std::string operator()( const iCallPrintNode & );
+			std::string operator()( const iCallInputNode & );
+			std::string operator()( const iCallAllocateNode & );
+			std::string operator()( const iCallTupleErrorNode & );
+			std::string operator()( const iCallTensorErrorNode & );
+
+			std::string operator()( const iIncrNode & );
+			std::string operator()( const iDecrNode & );
+			std::string operator()( const iLEANode & );
+
 		};
 	}
 }
