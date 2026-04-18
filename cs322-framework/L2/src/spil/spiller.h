@@ -186,7 +186,7 @@ namespace L2
 			add_iNode( const iNodeAlt &&i_n_alt ) { this->add_iNode( iNode { i_n_alt } ); }
 
 			//
-			// if spill is true ( = the non-memory location is the spill variable )
+			// if spill is true ( = one of the non-memory locations is the spill variable )
 			// then add an aliased load/store instr to the function node member;
 			// else, do nothing
 			//
@@ -200,16 +200,15 @@ namespace L2
 			}
 
 			//
-			// any_spill is the OR of all spill flags for a given instruction.
 			// if the instr spills at least one operand, we increment the 
 			// alias ID for later instructions to use.
 			//
 			// this must be done at the end of each instr handler
 			// because making nodes in the body requires the current alias ID.
 			//
-			void try_advance_alias_id( const bool any_spill )
+			void try_advance_alias_id( const bool spill )
 			{
-				if ( any_spill ) { ++this->next_alias_id; }
+				if ( spill ) { ++this->next_alias_id; }
 			}
 
 			void operator()( const iAssignNode & );

@@ -154,8 +154,7 @@ Spiller::operator()( const iStoreNode &n )
 	// x is read from, not written to,
 	// to compute the mem location to ultimately write to
 	//
-	this->try_add_alias_iLoadNode( spill_x );
-	this->try_add_alias_iLoadNode( spill_s );
+	this->try_add_alias_iLoadNode( spill_x || spill_s );
 
 	this->add_iNode(
 		iStoreNode
@@ -218,8 +217,7 @@ Spiller::operator()( const iAOpNode &n )
 	//
 	// w is both read from and written to
 	//
-	this->try_add_alias_iLoadNode( spill_w );
-	this->try_add_alias_iLoadNode( spill_t );
+	this->try_add_alias_iLoadNode( spill_w || spill_t );
 
 	this->add_iNode(
 		iAOpNode
@@ -249,8 +247,7 @@ Spiller::operator()( const iSxNode &n )
 		spill_w  { this->is_spill_var_name( w_name ) },
 		spill_sx { this->is_spill_var_name( sx_name ) };
 
-	this->try_add_alias_iLoadNode( spill_w );
-	this->try_add_alias_iLoadNode( spill_sx );
+	this->try_add_alias_iLoadNode( spill_w || spill_sx );
 
 	this->add_iNode(
 		iSxNode
@@ -308,8 +305,7 @@ Spiller::operator()( const iAddStoreNode &n )
 		spill_x { this->is_spill_var_name( x_name ) },
 		spill_t { this->is_spill_var_name( t_name ) };
 
-	this->try_add_alias_iLoadNode( spill_x );
-	this->try_add_alias_iLoadNode( spill_t );
+	this->try_add_alias_iLoadNode( spill_x || spill_t );
 
 	this->add_iNode(
 		iAddStoreNode
@@ -341,8 +337,7 @@ Spiller::operator()( const iSubStoreNode &n )
 		spill_x { this->is_spill_var_name( x_name ) },
 		spill_t { this->is_spill_var_name( t_name ) };
 
-	this->try_add_alias_iLoadNode( spill_x );
-	this->try_add_alias_iLoadNode( spill_t );
+	this->try_add_alias_iLoadNode( spill_x || spill_t );
 
 	this->add_iNode(
 		iSubStoreNode
@@ -374,8 +369,7 @@ Spiller::operator()( const iLoadAddNode &n )
 		spill_w { this->is_spill_var_name( w_name ) },
 		spill_x { this->is_spill_var_name( x_name ) };
 
-	this->try_add_alias_iLoadNode( spill_w );
-	this->try_add_alias_iLoadNode( spill_x );
+	this->try_add_alias_iLoadNode( spill_w || spill_x );
 
 	this->add_iNode(
 		iLoadAddNode
@@ -407,8 +401,7 @@ Spiller::operator()( const iLoadSubNode &n )
 		spill_w { this->is_spill_var_name( w_name ) },
 		spill_x { this->is_spill_var_name( x_name ) };
 
-	this->try_add_alias_iLoadNode( spill_w );
-	this->try_add_alias_iLoadNode( spill_x );
+	this->try_add_alias_iLoadNode( spill_w || spill_x );
 
 	this->add_iNode(
 		iLoadSubNode
@@ -426,6 +419,41 @@ Spiller::operator()( const iLoadSubNode &n )
 	this->try_advance_alias_id( spill_w || spill_x );
 
 }
+
+void
+L2::Spil::
+Spiller::operator()( const iCmpAssignNode &n )
+{
+	// w <- t cmp t
+
+	const std::string_view
+		w_name  { std::visit( this->var_view, n.w_n ) },
+		t1_name { std::visit( this->var_view, n.t1_n ) },
+		t2_name { std::visit( this->var_view, n.t2_n ) };
+	const bool
+		spill_w  { this->is_spill_var_name( w_name ) },
+		spill_t1 { this->is_spill_var_name( t1_name ) },
+		spill_t2 { this->is_spill_var_name( t2_name ) };
+
+	this->try_add_alias_iLoadNode( spill_w || spill_t1 || spill_t2 );
+
+	this->add_iNode(
+		iCmpAssignNode
+		{
+			.w_n = this->try_make_alias_node< wNode >( w_name ),
+			.op_assign_n = {},
+			.t1_n = this->try_make_alias_node< tNode >( t1_name ),
+			.cmp_n = n.cmp_n,
+			.t2_n = this->try_make_alias_node< tNode >( t2_name ),
+		}
+	);
+
+	this->try_add_alias_iStoreNode( spill_w );
+
+	this->try_advance_alias_id( spill_w || spill_t1 || spill_t2 );
+
+}
+
 
 
 
