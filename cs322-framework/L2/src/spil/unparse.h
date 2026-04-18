@@ -14,9 +14,18 @@ namespace L2
 
 		struct Unparser
 		{
+			static inline constexpr std::string_view
+				SP  { " " },
+				TAB { "\t" },
+				LF  { "\n" };
 
-			static inline constexpr std::string_view SP { " " };
-			static inline constexpr std::string_view LF { "\n" };
+			long long int stk_var_cnt { 0 };
+
+			Unparser( void ) =default;
+
+			Unparser( const long long int stk_var_cnt_ ):
+				stk_var_cnt { stk_var_cnt_ }
+			{}
 
 			//
 			// overload for string literals, such as spaces inserted between tokens
@@ -112,6 +121,9 @@ namespace L2
 			std::string operator()( const iIncrNode & );
 			std::string operator()( const iDecrNode & );
 			std::string operator()( const iLEANode & );
+
+			std::string operator()( const fNode & );
+			std::string operator()( const pNode & );
 
 		};
 	}

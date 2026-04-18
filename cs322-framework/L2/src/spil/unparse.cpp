@@ -361,3 +361,68 @@ Unparser::operator()( const L2::iLEANode &n )
 
 }
 
+std::string
+L2::Spil::
+Unparser::operator()( const L2::fNode &n )
+{
+	//
+	// (l
+	//   N N
+	//   i...
+	// )
+	//
+
+	std::string sbuf { };
+	sbuf.reserve( 512 );
+
+	sbuf += "\t(";
+	sbuf += ( *this )( n.l_n );
+	sbuf += LF;
+
+	sbuf += TAB;
+	sbuf += ( *this )( n.N_n );
+	sbuf += SP;
+	sbuf += std::to_string( this->stk_var_cnt );
+	sbuf += LF;
+	
+	for ( const iNode &i_n: n.i_ns )
+	{
+		sbuf += "\t\t";
+		sbuf += ( *this )( i_n );
+		sbuf += "\n";
+	}
+
+	sbuf += "\t)\n";
+
+	return std::move( sbuf );
+
+}
+
+std::string
+L2::Spil::
+Unparser::operator()( const L2::pNode &n )
+{
+	//
+	// (l
+	//   f...
+	// )
+	//
+
+	std::string sbuf {};
+	sbuf.reserve( 1024 );
+
+	sbuf += "(";
+	sbuf += ( *this )( n.l_n );
+	sbuf += LF;
+
+	for ( const fNode &f_n: n.f_ns )
+	{
+		sbuf += ( *this )( f_n );
+	}
+
+	sbuf += ")\n";
+
+	return std::move( sbuf );
+
+}
+
