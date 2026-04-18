@@ -14,6 +14,22 @@ namespace L2
 
 		struct Unparser
 		{
+
+			static inline constexpr std::string_view SP { " " };
+			static inline constexpr std::string_view LF { "\n" };
+
+			//
+			// overload for string literals, such as spaces inserted between tokens
+			// 
+			std::string operator()( const std::string_view s )
+			{
+				return std::string { s };
+			}
+
+			//
+			// overloads for terminal nodes
+			//
+
 			template< typename KWNode > requires L2::IsKWNode< KWNode >
 			std::string operator()( const KWNode &kw_n )
 			{
@@ -35,11 +51,16 @@ namespace L2
 				return std::to_string( n_nz_n.val );
 			}
 
+			//
+			// overloads for internal nodes
+			//
+
 			template< typename VariantNode > requires ::is_variant_v< VariantNode >
 			std::string operator()( const VariantNode &variant_n )
 			{
 				return std::visit( *this, variant_n );
 			}
+
 
 			template< typename Node >
 			void operator()( const Node &n, std::string &sbuf )
@@ -52,10 +73,13 @@ namespace L2
 			{
 				std::string sbuf {};
 				sbuf.reserve( 32 );
+
 				( ( *this )( ns, sbuf ) , ... );
-				sbuf += "\n";
+
 				return std::move( sbuf );
 			}
+
+			std::string operator()( const iAssignNode & );
 
 		};
 	}

@@ -265,7 +265,11 @@ namespace L2
 	};
 
 	using NNode = std::variant< _0Node, NNZNode >;
-	struct MNode { long long val; }; // multiples of 8 
+	struct MNode
+	{
+		// multiples of 8 
+		long long val;
+	}; 
 	using FNode = std::variant< _1Node, _3Node, _4Node >;
 	using ENode = std::variant< _1Node, _2Node, _4Node, _8Node >;
 
