@@ -454,6 +454,147 @@ Spiller::operator()( const iCmpAssignNode &n )
 
 }
 
+void
+L2::Spil::
+Spiller::operator()( const iCJumpNode &n )
+{
+	// cjump t cmp t label
+
+	const std::string_view
+		t1_name { std::visit( this->var_view, n.t1_n ) },
+		t2_name { std::visit( this->var_view, n.t2_n ) };
+	const bool
+		spill_t1 { this->is_spill_var_name( t1_name ) },
+		spill_t2 { this->is_spill_var_name( t2_name ) };
+
+	this->try_add_alias_iLoadNode( spill_t1 || spill_t2 );
+
+	this->add_iNode(
+		iCJumpNode
+		{
+			.cjump_n = {},
+			.t1_n = this->try_make_alias_node< tNode >( t1_name ),
+			.cmp_n = n.cmp_n,
+			.t2_n = this->try_make_alias_node< tNode >( t2_name ),
+			.label_n = n.label_n
+		}
+	);
+
+	this->try_advance_alias_id( spill_t1 || spill_t2 );
+
+}
+
+void
+L2::Spil::
+Spiller::operator()( const iLabelNode &n )
+{
+	// label
+
+	this->add_iNode( n );
+
+}
+
+void
+L2::Spil::
+Spiller::operator()( const iGotoNode &n )
+{
+	// goto label
+
+	this->add_iNode( n );
+
+}
+
+void
+L2::Spil::
+Spiller::operator()( const iReturnNode &n )
+{
+	// return
+
+	this->add_iNode( n );
+
+}
+
+void
+L2::Spil::
+Spiller::operator()( const iCallUNode &n )
+{
+	// call u N
+
+	const std::string_view
+		u_name { std::visit( this->var_view, n.u_n ) };
+	const bool
+		spill_u { this->is_spill_var_name( u_name ) };
+
+	this->try_add_alias_iLoadNode( spill_u );
+
+	this->add_iNode(
+		iCallUNode
+		{
+			.call_n = {},
+			.u_n = this->try_make_alias_node< uNode >( u_name ),
+			.N_n = n.N_n,
+		}
+	);
+
+	this->try_advance_alias_id( spill_u );
+
+}
+
+void
+L2::Spil::
+Spiller::operator()( const iCallPrintNode &n )
+{
+	// call print 1
+
+	this->add_iNode( n );
+
+}
+
+void
+L2::Spil::
+Spiller::operator()( const iCallInputNode &n )
+{
+	// call input 0
+
+	this->add_iNode( n );
+
+}
+
+void
+L2::Spil::
+Spiller::operator()( const iCallAllocateNode &n )
+{
+	// call allocate 2
+
+	this->add_iNode( n );
+
+}
+
+void
+L2::Spil::
+Spiller::operator()( const iCallTupleErrorNode &n )
+{
+	// call tuple-error 3
+
+	this->add_iNode( n );
+
+}
+
+void
+L2::Spil::
+Spiller::operator()( const iCallTensorErrorNode &n )
+{
+	// call tensor-error F
+
+	this->add_iNode( n );
+
+}
+
+
+
+
+
+
 
 
 
