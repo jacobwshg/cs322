@@ -382,7 +382,12 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iAssignNode &i_assign_n )
 {
+	//
 	// w <- s
+	//
+	// read s
+	// write w
+	//
 
 	const instr_id_t instr_id = this->new_instr_id();
 	const var_id_t
@@ -403,15 +408,21 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iLoadNode &i_load_n )
 {
+	// 
 	// w <- mem x M
+	//
+	// read w, x
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 	const var_id_t	
 		w_var_id { std::visit( this->var_vis, i_load_n.w_n ) },
 		x_var_id { std::visit( this->var_vis, i_load_n.x_n ) };
 
-	this->var_id_sets.GEN[ instr_id ]  += x_var_id;
-	this->var_id_sets.KILL[ instr_id ] += w_var_id;
+	this->var_id_sets.GEN[ instr_id ] += w_var_id;
+	this->var_id_sets.GEN[ instr_id ] += x_var_id;
+
+	// w not written to, memory is
 
 	this->add_serial_succ( instr_id );
 
@@ -421,15 +432,19 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iStoreNode &i_store_n )
 {
+	// 
 	// mem x M <- s
+	//
+	// read x, s
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 	const var_id_t	
 		x_var_id { std::visit( this->var_vis, i_store_n.x_n ) },
 		s_var_id { std::visit( this->var_vis, i_store_n.s_n ) };
 	
-	this->var_id_sets.GEN[ instr_id ]  += s_var_id;
-	this->var_id_sets.KILL[ instr_id ] += x_var_id;
+	this->var_id_sets.GEN[ instr_id ] += x_var_id;
+	this->var_id_sets.GEN[ instr_id ] += s_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -440,7 +455,11 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iStackArgNode &i_stack_arg_n )
 {
+	// 
 	// w <- stack_arg M
+	//
+	// write w
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 	const var_id_t
@@ -456,16 +475,21 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iAOpNode &i_aop_n )
 {
+	//
 	// w aop t
+	//
+	// read w, t
+	// write w
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 	const var_id_t	
 		w_var_id { std::visit( this->var_vis, i_aop_n.w_n ) },
 		t_var_id { std::visit( this->var_vis, i_aop_n.t_n ) };
 
-	this->var_id_sets.GEN[ instr_id ]  += t_var_id;
 	// w is both read from and written to
-	this->var_id_sets.GEN[ instr_id ]  += w_var_id;
+	this->var_id_sets.GEN [ instr_id ] += w_var_id;
+	this->var_id_sets.GEN [ instr_id ] += t_var_id;
 	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
@@ -477,15 +501,20 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iSxNode &i_sx_n )
 {
+	//
 	// w sop sx
+	//
+	// read w, sx
+	// write w
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 	const var_id_t	
 		w_var_id  { std::visit( this->var_vis, i_sx_n.w_n ) },
 		sx_var_id { std::visit( this->var_vis, i_sx_n.sx_n ) };
 
-	this->var_id_sets.GEN[ instr_id ]  += sx_var_id;
-	this->var_id_sets.GEN[ instr_id ]  += w_var_id;
+	this->var_id_sets.GEN [ instr_id ] += w_var_id;
+	this->var_id_sets.GEN [ instr_id ] += sx_var_id;
 	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
@@ -496,13 +525,18 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iSOpNode &i_sop_n )
 {
+	// 
 	// w sop N
+	//
+	// read w
+	// write w
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 	const var_id_t
 		w_var_id { std::visit( this->var_vis, i_sop_n.w_n ) };
 
-	this->var_id_sets.GEN[ instr_id ]  += w_var_id;
+	this->var_id_sets.GEN [ instr_id ] += w_var_id;
 	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
@@ -514,16 +548,19 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iAddStoreNode &i_add_store_n )
 {
+	// 
 	// mem x M += t
+	//
+	// read x, t
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 	const var_id_t	
 		x_var_id { std::visit( this->var_vis, i_add_store_n.x_n ) },
 		t_var_id { std::visit( this->var_vis, i_add_store_n.t_n ) };
 
-	this->var_id_sets.GEN [ instr_id ] += t_var_id;
-	this->var_id_sets.GEN [ instr_id ] += x_var_id;
-	this->var_id_sets.KILL[ instr_id ] += x_var_id;
+	this->var_id_sets.GEN[ instr_id ] += x_var_id;
+	this->var_id_sets.GEN[ instr_id ] += t_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -533,15 +570,18 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iSubStoreNode &i_sub_store_n )
 {
+	// 
 	// mem x M -= t
+	//
+	// read x, t
+	//
 	const instr_id_t instr_id { this->new_instr_id() };
 	const var_id_t	
 		x_var_id { std::visit( this->var_vis, i_sub_store_n.x_n ) },
 		t_var_id { std::visit( this->var_vis, i_sub_store_n.t_n ) };
 
-	this->var_id_sets.GEN [ instr_id ] += t_var_id;
-	this->var_id_sets.GEN [ instr_id ] += x_var_id;
-	this->var_id_sets.KILL[ instr_id ] += x_var_id;
+	this->var_id_sets.GEN[ instr_id ] += x_var_id;
+	this->var_id_sets.GEN[ instr_id ] += t_var_id;
 
 	this->add_serial_succ( instr_id );
 
@@ -551,15 +591,20 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iLoadAddNode &i_load_add_n )
 {
+	// 
 	// w += mem x M
+	//
+	// read w, x
+	// write w
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 	const var_id_t	
 		w_var_id { std::visit( this->var_vis, i_load_add_n.w_n ) },
 		x_var_id { std::visit( this->var_vis, i_load_add_n.x_n ) };
 
-	this->var_id_sets.GEN[ instr_id ]  += x_var_id;
-	this->var_id_sets.GEN[ instr_id ]  += w_var_id;
+	this->var_id_sets.GEN [ instr_id ] += w_var_id;
+	this->var_id_sets.GEN [ instr_id ] += x_var_id;
 	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
@@ -570,15 +615,20 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iLoadSubNode &i_load_sub_n )
 {
+	// 
 	// w -= mem x M
+	//
+	// read w, x
+	// write w
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 	const var_id_t	
 		w_var_id { std::visit( this->var_vis, i_load_sub_n.w_n ) },
 		x_var_id { std::visit( this->var_vis, i_load_sub_n.x_n ) };
 
-	this->var_id_sets.GEN [ instr_id ] += x_var_id;
 	this->var_id_sets.GEN [ instr_id ] += w_var_id;
+	this->var_id_sets.GEN [ instr_id ] += x_var_id;
 	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	this->add_serial_succ( instr_id );
@@ -589,7 +639,12 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iCmpAssignNode &i_cmp_assign_n )
 {
+	// 
 	// w <- t cmp t
+	//
+	// read t1, t2
+	// write w
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
@@ -611,7 +666,11 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iCJumpNode &i_cjump_n )
 {
+	// 
 	// cjump t cmp t label
+	//
+	// read t1, t2
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
@@ -635,7 +694,9 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iLabelNode &i_label_n )
 {
+	// 
 	// label
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
@@ -651,7 +712,9 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iGotoNode &i_goto_n )
 {
+	// 
 	// goto label
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
@@ -665,7 +728,9 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iReturnNode & )
 {
+	// 
 	// return
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
@@ -685,7 +750,11 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iCallUNode &i_call_u_n )
 {
+	// 
 	// call u N
+	//
+	// read u
+	//
 
 	struct NVisitor
 	{
@@ -699,7 +768,6 @@ InstrVisitor::operator()( const L2::iCallUNode &i_call_u_n )
 
 	const long long N_val { std::visit( NVisitor{}, i_call_u_n.N_n ) };
 	assert( N_val >= 0 );
-
 	const std::size_t argcnt { static_cast< std::size_t >( N_val ) };
 
 	// add u
@@ -728,7 +796,9 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iCallPrintNode &i_call_print_n )
 {
+	// 
 	// call print 1
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
@@ -756,7 +826,9 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iCallInputNode &i_call_input_n )
 {
+	// 
 	// call input 0
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
@@ -777,7 +849,9 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iCallAllocateNode &i_call_allocate_node )
 {
+	// 
 	// call allocate 2
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
@@ -805,7 +879,9 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iCallTupleErrorNode &i_call_tuple_error_n )
 {
+	// 
 	// call tuple-error 3
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
@@ -832,7 +908,9 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iCallTensorErrorNode &i_call_tensor_error_n )
 {
+	// 
 	// call tensor-error F
+	//
 
 	struct FVisitor
 	{
@@ -866,7 +944,12 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iIncrNode &i_incr_n )
 {
+	// 
 	// w ++
+	//
+	// read w
+	// write w
+	//
 	
 	const instr_id_t instr_id { this->new_instr_id() };
 	const var_id_t
@@ -883,7 +966,12 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iDecrNode &i_decr_n )
 {
+	// 
 	// w --
+	//
+	// read w
+	// write w
+	//
 	
 	const instr_id_t instr_id { this->new_instr_id() };
 	const var_id_t
@@ -900,7 +988,12 @@ void
 L2::Liv::
 InstrVisitor::operator()( const L2::iLEANode &i_lea_n )
 {
+	// 
 	// w @ w w E
+	//
+	// read w2, w3
+	// write w1
+	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
 	const var_id_t
