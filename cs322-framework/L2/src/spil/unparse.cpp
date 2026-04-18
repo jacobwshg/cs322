@@ -5,6 +5,42 @@
 
 std::string
 L2::Spil::
+Unparser::operator()( const L2::varNode &n )
+{
+	// %name
+
+	return ( *this )(
+		n.percent_n, n.name_n
+	);
+
+}
+
+std::string
+L2::Spil::
+Unparser::operator()( const L2::labelNode &n )
+{
+	// :name
+
+	return ( *this )(
+		n.colon_n, n.name_n
+	);
+
+}
+
+std::string
+L2::Spil::
+Unparser::operator()( const L2::lNode &n )
+{
+	// @name
+
+	return ( *this )(
+		n.at_n, n.name_n
+	);
+
+}
+
+std::string
+L2::Spil::
 Unparser::operator()( const L2::iAssignNode &n )
 {
 	// w <- s

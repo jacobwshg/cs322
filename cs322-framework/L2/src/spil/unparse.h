@@ -64,13 +64,19 @@ namespace L2
 			// overloads for internal nodes
 			//
 
+			std::string operator()( const varNode & );
+			std::string operator()( const labelNode & );
+			std::string operator()( const lNode & );
+
 			template< typename VariantNode > requires ::is_variant_v< VariantNode >
 			std::string operator()( const VariantNode &variant_n )
 			{
 				return std::visit( *this, variant_n );
 			}
 
-
+			// 
+			// overload with buffering, for concatenating fields of record nodes
+			//
 			template< typename Node >
 			void operator()( const Node &n, std::string &sbuf )
 			{

@@ -246,7 +246,11 @@ namespace L2
 	struct nameNode
 	{
 		static inline const std::regex re { "[a-zA-Z_][a-zA-z_0-9]*" };
-		std::string_view val; // outlived by actual token in Parser::srcbuf
+		//std::string_view val; // outlived by actual token in Parser::srcbuf
+		//
+		// switched to string because of temp nodes in spiller
+		//
+		std::string val;
 	};
 	struct varNode
 	{
