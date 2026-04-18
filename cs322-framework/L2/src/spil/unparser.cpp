@@ -418,6 +418,10 @@ Unparser::operator()( const L2::fNode &n )
 	sbuf += TAB;
 	sbuf += ( *this )( n.N_n );
 	sbuf += SP;
+	// 
+	// add in stack variable cnt,
+	// which isn't a native part of L2 fNode
+	// 
 	sbuf += std::to_string( this->stk_var_cnt );
 	sbuf += LF;
 	

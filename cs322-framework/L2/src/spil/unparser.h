@@ -12,6 +12,9 @@ namespace L2
 	namespace Spil
 	{
 
+		//
+		// restore a parsed L2 AST node to string
+		//
 		struct Unparser
 		{
 			static inline constexpr std::string_view

@@ -6,14 +6,17 @@
 
 L2::Spil::
 Spiller::Spiller(
-	const std::string_view spill_var_name_,
-	const std::string_view alias_prefix_
-):
-	spill_var_name { spill_var_name_ },
-	alias_prefix { alias_prefix_ },
-	unparser { 1LL }
+	const L2::fNode &f_n,
+	const L2::varNode &var_spill_n,
+	const L2::varNode &var_alias_prefix_n
+)
 {
-	this->f_spill.i_ns.reserve( 16 );
+	this->f_spill_n.l_n = f_n.l_n;
+	this->f_spill_n.N_n = f_n.N_n;
+	this->f_spill_n.i_ns.reserve( 16 );
+
+	this->spill_var_name = this->var_view( var_spill_n );
+	this->alias_prefix   = this->var_view( var_alias_prefix_n );
 }
 
 std::size_t
@@ -24,6 +27,23 @@ Spiller::new_alias_id( void )
 	++this->next_alias_id;
 	return id;
 
+}
+
+void
+L2::Spil::
+Spiller::spill( const L2::fNode &f_n )
+{
+	( *this )( f_n );
+}
+
+void
+L2::Spil::
+Spiller::unparse_and_display( void )
+{
+	std::printf(
+		"%s\n",
+		this->unparser( this->f_spill_n ).data()
+	);
 }
 
 //
@@ -50,7 +70,6 @@ Spiller::make_alias_iLoadNode( void )
 
 }
 
-
 L2::iStoreNode
 L2::Spil::
 Spiller::make_alias_iStoreNode( void )
@@ -70,7 +89,6 @@ Spiller::make_alias_iStoreNode( void )
 	};
 
 }
-
 
 void
 L2::Spil::
@@ -761,6 +779,16 @@ Spiller::operator()( const iLEANode &n )
 
 	this->try_advance_alias_id( spill_w1 || spill_w2 || spill_w3 );
 
+}
+
+void
+L2::Spil::
+Spiller::operator()( const fNode &f_n )
+{
+	for ( const iNode &i_n: f_n.i_ns )
+	{
+		std::visit( *this, i_n );
+	}
 }
 
 

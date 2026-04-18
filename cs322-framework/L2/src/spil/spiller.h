@@ -26,7 +26,7 @@ namespace L2
 		{
 
 			//
-			// in spilling mode, let the parser parse fNode ( function code ), 
+			// in spilling mode, let the parser parse fNode ( function code ),
 			// varNode ( var to spill ), and varNode ( alias prefix ),
 			// initialize spiller with the latter two's names,
 			// and call spiller's overload on the fNode
@@ -57,18 +57,31 @@ namespace L2
 			//
 			L2::Spil::Unparser unparser {};
 
-			L2::fNode f_spill {};
+			L2::fNode f_spill_n {};
 
 			Spiller( void );
 
+			//
+			// initialize from parser outputs
+			//
 			Spiller(
-				const std::string_view spill_var_name_,
-				const std::string_view alias_prefix_
+				const L2::fNode &f_n,
+				const L2::varNode &var_spill_n,
+				const L2::varNode &var_alias_prefix_n
 			);
 
 			std::size_t new_alias_id( void );
 
-			std::string new_alias_name( void );
+			//
+			// spill a variable over the given function,
+			// storing spilled instructions in this->f_n.i_ns
+			//
+			void spill( const fNode & );
+
+			//
+			// unparse and display the spilled function
+			//
+			void unparse_and_display( void );
 
 			//
 			// make a node with the current variable alias
@@ -181,7 +194,7 @@ namespace L2
 			// 
 			// add an instr node to the spilled function node's instr vector
 			//
-			void add_iNode( const iNode &&i_n ) { this->f_spill.i_ns.emplace_back( i_n ); }
+			void add_iNode( const iNode &&i_n ) { this->f_spill_n.i_ns.emplace_back( i_n ); }
 			template< typename iNodeAlt > void
 			add_iNode( const iNodeAlt &&i_n_alt ) { this->add_iNode( iNode { i_n_alt } ); }
 
@@ -246,7 +259,7 @@ namespace L2
 			void operator()( const iLEANode & );
 
 			void operator()( const fNode & );
-			void operator()( const pNode & );
+			//void operator()( const pNode & );
 
 		};
 

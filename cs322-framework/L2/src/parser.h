@@ -191,7 +191,7 @@ namespace L2
 			if constexpr ( std::is_same_v< IdentNodeT, L2::nameNode > )
 			{
 				// name ( val should be a token )
-				return IdentNodeT { .val = tok };
+				return IdentNodeT { .val = std::string { tok } };
 			}
 			if constexpr ( std::is_same_v< IdentNodeT, L2::NNZNode > )
 			{
