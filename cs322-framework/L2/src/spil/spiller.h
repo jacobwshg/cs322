@@ -113,7 +113,7 @@ namespace L2
 				{
 					return nameNode
 					{
-						.val = std::string { L2::KW::PERCENT } + std::to_string( this->next_alias_id )
+						.val = this->alias_prefix + std::to_string( this->next_alias_id )
 					};
 				}
 				else

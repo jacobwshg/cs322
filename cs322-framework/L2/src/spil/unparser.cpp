@@ -429,7 +429,6 @@ Unparser::operator()( const L2::fNode &n )
 	{
 		sbuf += "\t\t";
 		sbuf += ( *this )( i_n );
-		sbuf += "\n";
 	}
 
 	sbuf += "\t)\n";
