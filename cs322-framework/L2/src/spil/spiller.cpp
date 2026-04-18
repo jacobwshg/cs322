@@ -109,7 +109,12 @@ void
 L2::Spil::
 Spiller::operator()( const iLoadNode &n ) 
 {
+	// 
 	// w <- mem x M
+	//
+	// read x
+	// write w
+	//
 
 	const std::string_view
 		w_name { std::visit( this->var_view, n.w_n ) },
@@ -141,7 +146,11 @@ void
 L2::Spil::
 Spiller::operator()( const iStoreNode &n ) 
 {
+	// 
 	// mem x M <- s
+	//
+	// read x, s
+	//
 
 	const std::string_view
 		x_name { std::visit( this->var_view, n.x_n ) },
@@ -178,7 +187,11 @@ void
 L2::Spil::
 Spiller::operator()( const iStackArgNode &n )
 {
+	// 
 	// w <- stack-arg M
+	//
+	// write w
+	//
 
 	const std::string_view
 		w_name { std::visit( this->var_view, n.w_n ) };
@@ -205,7 +218,12 @@ void
 L2::Spil::
 Spiller::operator()( const iAOpNode &n )
 {
+	//
 	// w aop t
+	//
+	// read w, t
+	// write w
+	//
 
 	const std::string_view
 		w_name { std::visit( this->var_view, n.w_n ) },
@@ -238,7 +256,12 @@ void
 L2::Spil::
 Spiller::operator()( const iSxNode &n )
 {
+	//
 	// w sop sx
+	//
+	// read w, sx
+	// write w
+	//
 
 	const std::string_view
 		w_name  { std::visit( this->var_view, n.w_n ) },
@@ -268,7 +291,12 @@ void
 L2::Spil::
 Spiller::operator()( const iSOpNode &n )
 {
+	//
 	// w sop N
+	//
+	// read w
+	// write w
+	//
 
 	const std::string_view
 		w_name  { std::visit( this->var_view, n.w_n ) };
@@ -296,7 +324,11 @@ void
 L2::Spil::
 Spiller::operator()( const iAddStoreNode &n )
 {
+	// 
 	// mem x M += t
+	//
+	// read x, t
+	//
 
 	const std::string_view
 		x_name  { std::visit( this->var_view, n.x_n ) },
@@ -328,7 +360,11 @@ void
 L2::Spil::
 Spiller::operator()( const iSubStoreNode &n )
 {
+	// 
 	// mem x M -= t
+	//
+	// read x, t
+	//
 
 	const std::string_view
 		x_name  { std::visit( this->var_view, n.x_n ) },
@@ -360,7 +396,12 @@ void
 L2::Spil::
 Spiller::operator()( const iLoadAddNode &n )
 {
+	//
 	// w += mem x M
+	//
+	// read w, x
+	// write w
+	//
 
 	const std::string_view
 		w_name  { std::visit( this->var_view, n.w_n ) },
@@ -392,7 +433,12 @@ void
 L2::Spil::
 Spiller::operator()( const iLoadSubNode &n )
 {
+	// 
 	// w -= mem x M
+	//
+	// read w, x
+	// write w
+	//
 
 	const std::string_view
 		w_name  { std::visit( this->var_view, n.w_n ) },
@@ -424,7 +470,12 @@ void
 L2::Spil::
 Spiller::operator()( const iCmpAssignNode &n )
 {
+	// 
 	// w <- t cmp t
+	//
+	// read t1, t2
+	// write w
+	//
 
 	const std::string_view
 		w_name  { std::visit( this->var_view, n.w_n ) },
@@ -435,7 +486,7 @@ Spiller::operator()( const iCmpAssignNode &n )
 		spill_t1 { this->is_spill_var_name( t1_name ) },
 		spill_t2 { this->is_spill_var_name( t2_name ) };
 
-	this->try_add_alias_iLoadNode( spill_w || spill_t1 || spill_t2 );
+	this->try_add_alias_iLoadNode( spill_t1 || spill_t2 );
 
 	this->add_iNode(
 		iCmpAssignNode
@@ -458,7 +509,11 @@ void
 L2::Spil::
 Spiller::operator()( const iCJumpNode &n )
 {
+	// 
 	// cjump t cmp t label
+	//
+	// read t1, t2
+	//
 
 	const std::string_view
 		t1_name { std::visit( this->var_view, n.t1_n ) },
@@ -518,7 +573,11 @@ void
 L2::Spil::
 Spiller::operator()( const iCallUNode &n )
 {
+	// 
 	// call u N
+	//
+	// read u
+	//
 
 	const std::string_view
 		u_name { std::visit( this->var_view, n.u_n ) };
@@ -590,32 +649,113 @@ Spiller::operator()( const iCallTensorErrorNode &n )
 
 }
 
+void
+L2::Spil::
+Spiller::operator()( const iIncrNode &n )
+{
+	//
+	// w ++
+	//
+	// read w
+	// write w
+	//
 
+	const std::string_view
+		w_name { std::visit( this->var_view, n.w_n ) };
+	const bool
+		spill_w { this->is_spill_var_name( w_name ) };
 
+	this->try_add_alias_iLoadNode( spill_w );
 
+	this->add_iNode(
+		iIncrNode
+		{
+			.w_n = this->try_make_alias_node< wNode >( w_name ),
+			.op_incr_n = {},
+		}
+	);
 
+	this->try_add_alias_iStoreNode( spill_w );
 
+	this->try_advance_alias_id( spill_w );
 
+}
 
+void
+L2::Spil::
+Spiller::operator()( const iDecrNode &n )
+{
+	// 
+	// w --
+	//
+	// read w
+	// write w
+	//
 
+	const std::string_view
+		w_name { std::visit( this->var_view, n.w_n ) };
+	const bool
+		spill_w { this->is_spill_var_name( w_name ) };
 
+	this->try_add_alias_iLoadNode( spill_w );
 
+	this->add_iNode(
+		iDecrNode
+		{
+			.w_n = this->try_make_alias_node< wNode >( w_name ),
+			.op_decr_n = {},
+		}
+	);
 
+	this->try_add_alias_iStoreNode( spill_w );
 
+	this->try_advance_alias_id( spill_w );
 
+}
 
+void
+L2::Spil::
+Spiller::operator()( const iLEANode &n )
+{
+	//
+	// w @ w w E
+	//
+	// read w2, w3
+	// write w1
+	//
 
+	const std::string_view
+		w1_name { std::visit( this->var_view, n.w1_n ) },
+		w2_name { std::visit( this->var_view, n.w2_n ) },
+		w3_name { std::visit( this->var_view, n.w3_n ) };
+	const bool
+		spill_w1 { this->is_spill_var_name( w1_name ) },
+		spill_w2 { this->is_spill_var_name( w2_name ) },
+		spill_w3 { this->is_spill_var_name( w3_name ) };
 
+	//
+	// w2 and w3 are read from
+	//
+	this->try_add_alias_iLoadNode( spill_w2 || spill_w3 );
 
+	this->add_iNode(
+		iLEANode
+		{
+			.w1_n = this->try_make_alias_node< wNode >( w1_name ),
+			.at_n = {},
+			.w2_n = this->try_make_alias_node< wNode >( w2_name ),
+			.w3_n = this->try_make_alias_node< wNode >( w3_name ),
+			.E_n = n.E_n,
+		}
+	);
 
+	//
+	// w1 is written to
+	//
+	this->try_add_alias_iStoreNode( spill_w1 );
 
+	this->try_advance_alias_id( spill_w1 || spill_w2 || spill_w3 );
 
-
-
-
-
-
-
-
+}
 
 
