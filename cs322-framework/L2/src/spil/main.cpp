@@ -23,22 +23,25 @@ main( const int argc, const char *argv[] )
 	}
 
 	L2::Parser parser {};
+	parser.lex( ifs );
 
 	std::optional< L2::fNode > f_opt { parser.make_node< L2::fNode >() };
-	std::optional< L2::varNode >
-		var_spl_opt { parser.make_node< L2::varNode >() },
-		var_prefix_opt { parser.make_node< L2::varNode >() };
-
 	if ( !f_opt )
 	{
 		std::fprintf( stderr, "error: unable to parse function \n" );
 		return 2;
 	}
+
+	std::optional< L2::varNode >
+		var_spl_opt { parser.make_node< L2::varNode >() };
 	if ( !var_spl_opt )
 	{
 		std::fprintf( stderr, "error: unable to parse spill var \n" );
 		return 2;
 	}
+
+	std::optional< L2::varNode >
+		var_prefix_opt { parser.make_node< L2::varNode >() };
 	if ( !var_prefix_opt )
 	{
 		std::fprintf( stderr, "error: unable to parse alias prefix \n" );
