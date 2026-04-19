@@ -1,4 +1,7 @@
 
+#ifndef L2_LABELVIEW_H
+#define L2_LABELVIEW_H
+
 #include "ast.h"
 #include <string_view>
 
@@ -25,4 +28,6 @@ namespace L2
 	};
 
 }
+
+#endif
 
