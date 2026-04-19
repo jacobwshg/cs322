@@ -3,9 +3,12 @@
 #define L2_INTERF_H
 
 #include "../liveness.h"
+#include "../var_view.h"
+#include "../ast.h"
 
 #include <vector>
 #include <cstdint>
+#include <string_view>
 
 
 namespace L2
@@ -23,12 +26,17 @@ namespace L2
 
 	struct Terf::SpecArithFinder
 	{
-		bool
-		operator( const iSxNode &n ) { return true; }
+		std::string_view
+		operator()( const L2::iSxNode &n )
+		{
+			return std::visit( L2::VarViewer{}, n.sx_n );
+		}
 
-		template< typename iNodeAlt > bool
-		operator( const iNodeAlt &alt ) { return false; }
+		template< typename iNodeAlt > std::string_view
+		operator()( const iNodeAlt &alt ) { return L2::EMPTYTOK; }
 	};
+
+	using L2::Liv::GPRId;
 
 	struct Terf::InterferenceGraph
 	{
@@ -52,20 +60,25 @@ namespace L2
 		// 
 		InterferenceGraph( const std::size_t );
 
+		void
 		add_GPRs( void );
 
-		add_sets( const Liv::FuncVarIdSets & );
+		void
+		add_sets( const Liv::FnVarIdSets & );
 
+		void
 		add_spec_arith(
 			const std::vector< L2::iNode > &,
 			const L2::Liv::VarVisitor &
 		);
 
-		add_from_instr_vis( const Liv::InstrVisitor & )
+		void
+		add_from_instr_vis( const Liv::InstrVisitor & );
 
+		void
 		display( const L2::Liv::VarVisitor & );
 
-	}
+	};
 }
 
 #endif

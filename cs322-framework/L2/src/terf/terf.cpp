@@ -6,20 +6,26 @@
 #include <cstdint>
 #include <vector>
 #include <string_view>
+#include <algorithm>
 
 L2::Terf::
-InterferenceGraph::InterferenceGraph( const std::size_t var_cnt_ ) :
-	var_cnt { std::max( var_cnt_, MAX_GPR_ID+1 ) }
+InterferenceGraph::InterferenceGraph( const std::size_t var_cnt_ )
 {
+	this->var_cnt = std::max(
+		static_cast< var_id_t >( var_cnt_ ),
+		1 + MAX_GPR_ID
+	);
+
 	this->graph.resize( this->var_cnt );
 	this->add_GPRs();
 }
 
+void
 L2::Terf::
 InterferenceGraph::add_GPRs( void )
 {
 	using L2::Liv::GPRId;
-	using L2::var_id;
+	using L2::var_id_t;
 
 	for (
 		var_id_t gpr_id { this->MIN_GPR_ID };
@@ -40,25 +46,28 @@ InterferenceGraph::add_GPRs( void )
 	}
 }
 
+void
 L2::Terf::
 InterferenceGraph::add_sets( 
-	const L2::Liv::FuncVarIdSets &var_id_sets
+	const L2::Liv::FnVarIdSets &var_id_sets
 )
 {
+	using L2::Liv::VarIdSet;
+
 	instr_id_t instr_id { -1 };
 	//
 	// iterate over all IN sets, including that of the dummy guard,
 	// which will be empty
 	// 
-	for ( const var_id_set &in_set : var_id_sets.IN )
+	for ( const VarIdSet &in_set : var_id_sets.IN )
 	{
 		++instr_id;
 
 		//
 		// obtain OUT and KILL sets of same instruction
 		//
-		const var_id_set &out_set  { var_id_sets.OUT [ instr_id ] };
-		const var_id_set &kill_set { var_id_sets.KILL[ instr_id ] };
+		const VarIdSet &out_set  { var_id_sets.OUT [ instr_id ] };
+		const VarIdSet &kill_set { var_id_sets.KILL[ instr_id ] };
 
 		//
 		// register IN[i]-IN[i], OUT[i]-OUT[i], KILL[i]-OUT[i] edges 
@@ -93,6 +102,7 @@ InterferenceGraph::add_sets(
 
 }
 
+void
 L2::Terf::
 InterferenceGraph::add_spec_arith(
 	const std::vector< L2::iNode > &i_ns,
@@ -105,18 +115,11 @@ InterferenceGraph::add_spec_arith(
 
 	for ( const iNode &i_n : i_ns )
 	{
-		if ( !std::visit( this->spec_arith_fdr, i_n ) )
-		{
-			// 
-			// skip non-sx instructions
-			// 
-			continue;
-		}
-
 		const std::string_view sx_name
 		{
-			std::visit( this->var_view, i_n.sx_n );
+			std::visit( this->spec_arith_fdr, i_n )
 		};
+		if ( sx_name == L2::EMPTYTOK ) { continue; }
 
 		const var_id_t sx_var_id { var_vis.var_id_by_name( sx_name ) };
 
@@ -143,6 +146,7 @@ InterferenceGraph::add_spec_arith(
 	}
 }
 
+void
 L2::Terf::
 InterferenceGraph::display( const L2::Liv::VarVisitor &var_vis )
 {
@@ -153,8 +157,10 @@ InterferenceGraph::display( const L2::Liv::VarVisitor &var_vis )
 		id < var_vis.next_var_id; ++id
 	)
 	{
-		const std::string_view name { var_vis.var_name_by_id( var_id ) };
+		const std::string_view name { var_vis.var_name_by_id( id ) };
 		if ( name == L2::EMPTYTOK ) { continue; }
+
+		const L2::Liv::VarIdSet neighbors { this->graph[ id ] };
 
 		sbuf += "( ";
 
@@ -163,7 +169,7 @@ InterferenceGraph::display( const L2::Liv::VarVisitor &var_vis )
 			id2 < var_vis.next_var_id; ++id2
 		)
 		{
-			if ( !st.has[ id2 ] ) { continue; }
+			if ( !neighbors.has( id2 ) ) { continue; }
 
 			const std::string_view name2 { var_vis.var_name_by_id( id2 ) };
 			if ( name2 == L2::EMPTYTOK ) { continue; }
@@ -180,4 +186,5 @@ InterferenceGraph::display( const L2::Liv::VarVisitor &var_vis )
 	std::printf( "%s", sbuf.data() );
 
 }
+
 
