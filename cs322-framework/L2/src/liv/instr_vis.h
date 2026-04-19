@@ -93,8 +93,18 @@ namespace L2
 
 		InstrVisitor( void ) =default;
 
+		//
+		// initialize with the number of instructions
+		// in the function to analyze
+		//
 		explicit InstrVisitor( const std::size_t );
 
+		//
+		// display data members: instruction ID to successor IDs table, 
+		// label to instruction ID table, 
+		// successor request tables, 
+		// per-instruction var sets
+		//
 		void display( void ) const;
 
 		//

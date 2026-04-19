@@ -36,7 +36,7 @@ InstrVisitor::display( void ) const
 	this->var_vis.display();
 
 	//
-	// print succ ID table
+	// print instr ID to succ IDs table
 	//
 	std::printf( "instructions visitor\n" );
 	std::printf( "succs table\n" );
@@ -63,7 +63,7 @@ InstrVisitor::display( void ) const
 	}
 
 	//
-	// print succ request table
+	// print succ requests table
 	//
 	std::printf( "succ request table\n" );
 	for ( const auto &[ label_str, pred_id_vec ] : this->requests_tbl )
