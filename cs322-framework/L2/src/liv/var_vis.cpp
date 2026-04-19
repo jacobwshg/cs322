@@ -43,7 +43,7 @@ VarVisitor::display( void ) const
 // given ID, retrieve variable name 
 std::string_view
 L2::Liv::
-VarVisitor::var_by_id( const L2::var_id_t var_id ) const
+VarVisitor::var_name_by_id( const L2::var_id_t var_id ) const
 {
 
 	if ( var_id > 0 && var_id < VarVisitor::BASE_VAR_ID )
@@ -65,9 +65,21 @@ VarVisitor::var_by_id( const L2::var_id_t var_id ) const
 
 }
 
+//
+// retrieve var ID associated with a variable name, without creating a new one 
+// for an unknown variable. for unknown variables, VAR_ID_INVAL is returned.
+//
+L2::var_id_t
+L2::Liv::
+VarVisitor::var_id_by_name( const std::string_view var_name ) const
+{
+	const auto tbl_it { this->var_id_tbl.find( var_name ) };
+	if ( tbl_it == this->var_id_tbl.end() ) { return L2::VAR_ID_INVAL; }
+	return tbl_it->second;
+}
 
 //
-// return the var ID of a named variable. 
+// return the var ID of a node representing a named variable. 
 // if the variable is previously unknown, assign the next available ID to it.
 //
 L2::var_id_t

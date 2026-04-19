@@ -125,7 +125,13 @@ namespace L2
 			// bypassing this function and directly indexing 
 			// this->id_var_tbl will likely read garbage.
 			//
-			std::string_view var_by_id( const var_id_t var_id ) const;
+			std::string_view var_name_by_id( const var_id_t var_id ) const;
+
+			//
+			// retrive variable name by ID. if the variable is unknown,
+			// return L2::VAR_ID_INVAL.
+			//
+			var_id_t var_id_by_name( const std::string_view var_name ) const;
 
 			//
 			// retrieve variable ID of GPR

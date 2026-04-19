@@ -108,7 +108,7 @@ InstrVisitor::display_var_set( const L2::Liv::VarIdSet &var_id_set ) const
 
 			std::printf(
 				"%s ",
-				this->var_vis.var_by_id( var_id ).data()
+				this->var_vis.var_name_by_id( var_id ).data()
 			);
 		}
 	}
