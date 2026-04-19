@@ -3,8 +3,8 @@
 #define L2_SPIL_SPILLER_H
 
 #include "../ast.h"
+#include "../var_view.h"
 #include "unparser.h"
-#include "var_view.h"
 
 #include <string>
 #include <cstdint>
@@ -49,7 +49,7 @@ namespace L2
 			//
 			std::size_t next_alias_id { 0UL };
 
-			L2::Spil::VarViewer var_view {};
+			L2::VarViewer var_view {};
 
 			// 
 			// the variable to spill becomes a stack variable,

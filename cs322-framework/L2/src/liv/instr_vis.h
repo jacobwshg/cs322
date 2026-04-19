@@ -6,7 +6,9 @@
 #include "var_vis.h"
 #include "ints.h"
 #include "../ast.h"
+#include "../label_view.h"
 #include "../svutil.h"
+
 
 #include <variant>
 #include <vector>
@@ -20,35 +22,17 @@
 namespace L2
 {
 
-	using instr_id_t = std::int32_t;
-
 	namespace Liv
 	{
-		struct LabelViewer;
 		struct InstrVisitor;
-
 	}
 
-	//
-	// visits nodes carrying labels and extracts them to help
-	// determine successor relations.
-	//
-	// LabelViewer is much simpler and doesn't manage label state
-	// within a function, because label state is closely coupled 
-	// with instruction ID, and is thus more conveniently
-	// managed by InstrVisitor. if we were to manage it within 
-	// LabelViewer, InstrVisitor will have to pass in a current 
-	// instr ID and whether the instruction is a jump or a pure label.
-	//
-	struct Liv::LabelViewer
-	{
-		std::string_view operator()( const labelNode &label_n )
-		{
-			return label_n.name_n.val; 
-		}
-	};
-
 	// 
+	// processes each instruction in a parsed function:
+	// 
+	// register their variables, add variables to sets,
+	// and track successor relations
+	//
 	struct Liv::InstrVisitor
 	{
 		// 
@@ -64,7 +48,7 @@ namespace L2
 		//
 		VarVisitor var_vis {};
 
-		LabelViewer label_view {};
+		L2::LabelViewer label_view {};
 
 		FnVarIdSets var_id_sets {};
 
