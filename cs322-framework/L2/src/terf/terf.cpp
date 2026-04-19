@@ -48,6 +48,60 @@ InterferenceGraph::add_GPRs( void )
 
 void
 L2::Terf::
+InterferenceGraph::add_spec_arith(
+	const std::vector< L2::iNode > &i_ns,
+	const L2::Liv::VarVisitor &var_vis
+)
+{
+	using L2::Liv::GPRId;
+
+	static constexpr var_id_t RCX_ID { GPRId::val< RcxNode > };
+
+	for ( const iNode &i_n : i_ns )
+	{
+		const std::string_view sx_name
+		{
+			std::visit( this->spec_arith_fdr, i_n )
+		};
+		if ( sx_name == L2::EMPTYTOK ) { continue; }
+
+		const var_id_t sx_var_id { var_vis.var_id_by_name( sx_name ) };
+
+		//
+		// skip rcx itself
+		//
+		if ( sx_var_id == RCX_ID ) { continue; }
+		// 
+		// var shouldn't be invalid or a non-rcx GPR
+		//
+		assert( sx_var_id > this->MAX_GPR_ID ); 
+
+		for (
+			var_id_t gpr_id { this->MIN_GPR_ID };
+			gpr_id <= this->MAX_GPR_ID; ++gpr_id
+		)
+		{
+			if ( gpr_id != GPRId::val< RcxNode > )
+			{
+				this->graph[ gpr_id ] += sx_var_id;
+				this->graph[ sx_var_id ] += gpr_id;
+			}
+		}
+	}
+}
+
+void
+L2::Terf::
+InterferenceGraph::add_spec_arith(
+	const L2::fNode &f_n,
+	const L2::Liv::VarVisitor &var_vis
+)
+{
+	this->add_spec_arith( f_n.i_ns, var_vis );
+}
+
+void
+L2::Terf::
 InterferenceGraph::add_sets( 
 	const L2::Liv::FnVarIdSets &var_id_sets
 )
@@ -104,50 +158,6 @@ InterferenceGraph::add_sets(
 
 void
 L2::Terf::
-InterferenceGraph::add_spec_arith(
-	const std::vector< L2::iNode > &i_ns,
-	const L2::Liv::VarVisitor &var_vis
-)
-{
-	using L2::Liv::GPRId;
-
-	static constexpr var_id_t RCX_ID { GPRId::val< RcxNode > };
-
-	for ( const iNode &i_n : i_ns )
-	{
-		const std::string_view sx_name
-		{
-			std::visit( this->spec_arith_fdr, i_n )
-		};
-		if ( sx_name == L2::EMPTYTOK ) { continue; }
-
-		const var_id_t sx_var_id { var_vis.var_id_by_name( sx_name ) };
-
-		//
-		// skip rcx itself
-		//
-		if ( sx_var_id == RCX_ID ) { continue; }
-		// 
-		// var shouldn't be invalid or a non-rcx GPR
-		//
-		assert( sx_var_id > this->MAX_GPR_ID ); 
-
-		for (
-			var_id_t gpr_id { this->MIN_GPR_ID };
-			gpr_id <= this->MAX_GPR_ID; ++gpr_id
-		)
-		{
-			if ( gpr_id != GPRId::val< RcxNode > )
-			{
-				this->graph[ gpr_id ] += sx_var_id;
-				this->graph[ sx_var_id ] += gpr_id;
-			}
-		}
-	}
-}
-
-void
-L2::Terf::
 InterferenceGraph::display( const L2::Liv::VarVisitor &var_vis )
 {
 	std::string sbuf {}; sbuf.reserve( 512 );
@@ -162,7 +172,11 @@ InterferenceGraph::display( const L2::Liv::VarVisitor &var_vis )
 
 		const L2::Liv::VarIdSet neighbors { this->graph[ id ] };
 
-		sbuf += "( ";
+		//sbuf += "( ";
+		if ( id > this->MAX_GPR_ID ) { sbuf += L2::KW::PERCENT; }
+		sbuf += name;
+		sbuf += " ";
+		
 
 		for (
 			var_id_t id2 { this->MIN_GPR_ID };
@@ -174,12 +188,14 @@ InterferenceGraph::display( const L2::Liv::VarVisitor &var_vis )
 			const std::string_view name2 { var_vis.var_name_by_id( id2 ) };
 			if ( name2 == L2::EMPTYTOK ) { continue; }
 
+			if ( id2 > this->MAX_GPR_ID ) { sbuf += L2::KW::PERCENT; }
 			sbuf += name2;
 			sbuf += " ";
 
 		}
 
-		sbuf += ")\n";
+		//sbuf += ")\n";
+		sbuf += "\n";
 
 	}
 

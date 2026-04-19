@@ -51,6 +51,10 @@ namespace L2
 
 		L2::VarViewer var_view {};
 
+		//
+		// use a variable ID set to store the graph
+		// as an adjacency list
+		//
 		std::vector< Liv::VarIdSet > graph {};
 
 		InterferenceGraph( void ) =default;
@@ -60,21 +64,43 @@ namespace L2
 		// 
 		InterferenceGraph( const std::size_t );
 
+		//
+		// add edges between GPRs, which can be done at
+		// initialization time
+		//
 		void
 		add_GPRs( void );
 
+		//
+		// add edges from each instruction's sets.
+		//
+		// called after liveness analysis
+		//
 		void
 		add_sets( const Liv::FnVarIdSets & );
 
+		//
+		// given parsed instruction in a function, identify constrained
+		// arithmetic instructions, and add edges between
+		// constrained variables to GPRs using var-to-ID mappings
+		// stored in a VarVisitor
+		//
+		// called after liveness analysis
+		//
 		void
 		add_spec_arith(
 			const std::vector< L2::iNode > &,
 			const L2::Liv::VarVisitor &
 		);
-
 		void
-		add_from_instr_vis( const Liv::InstrVisitor & );
+		add_spec_arith(
+			const L2::fNode &,
+			const L2::Liv::VarVisitor &
+		);
 
+		//
+		// print
+		//
 		void
 		display( const L2::Liv::VarVisitor & );
 
