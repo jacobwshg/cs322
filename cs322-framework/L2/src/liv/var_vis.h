@@ -2,6 +2,7 @@
 #ifndef L2_LIV_VARVIS_H
 #define L2_LIV_VARVIS_H
 
+#include "ints.h"
 #include "../svutil.h"
 #include "../ast.h"
 #include <cstdint>

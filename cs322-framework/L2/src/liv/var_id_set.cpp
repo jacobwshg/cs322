@@ -1,5 +1,6 @@
 
 #include "var_id_set.h"
+#include "ints.h"
 
 #include <cstdint>
 #include <cstdio>
@@ -201,4 +202,47 @@ operator==( const VarIdSet &lhs, const VarIdSet &rhs )
 {
 	return !( lhs != rhs );
 }
+
+L2::Liv::
+FnVarIdSets::FnVarIdSets( const std::size_t instr_cnt )
+{
+	const std::size_t safe_cnt { instr_cnt + 1 };
+	this->GEN  .resize( safe_cnt, {} );
+	this->KILL .resize( safe_cnt, {} );
+	this->IN   .resize( safe_cnt, {} );
+	this->OUT  .resize( safe_cnt, {} );
+}
+
+void
+L2::Liv::
+FnVarIdSets::display( void ) const
+{
+	const std::size_t sz { this->GEN.size() };
+
+	instr_id_t instr_id { -1 };
+
+	std::printf( "function var id sets\n" );
+
+	for ( const VarIdSet &gen_st : this->GEN )
+	{
+		++instr_id;
+		std::printf( "instruction ID %0d\n", instr_id );
+
+		std::printf( "GEN\n" );
+		gen_st.display();
+
+		std::printf( "KILL\n" );
+		this->KILL[ instr_id ].display();
+
+		std::printf( "IN\n" );
+		this->IN[ instr_id ].display();
+
+		std::printf( "OUT\n" );
+		this->OUT[ instr_id ].display();
+
+	}
+
+}
+
+
 

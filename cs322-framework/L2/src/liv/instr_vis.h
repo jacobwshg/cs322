@@ -4,6 +4,7 @@
 
 #include "var_id_set.h"
 #include "var_vis.h"
+#include "ints.h"
 #include "../ast.h"
 #include "../svutil.h"
 
@@ -23,48 +24,28 @@ namespace L2
 
 	namespace Liv
 	{
-
-		struct FnVarIdSets;
-
-		struct LabelVisitor;
-
+		struct LabelViewer;
 		struct InstrVisitor;
 
 	}
 
 	//
-	// stores the GEN/KILL/IN/OUT variable sets
-	// for all instructions in a given scope
-	//
-	struct Liv::FnVarIdSets
-	{
-		std::vector< VarIdSet > GEN  {};
-		std::vector< VarIdSet > KILL {};
-		std::vector< VarIdSet > IN   {};
-		std::vector< VarIdSet > OUT  {};
-
-		FnVarIdSets( void ) =default;
-
-		FnVarIdSets( const std::size_t instr_cnt );
-
-		void display( void ) const;
-
-	};
-
-	//
 	// visits nodes carrying labels and extracts them to help
 	// determine successor relations.
 	//
-	// LabelVisitor is much simpler and doesn't manage label state
+	// LabelViewer is much simpler and doesn't manage label state
 	// within a function, because label state is closely coupled 
 	// with instruction ID, and is thus more conveniently
-	// managed by InstrVisitor. if we were to manage it wihtin 
-	// LabelVisitor, InstrVisitor will have to pass in a current 
+	// managed by InstrVisitor. if we were to manage it within 
+	// LabelViewer, InstrVisitor will have to pass in a current 
 	// instr ID and whether the instruction is a jump or a pure label.
 	//
-	struct Liv::LabelVisitor
+	struct Liv::LabelViewer
 	{
-		std::string_view operator()( const labelNode &label_n );
+		std::string_view operator()( const labelNode &label_n )
+		{
+			return label_n.name_n.val; 
+		}
 	};
 
 	// 
@@ -83,9 +64,11 @@ namespace L2
 		//
 		VarVisitor var_vis {};
 
-		instr_id_t next_instr_id { 0 };
+		LabelViewer label_view {};
 
 		FnVarIdSets var_id_sets {};
+
+		instr_id_t next_instr_id { 0 };
 
 		//
 		// [ i ] = successor instr IDs of instr with ID i
@@ -206,8 +189,6 @@ namespace L2
 
 		void operator()( const L2::iLEANode & );
 	};
-
-
 
 }
 

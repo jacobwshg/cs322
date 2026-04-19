@@ -10,6 +10,17 @@ namespace L2
 {
 	namespace Liv
 	{
+		//
+		// stores IDs of variables in a single GEN/KILL/IN/OUT set
+		// ( mappings are stored in a separate VarVisitor )
+		//
+		struct VarIdSet;
+
+		//
+		// stores the GEN/KILL/IN/OUT variable ID sets
+		// for all instructions in a given scope
+		//
+		struct FnVarIdSets;
 
 		struct VarIdSet
 		{
@@ -78,6 +89,21 @@ namespace L2
 
 		bool operator==( const VarIdSet &, const VarIdSet & );
 		bool operator!=( const VarIdSet &, const VarIdSet & );
+
+		struct FnVarIdSets
+		{
+			std::vector< VarIdSet > GEN  {};
+			std::vector< VarIdSet > KILL {};
+			std::vector< VarIdSet > IN   {};
+			std::vector< VarIdSet > OUT  {};
+
+			FnVarIdSets( void ) =default;
+
+			FnVarIdSets( const std::size_t instr_cnt );
+
+			void display( void ) const;
+
+		};
 
 	}
 

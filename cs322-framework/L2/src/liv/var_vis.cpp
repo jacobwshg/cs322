@@ -1,5 +1,6 @@
 
 #include "var_vis.h"
+#include "ints.h"
 
 #include <cstdio>
 #include <string_view>

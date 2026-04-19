@@ -1,5 +1,6 @@
 
 #include "instr_vis.h"
+#include "ints.h"
 #include "../ast.h"
 #include "../callconv.h"
 
@@ -10,59 +11,6 @@
 #include <cstdint>
 #include <algorithm>
 #include <cassert>
-
-
-L2::Liv::
-FnVarIdSets::FnVarIdSets( const std::size_t instr_cnt )
-{
-	const std::size_t safe_cnt { instr_cnt + 1 };
-	this->GEN  .resize( safe_cnt, {} );
-	this->KILL .resize( safe_cnt, {} );
-	this->IN   .resize( safe_cnt, {} );
-	this->OUT  .resize( safe_cnt, {} );
-}
-
-void
-L2::Liv::
-FnVarIdSets::display( void ) const
-{
-	const std::size_t sz { this->GEN.size() };
-
-	instr_id_t instr_id { -1 };
-
-	std::printf( "function var id sets\n" );
-
-	for ( const VarIdSet &gen_st : this->GEN )
-	{
-		++instr_id;
-		std::printf( "instruction ID %0d\n", instr_id );
-
-		std::printf( "GEN\n" );
-		gen_st.display();
-
-		std::printf( "KILL\n" );
-		this->KILL[ instr_id ].display();
-
-		std::printf( "IN\n" );
-		this->IN[ instr_id ].display();
-
-		std::printf( "OUT\n" );
-		this->OUT[ instr_id ].display();
-
-	}
-
-}
-
-
-//
-// extract the name in a labelNode
-//
-std::string_view
-L2::Liv::
-LabelVisitor::operator()( const L2::labelNode &label_n )
-{
-	return label_n.name_n.val; 
-}
 
 L2::Liv::
 InstrVisitor::InstrVisitor( const std::size_t instr_cnt )
@@ -684,7 +632,7 @@ InstrVisitor::operator()( const L2::iCJumpNode &i_cjump_n )
 	// one succ is next in sequence ( false br )
 	this->add_serial_succ( instr_id );
 	// one is label ( true br )
-	const std::string_view label_sv { LabelVisitor{}( i_cjump_n.label_n ) };
+	const std::string_view label_sv { this->label_view( i_cjump_n.label_n ) };
 	this->try_add_label_succ( label_sv, instr_id );
 
 }
@@ -701,7 +649,7 @@ InstrVisitor::operator()( const L2::iLabelNode &i_label_n )
 	const instr_id_t instr_id { this->new_instr_id() };
 
 	// resolve any requests from cjump or goto above
-	const std::string_view label_sv { LabelVisitor{}( i_label_n.label_n ) };
+	const std::string_view label_sv { this->label_view( i_label_n.label_n ) };
 	this->resolve_label_succ( instr_id, label_sv );
 
 	this->add_serial_succ( instr_id );
@@ -719,7 +667,7 @@ InstrVisitor::operator()( const L2::iGotoNode &i_goto_n )
 	const instr_id_t instr_id { this->new_instr_id() };
 
 	// only succ is label
-	const std::string_view label_sv { LabelVisitor{}( i_goto_n.label_n ) };
+	const std::string_view label_sv { this->label_view( i_goto_n.label_n ) };
 	this->try_add_label_succ( label_sv, instr_id );
 
 }
