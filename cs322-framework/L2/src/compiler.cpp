@@ -192,7 +192,7 @@ int main( int argc, char **argv )
 
 		fn_instr_vis.run_liveness();
 	
-		L2::Terf::InterferenceGraph igraph { var_cnt };
+		L2::Interf::InterferenceGraph igraph { var_cnt };
 
 		igraph.add_spec_arith( f_n, fn_instr_vis.var_vis );
 		igraph.add_sets( fn_instr_vis.var_id_sets );

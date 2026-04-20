@@ -13,7 +13,7 @@
 
 namespace L2
 {
-	namespace Terf
+	namespace Interf
 	{
 		//
 		// used to identify constrained arithmetic instrs
@@ -24,7 +24,7 @@ namespace L2
 		struct InterferenceGraph;
 	}
 
-	struct Terf::SpecArithFinder
+	struct Interf::SpecArithFinder
 	{
 		std::string_view
 		operator()( const L2::iSxNode &n )
@@ -38,7 +38,7 @@ namespace L2
 
 	using L2::Liv::GPRId;
 
-	struct Terf::InterferenceGraph
+	struct Interf::InterferenceGraph
 	{
 
 		static constexpr var_id_t
@@ -47,7 +47,7 @@ namespace L2
 
 		std::size_t var_cnt {};
 
-		Terf::SpecArithFinder spec_arith_fdr {};
+		Interf::SpecArithFinder spec_arith_fdr {};
 
 		L2::VarViewer var_view {};
 

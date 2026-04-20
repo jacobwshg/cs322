@@ -1,5 +1,5 @@
 
-#include "terf.h"
+#include "interf.h"
 #include "../liveness.h"
 #include "../var_view.h"
 #include <cassert>
@@ -8,7 +8,7 @@
 #include <string_view>
 #include <algorithm>
 
-L2::Terf::
+L2::Interf::
 InterferenceGraph::InterferenceGraph( const std::size_t var_cnt_ )
 {
 	this->var_cnt = std::max(
@@ -21,7 +21,7 @@ InterferenceGraph::InterferenceGraph( const std::size_t var_cnt_ )
 }
 
 void
-L2::Terf::
+L2::Interf::
 InterferenceGraph::add_GPRs( void )
 {
 	using L2::Liv::GPRId;
@@ -47,7 +47,7 @@ InterferenceGraph::add_GPRs( void )
 }
 
 void
-L2::Terf::
+L2::Interf::
 InterferenceGraph::add_spec_arith(
 	const std::vector< L2::iNode > &i_ns,
 	const L2::Liv::VarVisitor &var_vis
@@ -91,7 +91,7 @@ InterferenceGraph::add_spec_arith(
 }
 
 void
-L2::Terf::
+L2::Interf::
 InterferenceGraph::add_spec_arith(
 	const L2::fNode &f_n,
 	const L2::Liv::VarVisitor &var_vis
@@ -101,7 +101,7 @@ InterferenceGraph::add_spec_arith(
 }
 
 void
-L2::Terf::
+L2::Interf::
 InterferenceGraph::add_sets( 
 	const L2::Liv::FnVarIdSets &var_id_sets
 )
@@ -157,7 +157,7 @@ InterferenceGraph::add_sets(
 }
 
 void
-L2::Terf::
+L2::Interf::
 InterferenceGraph::display( const L2::Liv::VarVisitor &var_vis )
 {
 	std::string sbuf {}; sbuf.reserve( 512 );
