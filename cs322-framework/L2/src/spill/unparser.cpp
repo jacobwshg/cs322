@@ -4,7 +4,7 @@
 #include <string>
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::varNode &n )
 {
 	// %name
@@ -16,7 +16,7 @@ Unparser::operator()( const L2::varNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::labelNode &n )
 {
 	// :name
@@ -28,7 +28,7 @@ Unparser::operator()( const L2::labelNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::lNode &n )
 {
 	// @name
@@ -40,7 +40,7 @@ Unparser::operator()( const L2::lNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iAssignNode &n )
 {
 	// w <- s
@@ -54,7 +54,7 @@ Unparser::operator()( const L2::iAssignNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iLoadNode &n )
 {
 	// w <- mem x M
@@ -70,7 +70,7 @@ Unparser::operator()( const L2::iLoadNode &n )
 }
 
 std::string 
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iStoreNode &n )
 {
 	// mem x M <- s
@@ -86,7 +86,7 @@ Unparser::operator()( const L2::iStoreNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iStackArgNode &n )
 {
 	// w <- stack-arg M
@@ -101,7 +101,7 @@ Unparser::operator()( const L2::iStackArgNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iAOpNode &n )
 {
 	// w aop t
@@ -115,7 +115,7 @@ Unparser::operator()( const L2::iAOpNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iSxNode &n )
 {
 	// w sop sx
@@ -130,7 +130,7 @@ Unparser::operator()( const L2::iSxNode &n )
 
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iSOpNode &n )
 {
 	// w sop N
@@ -144,7 +144,7 @@ Unparser::operator()( const L2::iSOpNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iAddStoreNode &n )
 {
 	// mem x M += t
@@ -160,7 +160,7 @@ Unparser::operator()( const L2::iAddStoreNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iSubStoreNode &n )
 {
 	// mem x M -= t
@@ -176,7 +176,7 @@ Unparser::operator()( const L2::iSubStoreNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iLoadAddNode &n )
 {
 	// w += mem x M
@@ -192,7 +192,7 @@ Unparser::operator()( const L2::iLoadAddNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iLoadSubNode &n )
 {
 	// w -= mem x M
@@ -208,7 +208,7 @@ Unparser::operator()( const L2::iLoadSubNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iCmpAssignNode &n )
 {
 	// w <- t cmp t
@@ -224,7 +224,7 @@ Unparser::operator()( const L2::iCmpAssignNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iCJumpNode &n )
 {
 	// cjump t cmp t label
@@ -240,7 +240,7 @@ Unparser::operator()( const L2::iCJumpNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iLabelNode &n )
 {
 	// label
@@ -250,7 +250,7 @@ Unparser::operator()( const L2::iLabelNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iGotoNode &n )
 {
 	// goto label
@@ -263,7 +263,7 @@ Unparser::operator()( const L2::iGotoNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iReturnNode &n )
 {
 	// return
@@ -273,7 +273,7 @@ Unparser::operator()( const L2::iReturnNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iCallUNode &n )
 {
 	// call u N
@@ -286,7 +286,7 @@ Unparser::operator()( const L2::iCallUNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iCallPrintNode &n )
 {
 	// call print 1
@@ -300,7 +300,7 @@ Unparser::operator()( const L2::iCallPrintNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iCallInputNode &n )
 {
 	// call input 0
@@ -314,7 +314,7 @@ Unparser::operator()( const L2::iCallInputNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iCallAllocateNode &n )
 {
 	// call allocate 2
@@ -328,7 +328,7 @@ Unparser::operator()( const L2::iCallAllocateNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iCallTupleErrorNode &n )
 {
 	// call tuple-error 3
@@ -342,7 +342,7 @@ Unparser::operator()( const L2::iCallTupleErrorNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iCallTensorErrorNode &n )
 {
 	// call tensor-error f
@@ -356,7 +356,7 @@ Unparser::operator()( const L2::iCallTensorErrorNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iIncrNode &n )
 {
 	// w ++
@@ -369,7 +369,7 @@ Unparser::operator()( const L2::iIncrNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iDecrNode &n )
 {
 	// w --
@@ -382,7 +382,7 @@ Unparser::operator()( const L2::iDecrNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::iLEANode &n )
 {
 	// w @ w w E
@@ -398,7 +398,7 @@ Unparser::operator()( const L2::iLEANode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::fNode &n )
 {
 	//
@@ -438,7 +438,7 @@ Unparser::operator()( const L2::fNode &n )
 }
 
 std::string
-L2::Spil::
+L2::Spill::
 Unparser::operator()( const L2::pNode &n )
 {
 	//

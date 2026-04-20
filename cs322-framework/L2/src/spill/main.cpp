@@ -49,7 +49,7 @@ main( const int argc, const char *argv[] )
 		return 2;
 	}
 
-	L2::Spil::Spiller splr { *f_opt, *var_spl_opt, *var_prefix_opt };
+	L2::Spill::Spiller splr { *f_opt, *var_spl_opt, *var_prefix_opt };
 	splr.spill( *f_opt );
 	splr.unparse_and_display();
 

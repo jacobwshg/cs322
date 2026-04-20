@@ -104,7 +104,7 @@ int main( int argc, char **argv )
 	const std::string_view inf { argv[ argc-1 ] };
 	std::printf( "infile: %s \n", inf.data() );
 
-	std::ifstream ifs { inf };
+	std::ifstream ifs { inf.data() };
 	if ( !ifs )
 	{
 		std::fprintf( stderr, "unable to open \n" );
@@ -127,7 +127,7 @@ int main( int argc, char **argv )
 		const std::optional< L2::fNode > f_opt { parsr.make_node< L2::fNode >() };
 		if ( !f_opt ) { std::fprintf( stderr, "spill: unable to parse function \n" ); return 2; }
 		const std::optional< L2::varNode > spl_var_opt { parsr.make_node< L2::varNode >() };
-		if ( !spl_val_opt ) { std::fprintf( stderr, "spill: unable to parse spill var \n" ); return 2; }
+		if ( !spl_var_opt ) { std::fprintf( stderr, "spill: unable to parse spill var \n" ); return 2; }
 		const std::optional< L2::varNode > prefix_opt { parsr.make_node< L2::varNode >() };
 		if ( !prefix_opt ) { std::fprintf( stderr, "spill: unable to parse alias prefix \n" ); return 2; }
 
@@ -135,7 +135,7 @@ int main( int argc, char **argv )
 		const L2::varNode spl_var_n { *spl_var_opt };
 		const L2::varNode prefix_n { *prefix_opt };
 
-		L2::Spil::Spiller splr { f_n, spl_var_n, prefix_n };
+		L2::Spill::Spiller splr { f_n, spl_var_n, prefix_n };
 		splr.spill( f_n );
 		splr.unparse_and_display();
 

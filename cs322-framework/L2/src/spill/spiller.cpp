@@ -4,7 +4,7 @@
 
 #include <cstdint>
 
-L2::Spil::
+L2::Spill::
 Spiller::Spiller(
 	const L2::fNode &f_n,
 	const L2::varNode &var_spill_n,
@@ -20,7 +20,7 @@ Spiller::Spiller(
 }
 
 std::size_t
-L2::Spil::
+L2::Spill::
 Spiller::new_alias_id( void )
 {
 	const std::size_t id { this->next_alias_id };
@@ -30,14 +30,14 @@ Spiller::new_alias_id( void )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::spill( const L2::fNode &f_n )
 {
 	( *this )( f_n );
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::unparse_and_display( void )
 {
 	std::printf(
@@ -50,7 +50,7 @@ Spiller::unparse_and_display( void )
 // 
 //
 L2::iLoadNode
-L2::Spil::
+L2::Spill::
 Spiller::make_alias_iLoadNode( void )
 {
 	const long long stk_ofs
@@ -71,7 +71,7 @@ Spiller::make_alias_iLoadNode( void )
 }
 
 L2::iStoreNode
-L2::Spil::
+L2::Spill::
 Spiller::make_alias_iStoreNode( void )
 {
 	const long long stk_ofs
@@ -91,7 +91,7 @@ Spiller::make_alias_iStoreNode( void )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iAssignNode &n )
 {
 	// 
@@ -129,7 +129,7 @@ Spiller::operator()( const iAssignNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iLoadNode &n ) 
 {
 	// 
@@ -166,7 +166,7 @@ Spiller::operator()( const iLoadNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iStoreNode &n ) 
 {
 	// 
@@ -207,7 +207,7 @@ Spiller::operator()( const iStoreNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iStackArgNode &n )
 {
 	// 
@@ -238,7 +238,7 @@ Spiller::operator()( const iStackArgNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iAOpNode &n )
 {
 	//
@@ -276,7 +276,7 @@ Spiller::operator()( const iAOpNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iSxNode &n )
 {
 	//
@@ -311,7 +311,7 @@ Spiller::operator()( const iSxNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iSOpNode &n )
 {
 	//
@@ -344,7 +344,7 @@ Spiller::operator()( const iSOpNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iAddStoreNode &n )
 {
 	// 
@@ -380,7 +380,7 @@ Spiller::operator()( const iAddStoreNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iSubStoreNode &n )
 {
 	// 
@@ -416,7 +416,7 @@ Spiller::operator()( const iSubStoreNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iLoadAddNode &n )
 {
 	//
@@ -453,7 +453,7 @@ Spiller::operator()( const iLoadAddNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iLoadSubNode &n )
 {
 	// 
@@ -490,7 +490,7 @@ Spiller::operator()( const iLoadSubNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iCmpAssignNode &n )
 {
 	// 
@@ -529,7 +529,7 @@ Spiller::operator()( const iCmpAssignNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iCJumpNode &n )
 {
 	// 
@@ -563,7 +563,7 @@ Spiller::operator()( const iCJumpNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iLabelNode &n )
 {
 	// label
@@ -573,7 +573,7 @@ Spiller::operator()( const iLabelNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iGotoNode &n )
 {
 	// goto label
@@ -583,7 +583,7 @@ Spiller::operator()( const iGotoNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iReturnNode &n )
 {
 	// return
@@ -593,7 +593,7 @@ Spiller::operator()( const iReturnNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iCallUNode &n )
 {
 	// 
@@ -623,7 +623,7 @@ Spiller::operator()( const iCallUNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iCallPrintNode &n )
 {
 	// call print 1
@@ -633,7 +633,7 @@ Spiller::operator()( const iCallPrintNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iCallInputNode &n )
 {
 	// call input 0
@@ -643,7 +643,7 @@ Spiller::operator()( const iCallInputNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iCallAllocateNode &n )
 {
 	// call allocate 2
@@ -653,7 +653,7 @@ Spiller::operator()( const iCallAllocateNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iCallTupleErrorNode &n )
 {
 	// call tuple-error 3
@@ -663,7 +663,7 @@ Spiller::operator()( const iCallTupleErrorNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iCallTensorErrorNode &n )
 {
 	// call tensor-error F
@@ -673,7 +673,7 @@ Spiller::operator()( const iCallTensorErrorNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iIncrNode &n )
 {
 	//
@@ -705,7 +705,7 @@ Spiller::operator()( const iIncrNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iDecrNode &n )
 {
 	// 
@@ -737,7 +737,7 @@ Spiller::operator()( const iDecrNode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const iLEANode &n )
 {
 	//
@@ -782,7 +782,7 @@ Spiller::operator()( const iLEANode &n )
 }
 
 void
-L2::Spil::
+L2::Spill::
 Spiller::operator()( const fNode &f_n )
 {
 	for ( const iNode &i_n: f_n.i_ns )

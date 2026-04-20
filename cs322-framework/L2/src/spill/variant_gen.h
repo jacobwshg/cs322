@@ -1,6 +1,6 @@
 
-#ifndef L2_SPIL_ALIAS_VARIANT_GEN_H
-#define L2_SPIL_ALIAS_VARIANT_GEN_H
+#ifndef L2_SPILL_ALIAS_VARIANT_GEN_H
+#define L2_SPILL_ALIAS_VARIANT_GEN_H
 
 #include "../ast.h"
 
@@ -9,7 +9,7 @@
 
 namespace L2
 {
-	namespace Spil
+	namespace Spill
 	{
 
 		struct sxGenerator
