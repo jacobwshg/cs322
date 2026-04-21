@@ -48,56 +48,56 @@ namespace L1
 		parse( void );
 
 		// dispatcher
-		template< typename NodeT >
-		std::optional< NodeT >
+		template< typename Node >
+		std::optional< Node >
 		make_node( void )
 		{
 
 			//std::printf( "Token idx %0lu ", this->tok_idx  );
 
 			/*
-			if constexpr ( std::is_same_v< NodeT, L1::pNode > )
+			if constexpr ( std::is_same_v< Node, L1::pNode > )
 			{
 				return this->make_p_node();
 			}
 
-			if constexpr ( std::is_same_v< NodeT, L1::fNode > )
+			if constexpr ( std::is_same_v< Node, L1::fNode > )
 			{
 				return this->make_f_node();
 			}
 			*/
 
-			if constexpr ( std::is_same_v< NodeT, L1::MNode > )
+			if constexpr ( std::is_same_v< Node, L1::MNode > )
 			{
 				//std::printf( "making M node\n" );
 				return this->make_M_node();
 			}
 
-			if constexpr ( ::is_variant_v< NodeT > )
+			if constexpr ( ::is_variant_v< Node > )
 			{
-				//std::printf( "making variant node %s\n", typeid( NodeT{} ).name() );
-				return this->make_variant_node< NodeT >();
+				//std::printf( "making variant node %s\n", typeid( Node{} ).name() );
+				return this->make_variant_node< Node >();
 			}
 
-			if constexpr ( L1::IsKWNode< NodeT > )
+			if constexpr ( L1::IsKWNode< Node > )
 			{
-				//std::printf( "making kw node %s\n", typeid( NodeT{} ).name() );
-				return this->make_kw_node< NodeT >();
+				//std::printf( "making kw node %s\n", typeid( Node{} ).name() );
+				return this->make_kw_node< Node >();
 			}
 
-			if constexpr ( L1::IsIdentNode< NodeT > )
+			if constexpr ( L1::IsIdentNode< Node > )
 			{
-				//std::printf( "making identifier node %s\n", typeid( NodeT{} ).name() );
-				return this->make_ident_node< NodeT >();
+				//std::printf( "making identifier node %s\n", typeid( Node{} ).name() );
+				return this->make_ident_node< Node >();
 			}
 
-			if constexpr ( L1::IsRecNode< NodeT > )
+			if constexpr ( L1::IsRecNode< Node > )
 			{
-				//std::printf( "making record node %s\n", typeid( NodeT{} ).name() );
-				return this->make_record_node< NodeT >();
+				//std::printf( "making record node %s\n", typeid( Node{} ).name() );
+				return this->make_record_node< Node >();
 			}
 
-			//std::printf( "node type %s unknown\n", typeid( NodeT{} ).name() );
+			//std::printf( "node type %s unknown\n", typeid( Node{} ).name() );
 
 			return std::nullopt;
 		}
@@ -116,12 +116,12 @@ namespace L1
 		make_p_node( void );
 
 		// for variant nodes
-		template< typename VariantNodeT >
-			requires ::is_variant_v< VariantNodeT >
-		std::optional< VariantNodeT >
+		template< typename VariantNode >
+			requires ::is_variant_v< VariantNode >
+		std::optional< VariantNode >
 		make_variant_node( void )
 		{
-			std::optional< VariantNodeT > res_opt { std::nullopt };
+			std::optional< VariantNode > res_opt { std::nullopt };
 
 			// don't use a local struct with a `bool operator()`
 			// because local struct methods can't be templates and we can't parameterize
@@ -151,7 +151,7 @@ namespace L1
 
 			const std::size_t cur_idx { this->tok_idx };
 
-			expand( (VariantNodeT *) nullptr );
+			expand( (VariantNode *) { nullptr } );
 
 			if ( res_opt ) // successfully parsed an alternative
 			{
@@ -163,20 +163,20 @@ namespace L1
 		}
 
 		// for terminal kw nodes
-		template< typename KWNodeT >
-			requires L1::IsKWNode< KWNodeT >
-		std::optional< KWNodeT >
+		template< typename KWNode >
+			requires L1::IsKWNode< KWNode >
+		std::optional< KWNode >
 		make_kw_node( void )
 		{
 			const std::size_t cur_idx { this->tok_idx };
 			const std::string_view tok { this->gettok() };
 
-			//std::printf( "kw expected: %s, token: %s\n", KWNodeT::kw.data(), tok.data() );
+			//std::printf( "kw expected: %s, token: %s\n", KWNode::kw.data(), tok.data() );
 
-			if ( tok == KWNodeT::kw ) // token matches kw 
+			if ( tok == KWNode::kw ) // token matches kw 
 			{
 				//std::printf( "kw `%s` match success\n", tok.data() );
-				return KWNodeT {};
+				return KWNode {};
 			}
 			// match failed, restore idx
 			this->tok_idx = cur_idx;
@@ -184,14 +184,14 @@ namespace L1
 		};
 
 		// for terminal identifier nodes with regex
-		template< typename IdentNodeT >
-			requires L1::IsIdentNode< IdentNodeT >
-		std::optional< IdentNodeT >
+		template< typename IdentNode >
+			requires L1::IsIdentNode< IdentNode >
+		std::optional< IdentNode >
 		make_ident_node( void )
 		{
 			const std::size_t cur_idx { this->tok_idx };
 			const std::string_view tok { this->gettok() };
-			if ( !std::regex_match( tok.data(), IdentNodeT::re ) ) // token matches node regex
+			if ( !std::regex_match( tok.data(), IdentNode::re ) ) // token matches node regex
 			{
 				// match failed, restore idx
 				this->tok_idx = cur_idx;
@@ -200,18 +200,18 @@ namespace L1
 
 			//std::printf( "identifier `%s` match success\n", tok.data() );
 
-			if constexpr ( std::is_same_v< IdentNodeT, L1::nameNode > )
+			if constexpr ( std::is_same_v< IdentNode, L1::nameNode > )
 			{
 				// name ( val should be a token )
-				return IdentNodeT { .val = tok };
+				return IdentNode { .val = tok };
 			}
-			if constexpr ( std::is_same_v< IdentNodeT, L1::NNZNode > )
+			if constexpr ( std::is_same_v< IdentNode, L1::NNZNode > )
 			{
 				// nonzero N ( value should be an integer )
 				errno = 0;
 				const long long val { std::strtoll( tok.data(), nullptr, 0 ) };
 				if ( errno == ERANGE ) { return std::nullopt; }
-				return IdentNodeT { .val = val };
+				return IdentNode { .val = val };
 			}
 			return std::nullopt;
 		};
@@ -311,11 +311,12 @@ namespace L1
 		};
 
 		// for most record (struct) nodes
-		template< typename RecNodeT >
-			requires L1::IsRecNode< RecNodeT >
-		std::optional< RecNodeT >
+		template< typename RecNode >
+			requires L1::IsRecNode< RecNode >
+		std::optional< RecNode >
 		make_record_node( void )
 		{
+
 			const std::size_t cur_idx { this->tok_idx };
 
 			// IMPORTANT - expand `fields_t`. else the entire `fields_t` gets mapped to
@@ -329,15 +330,15 @@ namespace L1
 				}
 			};
 
-			std::optional< typename RecNodeT::fields_t > ndtuple_opt
+			std::optional< typename RecNode::fields_t > ndtuple_opt
 			{
 				// without expansion ( doesn't work )
-				//this->make_node_tuple< typename RecNodeT::fields_t >()
-				make_fields_tuple( ( typename RecNodeT::fields_t * ) {} )
+				//this->make_node_tuple< typename RecNode::fields_t >()
+				make_fields_tuple( ( typename RecNode::fields_t * ) nullptr )
 			};
 			if ( ndtuple_opt )
 			{
-				return std::make_from_tuple< RecNodeT >( *ndtuple_opt );
+				return std::make_from_tuple< RecNode >( *ndtuple_opt );
 			}
 
 			this->tok_idx = cur_idx;
