@@ -102,7 +102,7 @@ int main( int argc, char **argv )
 	}
 
 	const std::string_view inf { argv[ argc-1 ] };
-	std::printf( "infile: %s \n", inf.data() );
+	//std::printf( "infile: %s \n", inf.data() );
 
 	std::ifstream ifs { inf.data() };
 	if ( !ifs )
