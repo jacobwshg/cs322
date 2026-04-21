@@ -1,16 +1,21 @@
 
-#include <utils.h>
+#include "ast.h"
+#include "parser.h"
+#include "codegen.h"
+
+#include "../../util/utils.h"
 
 #include <unistd.h>
 #include <assert.h>
 #include <stdint.h>
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
 #include <cstdlib>
-#include <cstring>
+#include <fstream>
 #include <iostream>
 #include <iterator>
-#include <set>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -68,14 +73,35 @@ main( int argc, char **argv )
 	/*
 	 * Parse the input file.
 	 */
-	
+	const std::string_view path { argv[ argc - 1 ] };
+	std::ifstream ifs { path.data(), std::ios_base::in  };
+	if ( !ifs )
+	{
+		std::fprintf( stderr, "error: unable to open input file %s \n", path.data() );
+		return 2;
+	}
+
+	L1::Parser parser {};
+	parser.lex( ifs );
+
+	const std::optional< L1::pNode > ast_opt { parser.parse() };
+	if ( !ast_opt )
+	{
+		std::fprintf( stderr, "error: failed to parse program \n" );
+		return 2;
+	}
 
 	/*
 	 * Print the source program.
 	 */
 	if ( Utils::verbose )
 	{
-		// TODO
+		std::ifstream vb_ifs { path.data() };
+		while ( vb_ifs )
+		{
+			vb_ifs.get( *std::cout.rdbuf() );
+			std::cout << "\n";
+		}
 	}
 
 	/*
@@ -83,7 +109,8 @@ main( int argc, char **argv )
 	 */
 	if ( enable_code_generator )
 	{
-		// TODO
+		L1::CodeGenerator cgr {};
+		cgr.emit( std::cout, *ast_opt );
 	}
 
 	return 0;
