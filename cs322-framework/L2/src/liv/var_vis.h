@@ -12,8 +12,6 @@
 namespace L2
 {
 
-	static constexpr var_id_t VAR_ID_INVAL { -1 };
-
 	namespace Liv
 	{
 
