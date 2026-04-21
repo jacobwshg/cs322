@@ -55,7 +55,7 @@ namespace L2
 			// the variable to spill becomes a stack variable,
 			// which is used to initialize unparser's stk_var_cnt
 			//
-			L2::Spill::Unparser unparser {};
+			L2::Spill::Unparser unparser { 1 };
 
 			L2::fNode f_spill_n {};
 

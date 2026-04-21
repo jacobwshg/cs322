@@ -415,7 +415,7 @@ Unparser::operator()( const L2::fNode &n )
 	sbuf += ( *this )( n.l_n );
 	sbuf += LF;
 
-	sbuf += TAB;
+	sbuf += "\t\t";
 	sbuf += ( *this )( n.N_n );
 	sbuf += SP;
 	// 
