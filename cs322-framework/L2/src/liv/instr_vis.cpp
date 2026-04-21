@@ -134,7 +134,7 @@ InstrVisitor::display_instr_var_sets( const instr_id_t instr_id ) const
 	std::printf( "\tKILL:\t" );
 	this->display_var_set( this->var_id_sets.KILL[ instr_id ] );
 
-	std::printf( "\tIN:\t\t" );
+	std::printf( "\tIN:\t" );
 	this->display_var_set( this->var_id_sets.IN  [ instr_id ] );
 
 	std::printf( "\tOUT:\t" );
