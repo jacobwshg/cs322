@@ -359,7 +359,8 @@ InstrVisitor::operator()( const L2::iLoadNode &i_load_n )
 	// 
 	// w <- mem x M
 	//
-	// read w, x
+	// read x
+	// write w
 	//
 
 	const instr_id_t instr_id { this->new_instr_id() };
@@ -367,8 +368,8 @@ InstrVisitor::operator()( const L2::iLoadNode &i_load_n )
 		w_var_id { std::visit( this->var_vis, i_load_n.w_n ) },
 		x_var_id { std::visit( this->var_vis, i_load_n.x_n ) };
 
-	this->var_id_sets.GEN[ instr_id ] += w_var_id;
-	this->var_id_sets.GEN[ instr_id ] += x_var_id;
+	this->var_id_sets.GEN [ instr_id ] += x_var_id;
+	this->var_id_sets.KILL[ instr_id ] += w_var_id;
 
 	// w not written to, memory is
 

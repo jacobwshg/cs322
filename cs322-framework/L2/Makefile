@@ -46,19 +46,19 @@ interference:
 	python3 ../scripts/generate_interference.py $(COMPILER) $(FILE)
 
 test_interference:
-	python3 ../scripts/test_interference.py $(COMPILER) $(INTERFERENCE_DIR) --out $(OUT_DIR)
+	python3 ../scripts/test_interference.py $(COMPILER) $(INTERFERENCE_DIR) --out $(OUT_DIR)/interf/
 
 liveness:
 	python3 ../scripts/generate_liveness.py $(COMPILER) $(FILE)
 
 test_liveness:
-	python3 ../scripts/test_liveness.py $(COMPILER) $(LIVENESS_DIR) --out $(OUT_DIR)
+	python3 ../scripts/test_liveness.py $(COMPILER) $(LIVENESS_DIR) --out $(OUT_DIR)/liv/
 
 spilling:
 	python3 ../scripts/generate_spilling.py $(COMPILER) $(FILE)
 
 test_spilling:
-	python3 ../scripts/test_spilling.py $(COMPILER) $(SPILLING_DIR)
+	python3 ../scripts/test_spilling.py $(COMPILER) $(SPILLING_DIR) --out $(OUT_DIR)/spill/
 
 copy_instructor_bin:
 	mkdir -p bin ;
