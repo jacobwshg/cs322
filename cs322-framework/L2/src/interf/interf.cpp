@@ -34,14 +34,11 @@ InterferenceGraph::add_GPRs( void )
 	{
 		for (
 			var_id_t gpr2_id { MIN_GPR_ID };
-			gpr2_id <= MAX_GPR_ID; ++gpr2_id
+			gpr2_id < gpr_id; ++gpr2_id
 		)
 		{
-			if ( gpr_id != gpr2_id )
-			{
-				this->graph[ gpr_id ]  += gpr2_id;
-				this->graph[ gpr2_id ] += gpr_id;
-			}
+			this->graph[ gpr_id ]  += gpr2_id;
+			this->graph[ gpr2_id ] += gpr_id;
 		}
 	}
 }
@@ -59,12 +56,18 @@ InterferenceGraph::add_spec_arith(
 
 	for ( const iNode &i_n : i_ns )
 	{
+		//
+		// obtain sx node's underlying name
+		//
 		const std::string_view sx_name
 		{
 			std::visit( this->spec_arith_fdr, i_n )
 		};
 		if ( sx_name == L2::EMPTYTOK ) { continue; }
 
+		//
+		// recover variable ID from name
+		//
 		const var_id_t sx_var_id { var_vis.var_id_by_name( sx_name ) };
 
 		//
@@ -81,11 +84,10 @@ InterferenceGraph::add_spec_arith(
 			gpr_id <= MAX_GPR_ID; ++gpr_id
 		)
 		{
-			if ( gpr_id != GPRId::val< RcxNode > )
-			{
-				this->graph[ gpr_id ] += sx_var_id;
-				this->graph[ sx_var_id ] += gpr_id;
-			}
+			if ( gpr_id == GPRId::val< RcxNode > ) { continue; }
+
+			this->graph[ gpr_id ] += sx_var_id;
+			this->graph[ sx_var_id ] += gpr_id;
 		}
 	}
 }
@@ -146,7 +148,7 @@ InterferenceGraph::add_sets(
 				if (  in_in || out_out || kill_out )
 				{
 					this->graph[ id2 ] += id;
-					this->graph[ id ]  += id2;
+					this->graph[ id  ] += id2;
 				}
 			}
 		}
@@ -172,7 +174,6 @@ InterferenceGraph::display( const L2::Liv::VarVisitor &var_vis )
 
 		const L2::Liv::VarIdSet neighbors { this->graph[ id ] };
 
-		//sbuf += "( ";
 		if ( id > MAX_GPR_ID ) { sbuf += L2::KW::PERCENT; }
 		sbuf += name;
 		sbuf += " ";
@@ -183,7 +184,7 @@ InterferenceGraph::display( const L2::Liv::VarVisitor &var_vis )
 			id2 < var_vis.next_var_id; ++id2
 		)
 		{
-			if ( !neighbors.has( id2 ) ) { continue; }
+			if ( ( id2 == id ) || !neighbors.has( id2 ) ) { continue; }
 
 			const std::string_view name2 { var_vis.var_name_by_id( id2 ) };
 			if ( name2 == L2::EMPTYTOK ) { continue; }
@@ -194,7 +195,6 @@ InterferenceGraph::display( const L2::Liv::VarVisitor &var_vis )
 
 		}
 
-		//sbuf += ")\n";
 		sbuf += "\n";
 
 	}
