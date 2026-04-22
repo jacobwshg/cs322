@@ -27,16 +27,19 @@ namespace L2
 		std::size_t
 		degree(
 			const var_id_t max_var_id,
-			const VarIdSet &nei_id_set
+			const L2::Liv::VarIdSet &nei_id_set
 		);
 
 		//
 		// return degrees of each node whose neighbor's IDs are given in nei_id_sets,
+		// with the max variables ID to consider being max_var_id.
+		//
+		// called prior to attempting to coalesce
 		//
 		std::vector< std::size_t >
 		count_degrees(
 			const var_id_t max_var_id,
-			const std::vector< VarIdSet > &nei_id_sets
+			const std::vector< L2::Liv::VarIdSet > &nei_id_sets
 		);
 
 		//
@@ -47,8 +50,8 @@ namespace L2
 		bool can_coalesce_briggs(
 			const var_id_t max_var_id,
 			const std::vector< std::size_t > &degrees,
-			const VarIdSet &nei_id_set_1,
-			const VarIdSet &nei_id_set_2
+			const L2::Liv::VarIdSet &nei_id_set_1,
+			const L2::Liv::VarIdSet &nei_id_set_2
 		);
 
 		//
@@ -59,8 +62,9 @@ namespace L2
 		bool can_coalesce_george(
 			const var_id_t max_var_id,
 			const std::vector< std::size_t > &degrees,
-			const VarIdSet &nei_id_set_1,
-			const VarIdSet &nei_id_set_2
+			const L2::Liv::VarIdSet &nei_id_set_1,
+			const L2::Liv::VarIdSet
+ &nei_id_set_2
 		);
 
 	}
