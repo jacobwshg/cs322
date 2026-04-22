@@ -84,6 +84,11 @@ namespace L2
 		explicit InstrVisitor( const std::size_t );
 
 		//
+		// reset state
+		//
+		void reset( void );
+
+		//
 		// display data members: instruction ID to successor IDs table, 
 		// label to instruction ID table, 
 		// successor request tables, 
@@ -151,9 +156,14 @@ namespace L2
 		void run_liveness( void );
 
 		//
+		// process all instructions in a function
 		//
+		void process_iNode_vec( const std::vector< iNode > & );
+		void process_fNode( const fNode & );
+		
 		//
-
+		// process individual instructions
+		//
 		void operator()( const L2::iAssignNode & );
 		void operator()( const L2::iLoadNode & );
 		void operator()( const L2::iStoreNode & );

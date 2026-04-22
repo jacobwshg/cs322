@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <vector>
 #include <algorithm>
+#include <cassert>
 
 std::size_t
 L2::Color::
@@ -52,6 +53,54 @@ L2::Color::count_degrees(
 	return std::move( degrees );
 
 }
+
+std::vector< L2::Liv::VarIdSet >
+L2::Color::
+find_moves(
+	const L2::var_id_t max_var_id,
+	const std::vector< L2::iNode > &i_ns,
+	const std::vector< L2::Liv::VarIdSet > &gen_sets,
+	const std::vector< L2::Liv::VarIdSet > &kill_sets
+)
+{
+	std::vector< L2::Liv::VarIdSet > movegraph {};
+	movegraph.resize( 1 + max_var_id, {} ); 
+
+	std::size_t instr_id { 0 };
+	for ( const L2::iNode &i_n : i_ns )
+	{
+		if ( std::visit( iAssignFinder{}, i_n ) )
+		{
+			const L2::Liv::VarIdSet
+				&gen  { gen_sets [ instr_id ] },
+				&kill { kill_sets[ instr_id ] };
+
+			var_id_t
+				w_id { VAR_ID_INVAL },
+				s_id { VAR_ID_INVAL };
+
+			for ( var_id_t id { MIN_GPR_ID }; id <= max_var_id; ++id )
+			{
+				// sanity check - an iAssignNode's GEN and KILL sets should
+				// respectively contain a unique var ID
+				if ( gen. has( id ) ) { assert( s_id == VAR_ID_INVAL ); s_id = id; }
+				if ( kill.has( id ) ) { assert( w_id == VAR_ID_INVAL ); w_id = id; }
+				if ( w_id > 0 && s_id > 0 ) { break; }
+			}
+
+			movegraph[ w_id ] += s_id;
+			movegraph[ s_id ] += w_id;
+		}
+
+		++instr_id;
+
+	}
+
+	return std::move( movegraph );
+
+}
+
+
 
 /*
  *

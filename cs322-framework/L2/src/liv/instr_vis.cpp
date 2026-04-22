@@ -26,6 +26,18 @@ InstrVisitor::InstrVisitor( const std::size_t instr_cnt )
 
 void
 L2::Liv::
+InstrVisitor::reset( void )
+{
+	this->var_vis = {};
+	this->var_id_sets = {};
+	this->next_instr_id = 0;
+	this->succs_tbl.clear();
+	this->label_id_tbl.clear();
+	this->requests_tbl.clear();
+}
+
+void
+L2::Liv::
 InstrVisitor::display( void ) const
 {
 	instr_id_t instr_id { -1 };
@@ -314,6 +326,31 @@ InstrVisitor::step_liveness( void )
 	}
 
 	return canstep;
+
+}
+
+void
+L2::Liv::
+InstrVisitor::process_iNode_vec( const std::vector< L2::iNode > &i_ns )
+{
+	this->reset();
+
+	const std::size_t instr_cnt { i_ns.size() };
+
+	this->var_id_sets = FnVarIdSets { instr_cnt + 1 };
+	this->succs_tbl.resize( instr_cnt + 1, {} );
+
+	for ( const iNode &i_n : i_ns )
+	{
+		std::visit( *this, i_n );
+	}
+}
+
+void
+L2::Liv::
+InstrVisitor::process_fNode( const L2::fNode &f_n )
+{
+	this->process_iNode_vec( f_n.i_ns );
 
 }
 

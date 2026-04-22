@@ -3,6 +3,7 @@
 #define L2_COLOR_H
 
 #include "../liveness.h"
+#include "../ast.h"
 
 namespace L2
 {
@@ -16,6 +17,16 @@ namespace L2
 		struct CoalescedNode
 		{
 			std::vector< var_id_t > var_ids;
+		};
+
+		//
+		// helper visitor for find_moves(): return true if an instruction node
+		// represents a move ( iAssignNode )
+		//
+		struct iAssignFinder
+		{
+			bool operator()( const iAssignNode &n ) { return true; }
+			template< typename iNodeAlt > bool operator()( const iNodeAlt &alt ) { return false; }
 		};
 
 		//
@@ -38,6 +49,17 @@ namespace L2
 		count_degrees(
 			const var_id_t max_var_id,
 			const std::vector< L2::Liv::VarIdSet > &nei_id_sets
+		);
+
+		//
+		// find pairs of variables related through move ( assign ) instructions
+		//
+		std::vector< L2::Liv::VarIdSet >
+		find_moves(
+			const L2::var_id_t max_var_id,
+			const std::vector< L2::iNode > &i_ns,
+			const std::vector< L2::Liv::VarIdSet > &gen_sets,
+			const std::vector< L2::Liv::VarIdSet > &kill_sets
 		);
 
 		//
