@@ -1,9 +1,11 @@
 
 #include "var_id_set.h"
 #include "ints.h"
+#include "gprid.h"
 
 #include <cstdint>
 #include <cstdio>
+#include <vector>
 
 L2::Liv::
 VarIdSet::VarIdSet( void )
@@ -28,6 +30,27 @@ VarIdSet::display( void ) const
 		blk_base += 64;
 	}
 	//std::printf( "\n" );
+}
+
+std::vector< L2::var_id_t >
+L2::Liv::
+VarIdSet::to_vec( const L2::var_id_t max_var_id ) const
+{
+	std::vector< var_id_t > var_id_vec {};	
+	var_id_vec.reserve( 1 + max_var_id );
+
+	for (
+		var_id_t var_id { L2::Liv::MIN_GPR_ID };
+		var_id <= max_var_id;
+		++var_id
+	)
+	{
+		if ( this->has( var_id ) )
+		{
+			var_id_vec.emplace_back( var_id );
+		}
+	}
+	return std::move( var_id_vec );
 }
 
 //

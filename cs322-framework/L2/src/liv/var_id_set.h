@@ -2,6 +2,7 @@
 #ifndef L2_LIV_VARIDSET_H
 #define L2_LIV_VARIDSET_H
 
+#include "ints.h"
 #include <vector>
 #include <cstdint>
 #include <concepts> 
@@ -24,6 +25,7 @@ namespace L2
 
 		struct VarIdSet
 		{
+
 			std::vector< std::uint64_t > data {};
 
 			VarIdSet &operator|=( const VarIdSet & );
@@ -36,6 +38,11 @@ namespace L2
 			// print var ID set raw data in hex format
 			//
 			void display( void ) const;
+
+			//
+			// expand the set's bit representation into a vector of variable IDs
+			//
+			std::vector< var_id_t > to_vec( const var_id_t ) const;
 
 			//
 			// test whether a var ID is present in the set
@@ -73,6 +80,25 @@ namespace L2
 				this->data[ i / 64 ] |= ( 0x1UL << ( i % 64 ) );
 				return *this;
 			}
+
+			//
+			// remove a var ID to the set
+			//
+			template< typename I > requires std::integral< I >
+			VarIdSet &operator-=( const I i )
+			{
+				// ignore invalid var IDs
+				if ( i < 0 ) { return *this; }
+
+				const std::size_t blk_id { static_cast< std::size_t >( i ) / 64 };
+				if ( blk_id + 1 > this->data.size() )
+				{
+					return *this;
+				}
+				this->data[ blk_id ] &= ~( 0x1UL << ( i % 64 ) );
+				return *this;
+			}
+
 
 			friend VarIdSet operator|( const VarIdSet &, const VarIdSet & );
 			friend VarIdSet operator&( const VarIdSet &, const VarIdSet & );

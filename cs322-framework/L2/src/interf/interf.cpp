@@ -28,13 +28,13 @@ InterferenceGraph::add_GPRs( void )
 	using L2::var_id_t;
 
 	for (
-		var_id_t gpr_id { this->MIN_GPR_ID };
-		gpr_id <= this->MAX_GPR_ID; ++gpr_id
+		var_id_t gpr_id { MIN_GPR_ID };
+		gpr_id <= MAX_GPR_ID; ++gpr_id
 	)
 	{
 		for (
-			var_id_t gpr2_id { this->MIN_GPR_ID };
-			gpr2_id <= this->MAX_GPR_ID; ++gpr2_id
+			var_id_t gpr2_id { MIN_GPR_ID };
+			gpr2_id <= MAX_GPR_ID; ++gpr2_id
 		)
 		{
 			if ( gpr_id != gpr2_id )
@@ -74,11 +74,11 @@ InterferenceGraph::add_spec_arith(
 		// 
 		// var shouldn't be invalid or a non-rcx GPR
 		//
-		assert( sx_var_id > this->MAX_GPR_ID ); 
+		assert( sx_var_id > MAX_GPR_ID ); 
 
 		for (
-			var_id_t gpr_id { this->MIN_GPR_ID };
-			gpr_id <= this->MAX_GPR_ID; ++gpr_id
+			var_id_t gpr_id { MIN_GPR_ID };
+			gpr_id <= MAX_GPR_ID; ++gpr_id
 		)
 		{
 			if ( gpr_id != GPRId::val< RcxNode > )
@@ -163,7 +163,7 @@ InterferenceGraph::display( const L2::Liv::VarVisitor &var_vis )
 	std::string sbuf {}; sbuf.reserve( 512 );
 
 	for (
-		var_id_t id { this->MIN_GPR_ID };
+		var_id_t id { MIN_GPR_ID };
 		id < var_vis.next_var_id; ++id
 	)
 	{
@@ -173,13 +173,13 @@ InterferenceGraph::display( const L2::Liv::VarVisitor &var_vis )
 		const L2::Liv::VarIdSet neighbors { this->graph[ id ] };
 
 		//sbuf += "( ";
-		if ( id > this->MAX_GPR_ID ) { sbuf += L2::KW::PERCENT; }
+		if ( id > MAX_GPR_ID ) { sbuf += L2::KW::PERCENT; }
 		sbuf += name;
 		sbuf += " ";
 		
 
 		for (
-			var_id_t id2 { this->MIN_GPR_ID };
+			var_id_t id2 { MIN_GPR_ID };
 			id2 < var_vis.next_var_id; ++id2
 		)
 		{
@@ -188,7 +188,7 @@ InterferenceGraph::display( const L2::Liv::VarVisitor &var_vis )
 			const std::string_view name2 { var_vis.var_name_by_id( id2 ) };
 			if ( name2 == L2::EMPTYTOK ) { continue; }
 
-			if ( id2 > this->MAX_GPR_ID ) { sbuf += L2::KW::PERCENT; }
+			if ( id2 > MAX_GPR_ID ) { sbuf += L2::KW::PERCENT; }
 			sbuf += name2;
 			sbuf += " ";
 

@@ -8,12 +8,10 @@ namespace L2
 {
 	namespace Color
 	{
-		static constexpr std::size_t GPR_CNT { 15 };
-		static constexpr var_id_t
-			MIN_GPR_ID { L2::Liv::GPRId::val< RaxNode > }, 
-			MAX_GPR_ID { L2::Liv::GPRId::val< R15Node > };
+		using L2::Liv::MIN_GPR_ID;
+		using L2::Liv::MAX_GPR_ID;
 
-		//std::vector< std::size_t > node_neighbor_cnts {};
+		static constexpr std::size_t GPR_CNT { 15 };
 
 		struct CoalescedNode
 		{

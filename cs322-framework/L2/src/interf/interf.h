@@ -15,6 +15,10 @@ namespace L2
 {
 	namespace Interf
 	{
+
+		using L2::Liv::MIN_GPR_ID;
+		using L2::Liv::MAX_GPR_ID;
+
 		//
 		// used to identify constrained arithmetic instrs
 		// ( namely w sop sx )
@@ -40,10 +44,6 @@ namespace L2
 
 	struct Interf::InterferenceGraph
 	{
-
-		static constexpr var_id_t
-			MIN_GPR_ID { GPRId::val< RaxNode > },
-			MAX_GPR_ID { GPRId::val< R15Node > };
 
 		std::size_t var_cnt {};
 

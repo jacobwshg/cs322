@@ -28,7 +28,7 @@ VarVisitor::display( void ) const
 	var_id_t var_id { -1 };
 
 	std::printf( "variable visitor\n" );
-	for ( const std::string_view gpr_sv : GPRId::ID_GPR_TBL )
+	for ( const std::string_view gpr_sv : ID_GPR_TBL )
 	{
 		++var_id;
 		std::printf( "%d\t%s\n", var_id, gpr_sv.data() );
@@ -49,7 +49,7 @@ VarVisitor::var_name_by_id( const L2::var_id_t var_id ) const
 	if ( var_id > 0 && var_id < VarVisitor::BASE_VAR_ID )
 	{
 		// var ID is that of a GPR
-		return GPRId::ID_GPR_TBL[ var_id ];
+		return ID_GPR_TBL[ var_id ];
 	}
 	else if (
 		var_id >= VarVisitor::BASE_VAR_ID

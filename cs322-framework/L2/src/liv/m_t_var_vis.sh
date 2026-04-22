@@ -7,6 +7,6 @@ clang++ \
 	-std=c++2a \
 	-ferror-limit=2 \
 	-o test.out \
-	./t_var_vis.cpp ./var_vis.cpp #\
+	./var_vis.cpp ./t_var_vis.cc #\
 	#&> log
 

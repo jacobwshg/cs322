@@ -1,5 +1,5 @@
 
-CPP_FILES		:= $(shell find src -name "*.cpp")
+CPP_FILES		:= $(shell find src -name "*.cpp" -type f)
 OBJ_FILES		:= $(patsubst src/%.cpp,obj/%.o,$(CPP_FILES))
 CC_FLAGS		:= --std=c++2a -I./src -I../lib/PEGTL/include -I../lib -I../util -g3 -DDEBUG -pedantic -pedantic-errors -Werror=pedantic
 CC				:= clang++

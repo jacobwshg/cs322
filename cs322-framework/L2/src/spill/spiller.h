@@ -83,11 +83,6 @@ namespace L2
 			bool spilled( void ) const { return this->next_alias_id > 0; }
 
 			//
-			// unparse and display the spilled function
-			//
-			void unparse_and_display( void );
-
-			//
 			// make a node with the current variable alias
 			// that can be substituted into spilled instructions
 			//
