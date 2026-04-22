@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
+#include <cstdio>
 
 std::size_t
 L2::Color::
@@ -69,8 +70,12 @@ find_moves(
 	std::size_t instr_id { 0 };
 	for ( const L2::iNode &i_n : i_ns )
 	{
+		// bug: the finder doesn't rule out assigning a literal 
+		// if so, s_id stays at VAR_ID_INVAL and causes OOB
 		if ( std::visit( iAssignFinder{}, i_n ) )
 		{
+			std::printf( "find_moves() instr #%lu is assign \n", instr_id );				
+
 			const L2::Liv::VarIdSet
 				&gen  { gen_sets [ instr_id ] },
 				&kill { kill_sets[ instr_id ] };
@@ -81,6 +86,8 @@ find_moves(
 
 			for ( var_id_t id { MIN_GPR_ID }; id <= max_var_id; ++id )
 			{
+				std::printf( "find_moves() var id: %d\n", id );				
+
 				// sanity check - an iAssignNode's GEN and KILL sets should
 				// respectively contain a unique var ID
 				if ( gen. has( id ) ) { assert( s_id == VAR_ID_INVAL ); s_id = id; }
