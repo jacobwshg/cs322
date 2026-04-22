@@ -128,16 +128,16 @@ InstrVisitor::display_instr_var_sets( const instr_id_t instr_id ) const
 	}
 	std::printf( "instr %0d var sets:\n", instr_id );
 
-	std::printf( "\tGEN:\t" );
+	std::printf( "\tGEN:\t\t" );
 	this->display_var_set( this->var_id_sets.GEN [ instr_id ] );
 
-	std::printf( "\tKILL:\t" );
+	std::printf( "\tKILL:\t\t" );
 	this->display_var_set( this->var_id_sets.KILL[ instr_id ] );
 
-	std::printf( "\tIN:\t" );
+	std::printf( "\tIN:\t\t" );
 	this->display_var_set( this->var_id_sets.IN  [ instr_id ] );
 
-	std::printf( "\tOUT:\t" );
+	std::printf( "\tOUT:\t\t" );
 	this->display_var_set( this->var_id_sets.OUT [ instr_id ] );
 
 }
@@ -166,7 +166,7 @@ InstrVisitor::display_test_in_out( void ) const
 	//
 	// print IN sets
 	//
-	std::printf( "\t( in\n" );
+	std::printf( "\t(in\n" );
 	for ( instr_id = 0; instr_id < this->next_instr_id; ++instr_id )	
 	{
 		std::printf( "\t\t" );
@@ -177,7 +177,7 @@ InstrVisitor::display_test_in_out( void ) const
 	//
 	// print OUT sets
 	//
-	std::printf( "\t( out\n" );
+	std::printf( "\t(out\n" );
 	for ( instr_id = 0; instr_id < this->next_instr_id; ++instr_id )	
 	{
 		std::printf( "\t\t" );
