@@ -51,12 +51,10 @@ namespace L2
 
 			L2::VarViewer var_view {};
 
-			// 
-			// the variable to spill becomes a stack variable,
-			// which is used to initialize unparser's stk_var_cnt
 			//
-			L2::Spill::Unparser unparser { 1 };
-
+			// function node after spilling, with updated
+			// instruction vector
+			//
 			L2::fNode f_spill_n {};
 
 			Spiller( void );
@@ -79,6 +77,12 @@ namespace L2
 			void spill( const fNode & );
 
 			//
+			// return whether spilling has occurred based on
+			// whether next_alias_id has been incremented
+			//
+			bool spilled( void ) const { return this->next_alias_id > 0; }
+
+			//
 			// unparse and display the spilled function
 			//
 			void unparse_and_display( void );
@@ -93,7 +97,7 @@ namespace L2
 			//
 			// compare a variable name with the name of the variable to spill
 			//
-			inline bool is_spill_var_name( const std::string_view var_name )
+			inline bool is_spill_var_name( const std::string_view var_name ) const
 			{
 				return this->spill_var_name == var_name;
 			}
@@ -102,9 +106,9 @@ namespace L2
 			// make a varNode ( or its various wrappers ) with the latest alias name.
 			//
 			template< typename Node > Node
-			make_alias_node( void ) { return Node {}; }
+			make_alias_node( void ) const { return Node {}; }
 			template<> nameNode
-			make_alias_node< nameNode >( void )
+			make_alias_node< nameNode >( void ) const
 			{
 				return nameNode
 				{
@@ -112,7 +116,7 @@ namespace L2
 				};
 			}
 			template<> varNode
-			make_alias_node< varNode >( void )
+			make_alias_node< varNode >( void ) const
 			{
 				return varNode
 				{	
@@ -121,37 +125,37 @@ namespace L2
 				};
 			}
 			template<> sxNode
-			make_alias_node< sxNode >( void )
+			make_alias_node< sxNode >( void ) const
 			{
 				return sxNode { this->make_alias_node< varNode >() };
 			}
 			template<> aNode
-			make_alias_node< aNode >( void )
+			make_alias_node< aNode >( void ) const
 			{
 				return aNode { this->make_alias_node< sxNode >() };
 			}
 			template<> wNode
-			make_alias_node< wNode >( void )
+			make_alias_node< wNode >( void ) const
 			{
 				return wNode { this->make_alias_node< aNode >() };
 			}
 			template<> uNode
-			make_alias_node< uNode >( void )
+			make_alias_node< uNode >( void ) const
 			{
 				return uNode { this->make_alias_node< wNode >() };
 			}
 			template<> xNode
-			make_alias_node< xNode >( void )
+			make_alias_node< xNode >( void ) const
 			{
 				return xNode { this->make_alias_node< wNode >() };
 			}
 			template<> tNode
-			make_alias_node< tNode >( void )
+			make_alias_node< tNode >( void ) const
 			{
 				return tNode { this->make_alias_node< xNode >() };
 			}
 			template<> sNode
-			make_alias_node< sNode >( void )
+			make_alias_node< sNode >( void ) const
 			{
 				return sNode { this->make_alias_node< tNode >() };
 			}
@@ -161,40 +165,18 @@ namespace L2
 			// to the level of Node; else, simply copy the provided node.
 			//
 			template< typename Node > Node
-			try_make_alias_node( const Node &n, const bool spill )
+			try_make_alias_node( const Node &n, const bool spill ) const
 			{
 				if ( spill ) { return this->make_alias_node< Node >(); }
 				else { return n; }
 			}
 	
-			/*
-			inline L2::nameNode make_alias_nameNode( void )
-			{
-				return nameNode
-				{
-					.val = std::string { L2::KW::PERCENT }
-						+ std::to_string( this->next_alias_id )
-				};
-			}
-			inline L2::varNode make_alias_varNode( void )
-			{
-				return varNode { .percent_n = {}, .name_n = this->make_alias_nameNode() };
-			}
-			inline L2::sxNode make_alias_sxNode( void ) { return sxNode { this->make_alias_varNode() }; }
-			inline L2::aNode make_alias_aNode( void ) { return aNode { this->make_alias_sxNode() }; }
-			inline L2::wNode make_alias_wNode( void ) { return wNode { this->make_alias_aNode() }; }
-			inline L2::uNode make_alias_uNode( void ) { return uNode { this->make_alias_wNode() }; }
-			inline L2::xNode make_alias_xNode( void ) { return xNode { this->make_alias_wNode() }; }
-			inline L2::tNode make_alias_tNode( void ) { return tNode { this->make_alias_xNode() }; }
-			inline L2::sNode make_alias_sNode( void ) { return sNode { this->make_alias_tNode() }; }
-			*/
-
 			//
 			// make a load/store node where non-memory location is DEFINITELY replaced with 
 			// the latest alias ( no comparison with spill var name )
 			//
-			L2::iLoadNode make_alias_iLoadNode( void );
-			L2::iStoreNode make_alias_iStoreNode( void );
+			L2::iLoadNode make_alias_iLoadNode( void ) const;
+			L2::iStoreNode make_alias_iStoreNode( void ) const;
 
 			// 
 			// add an instr node to the spilled function node's instr vector

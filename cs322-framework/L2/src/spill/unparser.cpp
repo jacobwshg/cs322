@@ -362,7 +362,7 @@ Unparser::operator()( const L2::iIncrNode &n )
 	// w ++
 
 	return ( *this )(
-		n.w_n, SP,
+		n.w_n,
 		n.op_incr_n, LF
 	);
 
@@ -372,10 +372,10 @@ std::string
 L2::Spill::
 Unparser::operator()( const L2::iDecrNode &n )
 {
-	// w --
+	// w--
 
 	return ( *this )(
-		n.w_n, SP,
+		n.w_n, 
 		n.op_decr_n, LF
 	);
 

@@ -36,22 +36,12 @@ Spiller::spill( const L2::fNode &f_n )
 	( *this )( f_n );
 }
 
-void
-L2::Spill::
-Spiller::unparse_and_display( void )
-{
-	std::printf(
-		"%s\n",
-		this->unparser( this->f_spill_n ).data()
-	);
-}
-
 //
 // 
 //
 L2::iLoadNode
 L2::Spill::
-Spiller::make_alias_iLoadNode( void )
+Spiller::make_alias_iLoadNode( void ) const
 {
 	const long long stk_ofs
 	{
@@ -72,7 +62,7 @@ Spiller::make_alias_iLoadNode( void )
 
 L2::iStoreNode
 L2::Spill::
-Spiller::make_alias_iStoreNode( void )
+Spiller::make_alias_iStoreNode( void ) const
 {
 	const long long stk_ofs
 	{

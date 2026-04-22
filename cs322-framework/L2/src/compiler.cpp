@@ -117,6 +117,17 @@ int main( int argc, char **argv )
 	/*
 	 * Parse the input file.
 	 */
+
+	std::optional< L2::fNode > 
+		f_opt { std::nullopt };
+
+	std::optional< L2::varNode > 
+		spl_var_opt { std::nullopt },
+		spl_prefix_opt { std::nullopt };
+
+	std::optional< L2::pNode > 
+		p_opt { std::nullopt };
+
 	if ( spill_only )
 	{
 		/*
@@ -124,21 +135,14 @@ int main( int argc, char **argv )
 		 */
 		// TODO
 
-		const std::optional< L2::fNode > f_opt { parsr.make_node< L2::fNode >() };
+		f_opt = parsr.make_node< L2::fNode >();
 		if ( !f_opt ) { std::fprintf( stderr, "spill: unable to parse function \n" ); return 2; }
-		const std::optional< L2::varNode > spl_var_opt { parsr.make_node< L2::varNode >() };
+
+		spl_var_opt = parsr.make_node< L2::varNode >();
 		if ( !spl_var_opt ) { std::fprintf( stderr, "spill: unable to parse spill var \n" ); return 2; }
-		const std::optional< L2::varNode > prefix_opt { parsr.make_node< L2::varNode >() };
-		if ( !prefix_opt ) { std::fprintf( stderr, "spill: unable to parse alias prefix \n" ); return 2; }
 
-		const L2::fNode f_n { *f_opt };
-		const L2::varNode spl_var_n { *spl_var_opt };
-		const L2::varNode prefix_n { *prefix_opt };
-
-		L2::Spill::Spiller splr { f_n, spl_var_n, prefix_n };
-		splr.spill( f_n );
-		splr.unparse_and_display();
-
+		spl_prefix_opt = parsr.make_node< L2::varNode >();
+		if ( !spl_prefix_opt ) { std::fprintf( stderr, "spill: unable to parse alias prefix \n" ); return 2; }
 
 	}
 	else if ( liveness_only )
@@ -149,22 +153,8 @@ int main( int argc, char **argv )
 		 */
 		// TODO
 	
-		const std::optional< L2::fNode > f_opt { parsr.make_node< L2::fNode >() };
+		f_opt = parsr.make_node< L2::fNode >();
 		if ( !f_opt ) { std::fprintf( stderr, "spill: unable to parse function \n" ); return 2; }
-
-		const L2::fNode f_n { *f_opt };
-		const std::size_t instr_cnt { f_n.i_ns.size() };
-
-		L2::Liv::InstrVisitor fn_instr_vis { instr_cnt };
-
-		for ( const L2::iNode i_n: f_n.i_ns )
-		{
-			std::visit( fn_instr_vis, i_n );
-		}
-
-		fn_instr_vis.run_liveness();
-
-		fn_instr_vis.display_test_in_out();
 
 	}
 	else if ( interference_only )
@@ -175,8 +165,92 @@ int main( int argc, char **argv )
 		 */
 		// TODO
 
-		const std::optional< L2::fNode > f_opt { parsr.make_node< L2::fNode >() };
+		f_opt = parsr.make_node< L2::fNode >();
 		if ( !f_opt ) { std::fprintf( stderr, "spill: unable to parse function \n" ); return 2; }
+
+	}
+	else
+	{
+
+		/*
+		 * Parse the L2 program.
+		 */
+		// TODO
+
+		p_opt = parsr.make_node< L2::pNode >();
+		if ( !p_opt ) { std::fprintf( stderr, "error: unable to parse program \n" ); return 2; }
+
+		const L2::pNode p_n { *p_opt };
+
+	}
+
+	/*
+	 * Special cases.
+	 */
+	if ( spill_only )
+	{
+
+		/*
+		 * Spill.
+		 */
+
+		const L2::fNode f_n { *f_opt };
+		const L2::varNode spl_var_n { *spl_var_opt };
+		const L2::varNode spl_prefix_n { *spl_prefix_opt };
+
+		L2::Spill::Unparser unparsr {};
+
+		L2::Spill::Spiller splr { f_n, spl_var_n, spl_prefix_n };
+		splr.spill( f_n );
+
+		if ( splr.spilled() )
+		{
+			//
+			// if spilling happened, increment the unparser's count of
+			// stack variables so it prints `N 1` rather than `N 0`
+			//
+			++unparsr.stk_var_cnt;
+		}
+
+		std::printf( "%s\n", unparsr( splr.f_spill_n ).data() );
+
+		return 0;
+	}
+
+	/*
+	 * Liveness test.
+	 */
+	if ( liveness_only )
+	{
+
+		//for ( ;; ){}
+
+		const L2::fNode f_n { *f_opt };
+		const std::size_t instr_cnt { f_n.i_ns.size() };
+
+		L2::Liv::InstrVisitor fn_instr_vis { instr_cnt };
+
+		//
+		// process instruction nodes in function, storing information
+		// about variables and successors
+		//
+		for ( const L2::iNode i_n: f_n.i_ns )
+		{
+			std::visit( fn_instr_vis, i_n );
+		}
+
+		fn_instr_vis.run_liveness();
+
+		fn_instr_vis.display_test_in_out();
+
+		return 0;
+	}
+
+	/*
+	 * Interference graph test.
+	 */
+	if ( interference_only )
+	{
 
 		const L2::fNode f_n { *f_opt };
 		const std::size_t instr_cnt { f_n.i_ns.size() };
@@ -198,53 +272,6 @@ int main( int argc, char **argv )
 		igraph.add_sets( fn_instr_vis.var_id_sets );
 
 		igraph.display( fn_instr_vis.var_vis );
-
-	}
-	else
-	{
-
-		/*
-		 * Parse the L2 program.
-		 */
-		// TODO
-
-		const std::optional< L2::pNode > p_opt { parsr.make_node< L2::pNode >() };
-		if ( !p_opt ) { std::fprintf( stderr, "error: unable to parse program \n" ); return 2; }
-
-		const L2::pNode p_n { *p_opt };
-
-	}
-
-	/*
-	 * Special cases.
-	 */
-	if ( spill_only )
-	{
-
-		/*
-		 * Spill.
-		 */
-		// TODO
-
-		return 0;
-	}
-
-	/*
-	 * Liveness test.
-	 */
-	if ( liveness_only )
-	{
-		// TODO
-
-		return 0;
-	}
-
-	/*
-	 * Interference graph test.
-	 */
-	if ( interference_only )
-	{
-		// TODO
 
 		return 0;
 	}
