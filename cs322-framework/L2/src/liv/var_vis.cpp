@@ -35,7 +35,14 @@ VarVisitor::display( void ) const
 	}
 	for ( const std::string &var_name: this->id_var_tbl )
 	{
-		std::printf( "%d\t%s%s\n", this->var_id_tbl.at( var_name ), L2::KW::PERCENT.data(), var_name.data() );
+		//
+		// use .at() as a sanity check that the var name has been 
+		// properly registered
+		//
+		std::printf(
+			"%d\t%s%s\n", 
+			this->var_id_tbl.at( var_name ), L2::KW::PERCENT.data(), var_name.data()
+		);
 	}
 	std::printf( "\n" );
 }

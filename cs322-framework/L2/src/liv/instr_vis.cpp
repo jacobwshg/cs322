@@ -21,6 +21,7 @@ InstrVisitor::InstrVisitor( const std::size_t instr_cnt )
 	// will not cause an indexing error
 	//
 	this->var_id_sets = FnVarIdSets { instr_cnt + 1 };
+	this->movegraph.resize( 16, {} );
 	this->succs_tbl.resize( instr_cnt + 1, {} );
 }
 
@@ -30,12 +31,16 @@ InstrVisitor::reset( void )
 {
 	this->var_vis = {};
 	this->var_id_sets = {};
+	this->movegraph.clear(); this->movegraph.resize( 16, {} );
 	this->next_instr_id = 0;
 	this->succs_tbl.clear();
 	this->label_id_tbl.clear();
 	this->requests_tbl.clear();
 }
 
+//
+// display various members
+//
 void
 L2::Liv::
 InstrVisitor::display( void ) const
@@ -55,7 +60,12 @@ InstrVisitor::display( void ) const
 	for ( const std::vector< instr_id_t > &succ_id_vec : this->succs_tbl )
 	{
 		++instr_id;
-		std::printf( "\tinstr %0d successors: ", instr_id );
+
+		std::printf( "\t" );
+
+		if ( instr_id == this->next_instr_id ) { std::printf( "[dummy] " ); }
+
+		std::printf( "instr %0d successors: ", instr_id );
 
 		for ( const instr_id_t succ_instr_id : succ_id_vec )
 		{
@@ -101,14 +111,17 @@ InstrVisitor::display( void ) const
 
 }
 
-
+//
+// display names of variables whose IDs are in the set
+// in test format
+//
 void
 L2::Liv::
 InstrVisitor::display_var_set( const L2::Liv::VarIdSet &var_id_set ) const
 {
 	std::printf( "( " );
 	for (
-		var_id_t var_id { GPRId::val< RaxNode > };
+		var_id_t var_id { L2::Liv::MIN_GPR_ID };
 		var_id < this->var_vis.next_var_id;
 		++var_id
 	)
@@ -127,7 +140,10 @@ InstrVisitor::display_var_set( const L2::Liv::VarIdSet &var_id_set ) const
 	std::printf( ")\n" );
 }
 
-
+//
+// display var names in GEN/KILL/IN/OUT sets for a single instr
+// in debug format
+//
 void
 L2::Liv::
 InstrVisitor::display_instr_var_sets( const instr_id_t instr_id ) const
@@ -154,6 +170,10 @@ InstrVisitor::display_instr_var_sets( const instr_id_t instr_id ) const
 
 }
 
+//
+// display var names in GEN/KILL/IN/OUT sets for all instrs
+// in debug format
+//
 void
 L2::Liv::
 InstrVisitor::display_all_instr_var_sets( void ) const
@@ -167,7 +187,10 @@ InstrVisitor::display_all_instr_var_sets( void ) const
 	}
 }
 
-
+//
+// display var names in IN/OUT sets for all instrs
+// in test format
+//
 void
 L2::Liv::
 InstrVisitor::display_test_in_out( void ) const
@@ -378,6 +401,18 @@ InstrVisitor::operator()( const L2::iAssignNode &i_assign_n )
 	const var_id_t
 		w_var_id { std::visit( this->var_vis, i_assign_n.w_n ) },
 		s_var_id { std::visit( this->var_vis, i_assign_n.s_n ) };
+
+	if ( w_var_id > 0 && s_var_id > 0 )
+	{
+		// for coalescence in coloring
+		const var_id_t max_id { std::max( w_var_id, s_var_id ) };
+		if ( this->movegraph.size() <= static_cast< std::size_t >( max_id ) )
+		{
+			this->movegraph.resize( 1 + max_id );
+		}
+		this->movegraph[ w_var_id ]  += s_var_id;
+		this->movegraph[ s_var_id ]  += w_var_id;
+	}
 
 	// s is read from, add to GEN set
 	this->var_id_sets.GEN[ instr_id ] += s_var_id;

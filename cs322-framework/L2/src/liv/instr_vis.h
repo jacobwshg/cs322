@@ -50,7 +50,19 @@ namespace L2
 
 		L2::LabelViewer label_view {};
 
+		// 
+		// GEN/KILL/IN/OUT for each instruction
+		//
 		FnVarIdSets var_id_sets {};
+
+		//
+		// var ID pairs connected by assignment instrs - 
+		// used for coalescence in coloring
+		//
+		// includes an element for the dummy var with ID = 0,
+		// which will be empty
+		//
+		std::vector< L2::Liv::VarIdSet > movegraph {};
 
 		instr_id_t next_instr_id { 0 };
 
