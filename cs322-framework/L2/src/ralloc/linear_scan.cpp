@@ -59,8 +59,11 @@ LinearScan::LinearScan(
 			//
 			L2::instr_id_t & var_hot_intvl_start { this->hot_interval_starts[ var_id ] };
 
-			// skip vars that won't go alive as of the next instr
-			if ( var_hot_intvl_start <= 0 ) { continue; }
+			// 
+			// skip vars that died before the prev instr 
+			// ( hot interval not having ended recently )
+			//
+			if ( var_hot_intvl_start < 0 ) { continue; }
 
 			//{
 			//
@@ -100,8 +103,11 @@ LinearScan::LinearScan(
 			//
 			L2::instr_id_t & var_hot_intvl_start { this->hot_interval_starts[ var_id ] };
 
+			// 
 			// skip vars that are in the middle of a hot interval
-			if ( var_hot_intvl_start > 0 ) { continue; }
+			// ( hot interval not starting immediately )
+			//
+			if ( var_hot_intvl_start >= 0 ) { continue; }
 
 
 			//{
