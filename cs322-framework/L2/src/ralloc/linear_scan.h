@@ -7,6 +7,7 @@
 #include <vector>
 #include <queue>
 #include <cassert>
+#include <bitset>
 
 namespace L2
 {
@@ -47,7 +48,19 @@ namespace L2
 			ends_later< LiveInterval >
 		> hot_intervals {};
 
-		L2::Liv::VarIdSet hot_var_ids {};
+		//
+		// assignments to GPRs,
+		// indexed by named var ID
+		//
+		// for now, the policy is that GPR - named var mapping can be one-to-many,
+		// but named var - GPR mapping is one-to-one,
+		// that is, the same GPR may be time-multiplexed between vars with 
+		// disjoint hot intervals, but a given var sticks to the same GPR
+		// should it be live at any point in the program.
+		//
+		std::vector< L2::var_id_t > assignments {};
+
+		L2::Liv::VarIdSet spill_vars {};
 
 		//
 		// IDs of instrs before which hot intervals start,
@@ -56,10 +69,10 @@ namespace L2
 		std::vector< L2::instr_id_t > hot_interval_starts {};
 
 		//
-		// return the effective var ID used for indexing
-		// hot_nterval_starts, which is 0 for the 
-		// named var with lowest ID ( no padding for GPRs,
-		// like VarVisitor's id_var_tbl )
+		// [ unused ]
+		// return the effective var ID used for indexing,
+		// which is 0 for the // named var with lowest ID
+		// 	( no padding for GPRs, like VarVisitor's id_var_tbl )
 		//
 		inline L2::var_id_t
 		ef_var_id ( const L2::var_id_t var_id )
@@ -72,14 +85,30 @@ namespace L2
 		}
 
 		//
-		// 1111 1111 1111 1110
-		// ( register 0 is dummy )
+		// GPRs in use by named vars
 		//
-		std::bitset< 16 > available_colors { 0xfeUL };
+		std::bitset< 16 > hot_GPRs { 0x0UL };
 
 		LinearScan(
 			const L2::Liv::InstrVisitor &
 		);
+
+		inline L2::var_id_t
+		find_lowest_free_GPR( void ) const
+		{
+			for (
+				var_id_t gpr_id { L2::Liv::MIN_GPR_ID };
+				gpr_id <= L2::Liv::MAX_GPR_ID; ++gpr_id
+			)
+			{
+				if ( this->hot_GPRs.test( gpr_id ) ) { return gpr_id; }
+			}
+			return L2::VAR_ID_INVAL;
+		}
+
+		inline bool GPR_in_use( const L2::var_id_t gpr_id ) { return this->hot_GPRs.test( gpr_id ); }
+		inline void use_GPR( const L2::var_id_t gpr_id )    { if ( gpr_id > 0 ) { this->hot_GPRs.set( gpr_id ); } }
+		inline void free_GPR( const L2::var_id_t gpr_id )   { if ( gpr_id > 0 ) { this->hot_GPRs.reset( gpr_id ); } }
 
 		//scan( void );
 

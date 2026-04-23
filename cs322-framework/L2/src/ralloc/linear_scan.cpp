@@ -3,6 +3,7 @@
 #include "../liveness.h"
 
 #include <cstdio>
+#include <cassert>
 
 L2::
 LinearScan::LinearScan(
@@ -27,43 +28,156 @@ LinearScan::LinearScan(
 	// all variables are cold ( inactive ) by default
 	//
 	this->hot_interval_starts.resize( var_vis.next_var_id, -1 );
+	this->assignments.resize( var_vis.next_var_id, L2::VAR_ID_INVAL );
 
 	const std::vector< L2::Liv::VarIdSet >
-		&in_sets  { var_id_sets.IN };
-	for ( const L2::Liv::VarIdSet &in : in_sets )
+		&IN_sets  { var_id_sets.IN };
+
+	for ( const L2::Liv::VarIdSet &instr_IN : IN_sets )
 	{
 		++instr_id;
 		//
-		// loop through named variables in scope
+		// housekeep for any ending hot intervals. do this in a separate loop
+		// to maximally free up GPRs for incoming hot intervals.
 		//
 		for (
 			L2::var_id_t var_id { var_vis.BASE_VAR_ID };
 			var_id < var_vis.next_var_id; ++var_id
 		)
 		{
-			if (
-				in.has( var_id ) &&
-				this->hot_interval_starts[ var_id ] < 0
-			)
+			//
+			// ignore vars that are still alive as of next instr
+			//
+			if ( instr_IN.has( var_id ) ) { continue; }
+
+			//
+			// reference to the current variable's hot interval start instr id
+			// ( if it's cold, then -1 )
+			//
+			L2::instr_id_t & var_hot_intvl_start { this->hot_interval_starts[ var_id ] };
+
+			if ( var_hot_intvl_start > -1 )
 			{
-				std::printf(
-					"var #%0d `%%%s` hot interval starting before instr #%0d \n",
-					var_id, var_vis.var_name_by_id( var_id ).data(), instr_id
-				);
-				this->hot_interval_starts[ var_id ] = instr_id;
-			}
-			else if (
-				!in.has( var_id ) &&
-				this->hot_interval_starts[ var_id ] > -1
-			)
-			{
+				//
+				// var is not in the next instr's IN set while it is holding a hot interval,
+				// meaning its hot interval ends before the next instr
+				//
 				std::printf(
 					"var #%0d `%%%s` hot interval ending before instr #%0d \n",
 					var_id, var_vis.var_name_by_id( var_id ).data(), instr_id
 				);
-				this->hot_interval_starts[ var_id ] = -1;
+
+				//
+				// free up GPR for use by vars that may become live
+				//
+				const L2::var_id_t gpr_id { this->assignments[ var_id ] };
+				this->free_GPR( gpr_id );
+
+				var_hot_intvl_start = -1;
 			}
 		}
+		//
+		// begin any new hot intervals, assigning GPRs or spilling as necessary.
+		//
+		for (
+			L2::var_id_t var_id { var_vis.BASE_VAR_ID };
+			var_id < var_vis.next_var_id; ++var_id
+		)
+		{
+			//
+			// ignore vars that are not alive as of next instr
+			//
+			if ( !instr_IN.has( var_id ) ) { continue; }
+
+			//
+			// reference to the current variable's hot interval start instr id
+			// ( if it's cold, then -1 )
+			//
+			L2::instr_id_t & var_hot_intvl_start { this->hot_interval_starts[ var_id ] };
+
+			if ( var_hot_intvl_start < 0 )
+			{
+				//
+				// var is in the next instr's IN set while it isn't holding a hot interval,
+				// meaning its hot interval starts before the next instr
+				//
+				std::printf(
+					"var #%0d `%%%s` hot interval starting before instr #%0d \n",
+					var_id, var_vis.var_name_by_id( var_id ).data(), instr_id
+				);
+				var_hot_intvl_start = instr_id;
+
+				L2::var_id_t gpr_id { this->assignments[ var_id ] };
+				if ( gpr_id > 0 )
+				{
+					//
+					// var has a valid GPR assignment from a previous hot interval
+					//
+					if ( GPR_in_use( gpr_id ) )
+					{
+						//
+						// conflict; spill current variable and give up 
+						// existing assignment to GPR
+						//
+						this->assignments[ var_id ] = L2::VAR_ID_INVAL;
+						this->spill_vars += var_id;
+					}
+					else
+					{
+						//
+						// retake control of previously assigned GPR
+						//
+						this->use_GPR( gpr_id );
+					}
+				}
+				else if ( !this->spill_vars.has( gpr_id ) )
+				{
+					//
+					// no previous GPR assignment, and hasn't been spilled
+					//
+					gpr_id = this->find_lowest_free_GPR();
+					if ( gpr_id < 0 )
+					{
+						//
+						// all GPRs in use; spill current variable
+						//
+						this->spill_vars += var_id;
+					}
+					else
+					{
+						// 
+						// GPR available; make assignment
+						//
+						this->use_GPR( gpr_id );
+						this->assignments[ var_id ] = gpr_id;
+					}
+				}
+			}
+
+		}
+	}
+
+	for (
+		L2::var_id_t var_id { var_vis.BASE_VAR_ID };
+		var_id < var_vis.next_var_id; ++var_id
+	)
+	{
+		std::printf(
+			"var #%0d `%%%s`:\t", 
+			var_id, var_vis.var_name_by_id( var_id ).data()
+		);
+		const L2::var_id_t gpr_id { this->assignments[ var_id ] };
+		if ( gpr_id < 0 && this->spill_vars.has( var_id ) )
+		{
+			std::printf( "spill" );
+		}
+		else if ( gpr_id > 0 && this->spill_vars.has( var_id ) )
+		{
+			std::printf( "%s", L2::Liv::ID_GPR_TBL[ gpr_id ].data() );
+		}
+		else { assert( false ); }
+		
+		std::printf( "\n" );
 	}
 
 }
