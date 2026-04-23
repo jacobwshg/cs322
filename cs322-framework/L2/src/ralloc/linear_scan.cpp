@@ -204,11 +204,19 @@ LinearScan::LinearScan(
 		{
 			std::printf( "spill" );
 		}
-		else if ( gpr_id > 0 && this->spill_vars.has( var_id ) )
+		else if ( gpr_id > 0 && !this->spill_vars.has( var_id ) )
 		{
 			std::printf( "%s", L2::Liv::ID_GPR_TBL[ gpr_id ].data() );
 		}
-		else { assert( false ); }
+		else
+		{
+			std::fprintf(
+				stdout,
+				"error: var %0d `%%%s` assigned GPR ID: %0d, spill status: %0d \n",
+				var_id, var_vis.var_name_by_id( var_id ).data(), gpr_id, this->spill_vars.has( var_id )
+			);
+			//assert( false );
+		}
 		
 		std::printf( "\n" );
 	}
