@@ -101,7 +101,7 @@ namespace L2
 				gpr_id <= L2::Liv::MAX_GPR_ID; ++gpr_id
 			)
 			{
-				if ( this->hot_GPRs.test( gpr_id ) ) { return gpr_id; }
+				if ( !this->hot_GPRs.test( gpr_id ) ) { return gpr_id; }
 			}
 			return L2::VAR_ID_INVAL;
 		}
