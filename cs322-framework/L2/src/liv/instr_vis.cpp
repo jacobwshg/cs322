@@ -404,7 +404,7 @@ InstrVisitor::operator()( const L2::iAssignNode &i_assign_n )
 		s_var_id { std::visit( this->var_vis, i_assign_n.s_n ) };
 
 
-	if ( w_var_id > 0 && s_var_id > 0 )
+	if ( w_var_id >= MIN_GPR_ID && s_var_id >= MIN_GPR_ID )
 	{
 		// for coalescence in coloring
 		const var_id_t max_id { std::max( w_var_id, s_var_id ) };

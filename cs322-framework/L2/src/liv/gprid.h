@@ -11,6 +11,8 @@ namespace L2
 {
 	namespace Liv
 	{
+		static constexpr var_id_t GPR_ID_DUMMY { 0 };
+
 		struct GPRId
 		{
 			//

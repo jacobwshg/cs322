@@ -128,7 +128,7 @@ LinearScan::LinearScan(
 				var_id, var_vis.var_name_by_id( var_id ).data(), gpr_id
 			);
 
-			if ( gpr_id > 0 )
+			if ( gpr_id >= L2::Liv::MIN_GPR_ID )
 			{
 				//
 				// var has a valid GPR assignment from a previous hot interval
@@ -210,7 +210,7 @@ LinearScan::LinearScan(
 		{
 			std::printf( "spill" );
 		}
-		else if ( gpr_id > 0 && !this->spill_vars.has( var_id ) )
+		else if ( gpr_id >= L2::Liv::MIN_GPR_ID && !this->spill_vars.has( var_id ) )
 		{
 			std::printf( "%s", L2::Liv::ID_GPR_TBL[ gpr_id ].data() );
 		}

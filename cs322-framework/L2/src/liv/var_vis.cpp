@@ -1,6 +1,7 @@
 
 #include "var_vis.h"
 #include "ints.h"
+#include "gprid.h"
 
 #include <cstdio>
 #include <string_view>
@@ -53,7 +54,7 @@ L2::Liv::
 VarVisitor::var_name_by_id( const L2::var_id_t var_id ) const
 {
 
-	if ( var_id > 0 && var_id < VarVisitor::BASE_VAR_ID )
+	if ( var_id >= MIN_GPR_ID && var_id < VarVisitor::BASE_VAR_ID )
 	{
 		// var ID is that of a GPR
 		return ID_GPR_TBL[ var_id ];

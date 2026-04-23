@@ -106,11 +106,18 @@ namespace L2
 			return L2::VAR_ID_INVAL;
 		}
 
-		inline bool GPR_in_use( const L2::var_id_t gpr_id ) { return this->hot_GPRs.test( gpr_id ); }
-		inline void use_GPR( const L2::var_id_t gpr_id )    { if ( gpr_id > 0 ) { this->hot_GPRs.set( gpr_id ); } }
-		inline void free_GPR( const L2::var_id_t gpr_id )   { if ( gpr_id > 0 ) { this->hot_GPRs.reset( gpr_id ); } }
-
-		//scan( void );
+		inline bool GPR_in_use( const L2::var_id_t gpr_id )
+		{
+			return this->hot_GPRs.test( gpr_id );
+		}
+		inline void use_GPR( const L2::var_id_t gpr_id )
+		{
+			if ( gpr_id >= L2::Liv::MIN_GPR_ID ) { this->hot_GPRs.set( gpr_id ); }
+		}
+		inline void free_GPR( const L2::var_id_t gpr_id )
+		{
+			if ( gpr_id >= L2::Liv::MIN_GPR_ID ) { this->hot_GPRs.reset( gpr_id ); }
+		}
 
 	};	
 }

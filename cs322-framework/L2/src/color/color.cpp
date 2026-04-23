@@ -92,7 +92,7 @@ find_moves(
 				// respectively contain a unique var ID
 				if ( gen. has( id ) ) { assert( s_id == VAR_ID_INVAL ); s_id = id; }
 				if ( kill.has( id ) ) { assert( w_id == VAR_ID_INVAL ); w_id = id; }
-				if ( w_id > 0 && s_id > 0 ) { break; }
+				if ( w_id >= L2::Liv::MIN_GPR_ID && s_id >= L2::Liv::MIN_GPR_ID ) { break; }
 			}
 
 			movegraph[ w_id ] += s_id;
