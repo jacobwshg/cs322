@@ -3,7 +3,7 @@ CPP_FILES		:= $(shell find src -name "*.cpp" -type f)
 OBJ_FILES		:= $(patsubst src/%.cpp,obj/%.o,$(CPP_FILES))
 CC_FLAGS		:= --std=c++2a -I./src -I../lib/PEGTL/include -I../lib -I../util -g3 -DDEBUG -pedantic -pedantic-errors -Werror=pedantic
 CC				:= clang++
-PL_CLASS        := L2
+PL_CLASS		:= L2
 COMPILER 		:= bin/$(PL_CLASS)
 TEST_DIR		:= tests
 OUT_DIR			:= out/

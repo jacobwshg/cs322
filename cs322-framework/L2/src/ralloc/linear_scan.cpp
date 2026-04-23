@@ -230,7 +230,7 @@ LinearScan::LinearScan(
 		const L2::var_id_t gpr_id { this->assignments[ var_id ] };
 		if ( gpr_id < 0 && this->spill_vars.has( var_id ) )
 		{
-			std::printf( "spill" );
+			std::printf( "<spill>" );
 		}
 		else if ( gpr_id >= L2::Liv::MIN_GPR_ID && !this->spill_vars.has( var_id ) )
 		{
