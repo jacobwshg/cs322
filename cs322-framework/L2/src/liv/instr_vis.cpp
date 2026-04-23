@@ -403,6 +403,7 @@ InstrVisitor::operator()( const L2::iAssignNode &i_assign_n )
 		w_var_id { std::visit( this->var_vis, i_assign_n.w_n ) },
 		s_var_id { std::visit( this->var_vis, i_assign_n.s_n ) };
 
+
 	if ( w_var_id > 0 && s_var_id > 0 )
 	{
 		// for coalescence in coloring
@@ -411,10 +412,10 @@ InstrVisitor::operator()( const L2::iAssignNode &i_assign_n )
 		{
 			this->movegraph.resize( 1 + max_id );
 		}
-		std::printf(
-			"adding move edge between %d and %d \n",
-			w_var_id, s_var_id
-		);
+	//	std::printf(
+	//		"adding move edge between %d and %d \n",
+	//		w_var_id, s_var_id
+	//	);
 		this->movegraph[ w_var_id ]  += s_var_id;
 		this->movegraph[ s_var_id ]  += w_var_id;
 	}
