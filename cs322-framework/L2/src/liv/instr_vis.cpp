@@ -317,7 +317,7 @@ InstrVisitor::step_liveness( void )
 		// update the current instr's OUT set first 
 		// so IN can use its updates
 		//
-		VarIdSet new_out_set {};
+		L2::Liv::VarIdSet new_out_set {};
 		//
 		// loop over all successors of current instr 
 		//
@@ -334,7 +334,7 @@ InstrVisitor::step_liveness( void )
 		//
 		// update IN set
 		//
-		VarIdSet new_in_set { this->var_id_sets.GEN[ instr_id ] };
+		L2::Liv::VarIdSet new_in_set { this->var_id_sets.GEN[ instr_id ] };
 		new_in_set |= (
 			new_out_set - this->var_id_sets.KILL[ instr_id ]
 		);
@@ -354,6 +354,13 @@ InstrVisitor::step_liveness( void )
 
 void
 L2::Liv::
+InstrVisitor::run_liveness( void )
+{
+	while ( this->step_liveness() ) {}
+}
+
+void
+L2::Liv::
 InstrVisitor::process_iNode_vec( const std::vector< L2::iNode > &i_ns )
 {
 	this->reset();
@@ -367,6 +374,9 @@ InstrVisitor::process_iNode_vec( const std::vector< L2::iNode > &i_ns )
 	{
 		std::visit( *this, i_n );
 	}
+
+	this->movegraph.resize( this->var_vis.next_var_id );
+
 }
 
 void
@@ -376,15 +386,6 @@ InstrVisitor::process_fNode( const L2::fNode &f_n )
 	this->process_iNode_vec( f_n.i_ns );
 
 }
-
-
-void
-L2::Liv::
-InstrVisitor::run_liveness( void )
-{
-	while ( this->step_liveness() ) {}
-}
-
 
 void
 L2::Liv::
@@ -410,6 +411,10 @@ InstrVisitor::operator()( const L2::iAssignNode &i_assign_n )
 		{
 			this->movegraph.resize( 1 + max_id );
 		}
+		std::printf(
+			"adding move edge between %d and %d \n",
+			w_var_id, s_var_id
+		);
 		this->movegraph[ w_var_id ]  += s_var_id;
 		this->movegraph[ s_var_id ]  += w_var_id;
 	}
