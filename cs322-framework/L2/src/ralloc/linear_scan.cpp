@@ -209,6 +209,7 @@ LinearScan::LinearScan(
 					);
 					this->use_GPR( gpr_id );
 					this->assignments[ var_id ] = gpr_id;
+					this->spill_vars -= var_id;
 				}
 			}
 			//}
