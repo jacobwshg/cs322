@@ -60,6 +60,9 @@ namespace L2
 		//
 		std::vector< L2::var_id_t > assignments {};
 
+		//
+		// IDs of vars to be spilled
+		//
 		L2::Liv::VarIdSet spill_vars {};
 
 		//
@@ -85,26 +88,15 @@ namespace L2
 		}
 
 		//
-		// GPRs in use by named vars
+		// GPRs in use by named vars, which _does not_ include those
+		// in use by args or caller/callee save
 		//
 		std::bitset< 16 > hot_GPRs { 0x0UL };
 
-		LinearScan(
-			const L2::Liv::InstrVisitor &
-		);
+		LinearScan( const L2::Liv::InstrVisitor & );
 
-		inline L2::var_id_t
-		find_lowest_free_GPR( void ) const
-		{
-			for (
-				var_id_t gpr_id { L2::Liv::MIN_GPR_ID };
-				gpr_id <= L2::Liv::MAX_GPR_ID; ++gpr_id
-			)
-			{
-				if ( !this->hot_GPRs.test( gpr_id ) ) { return gpr_id; }
-			}
-			return L2::VAR_ID_INVAL;
-		}
+		L2::var_id_t
+		find_lowest_free_GPR( const L2::Liv::VarIdSet & ) const;
 
 		inline bool GPR_in_use( const L2::var_id_t gpr_id )
 		{

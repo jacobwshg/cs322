@@ -5,6 +5,27 @@
 #include <cstdio>
 #include <cassert>
 
+
+L2::var_id_t
+L2::
+LinearScan::find_lowest_free_GPR( const L2::Liv::VarIdSet &instr_IN ) const
+{
+	for (
+		var_id_t gpr_id { L2::Liv::MIN_GPR_ID };
+		gpr_id <= L2::Liv::MAX_GPR_ID; ++gpr_id
+	)
+	{
+		//
+		// don't use GPRs occupied by other live vars
+		// or already in the IN set ( args/saved )
+		//
+		if ( this->hot_GPRs.test( gpr_id ) || instr_IN.has( gpr_id ) ) { continue; }
+		return gpr_id;
+	}
+	return L2::VAR_ID_INVAL;
+}
+
+
 L2::
 LinearScan::LinearScan(
 	const L2::Liv::InstrVisitor &instr_vis
@@ -163,8 +184,9 @@ LinearScan::LinearScan(
 			{
 				//
 				// no previous GPR assignment, and hasn't been spilled
+				// try assigning a GPR
 				//
-				gpr_id = this->find_lowest_free_GPR();
+				gpr_id = this->find_lowest_free_GPR( instr_IN );
 				if ( gpr_id < 0 )
 				{
 					//
