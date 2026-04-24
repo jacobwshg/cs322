@@ -41,7 +41,7 @@ LinearScan::LinearScan(
 
 	const L2::instr_id_t instr_cnt
 	{
-		static_cast< instr_id_t >( var_id_sets.IN.size() )
+		static_cast< instr_id_t >( var_id_sets.INs.size() )
 	};
 	L2::instr_id_t instr_id { -1 };
 
@@ -52,9 +52,9 @@ LinearScan::LinearScan(
 	this->assignments.resize( var_vis.next_var_id, L2::VAR_ID_INVAL );
 
 	const std::vector< L2::Liv::VarIdSet >
-		&IN_sets  { var_id_sets.IN };
+		&INs  { var_id_sets.INs };
 
-	for ( const L2::Liv::VarIdSet &instr_IN : IN_sets )
+	for ( const L2::Liv::VarIdSet &instr_IN : INs )
 	{
 		++instr_id;
 
@@ -154,7 +154,7 @@ LinearScan::LinearScan(
 				//
 				// var has a valid GPR assignment from a previous hot interval
 				//
-				if ( GPR_in_use( gpr_id ) )
+				if ( GPR_in_use( gpr_id, instr_IN ) )
 				{
 					//
 					// conflict; spill current variable and give up 

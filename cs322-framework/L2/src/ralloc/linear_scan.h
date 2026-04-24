@@ -98,9 +98,12 @@ namespace L2
 		L2::var_id_t
 		find_lowest_free_GPR( const L2::Liv::VarIdSet & ) const;
 
-		inline bool GPR_in_use( const L2::var_id_t gpr_id )
+		inline bool GPR_in_use(
+			const L2::var_id_t gpr_id,
+			const L2::Liv::VarIdSet &instr_IN
+		)
 		{
-			return this->hot_GPRs.test( gpr_id );
+			return this->hot_GPRs.test( gpr_id ) || instr_IN.has( gpr_id );
 		}
 		inline void use_GPR( const L2::var_id_t gpr_id )
 		{

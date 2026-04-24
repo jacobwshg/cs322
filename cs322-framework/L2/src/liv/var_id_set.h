@@ -118,10 +118,10 @@ namespace L2
 
 		struct FnVarIdSets
 		{
-			std::vector< VarIdSet > GEN  {};
-			std::vector< VarIdSet > KILL {};
-			std::vector< VarIdSet > IN   {};
-			std::vector< VarIdSet > OUT  {};
+			std::vector< VarIdSet > GENs  {};
+			std::vector< VarIdSet > KILLs {};
+			std::vector< VarIdSet > INs   {};
+			std::vector< VarIdSet > OUTs  {};
 
 			FnVarIdSets( void ) =default;
 

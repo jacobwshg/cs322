@@ -115,15 +115,15 @@ InterferenceGraph::add_sets(
 	// iterate over all IN sets, including that of the dummy guard,
 	// which will be empty
 	// 
-	for ( const VarIdSet &in_set : var_id_sets.IN )
+	for ( const VarIdSet &IN : var_id_sets.INs )
 	{
 		++instr_id;
 
 		//
 		// obtain OUT and KILL sets of same instruction
 		//
-		const VarIdSet &out_set  { var_id_sets.OUT [ instr_id ] };
-		const VarIdSet &kill_set { var_id_sets.KILL[ instr_id ] };
+		const VarIdSet &OUT  { var_id_sets.OUTs [ instr_id ] };
+		const VarIdSet &KILL { var_id_sets.KILLs[ instr_id ] };
 
 		//
 		// register IN[i]-IN[i], OUT[i]-OUT[i], KILL[i]-OUT[i] edges 
@@ -141,9 +141,9 @@ InterferenceGraph::add_sets(
 				if ( id2 == id ) { continue; }
 
 				const bool
-					in_in    { in_set  .has( id ) && in_set .has( id2 ) },	
-					out_out  { out_set .has( id ) && out_set.has( id2 ) },
-					kill_out { kill_set.has( id ) && out_set.has( id2 ) };
+					in_in    { IN  .has( id ) && IN .has( id2 ) },	
+					out_out  { OUT .has( id ) && OUT.has( id2 ) },
+					kill_out { KILL.has( id ) && OUT.has( id2 ) };
 
 				if (  in_in || out_out || kill_out )
 				{
