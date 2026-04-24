@@ -214,21 +214,21 @@ namespace L2
 	struct TensorErrorNode { static constexpr sv_t kw { KW::TENSOR_ERROR }; };
 
 	struct RaxNode { using is_reg = bool; static constexpr sv_t kw { KW::RAX }; };
-	struct RbxNode { using is_reg = bool; static constexpr sv_t kw { KW::RBX }; };
+	/**/ struct RbxNode { using is_reg = bool; static constexpr sv_t kw { KW::RBX }; };
 	struct RcxNode { using is_reg = bool; static constexpr sv_t kw { KW::RCX }; };
 	struct RdxNode { using is_reg = bool; static constexpr sv_t kw { KW::RDX }; };
 	struct RdiNode { using is_reg = bool; static constexpr sv_t kw { KW::RDI }; };
 	struct RsiNode { using is_reg = bool; static constexpr sv_t kw { KW::RSI }; };
-	struct RbpNode { using is_reg = bool; static constexpr sv_t kw { KW::RBP }; };
+	/**/ struct RbpNode { using is_reg = bool; static constexpr sv_t kw { KW::RBP }; };
 	struct RspNode { using is_reg = bool; static constexpr sv_t kw { KW::RSP }; };	
 	struct R8Node  { using is_reg = bool; static constexpr sv_t kw { KW::R8  }; };
 	struct R9Node  { using is_reg = bool; static constexpr sv_t kw { KW::R9  }; };
-	struct R10Node { using is_reg = bool; static constexpr sv_t kw { KW::R10 }; };
-	struct R11Node { using is_reg = bool; static constexpr sv_t kw { KW::R11 }; };
-	struct R12Node { using is_reg = bool; static constexpr sv_t kw { KW::R12 }; };
-	struct R13Node { using is_reg = bool; static constexpr sv_t kw { KW::R13 }; };
-	struct R14Node { using is_reg = bool; static constexpr sv_t kw { KW::R14 }; };
-	struct R15Node { using is_reg = bool; static constexpr sv_t kw { KW::R15 }; };
+	/**/ struct R10Node { using is_reg = bool; static constexpr sv_t kw { KW::R10 }; };
+	/**/ struct R11Node { using is_reg = bool; static constexpr sv_t kw { KW::R11 }; };
+	/**/ struct R12Node { using is_reg = bool; static constexpr sv_t kw { KW::R12 }; };
+	/**/ struct R13Node { using is_reg = bool; static constexpr sv_t kw { KW::R13 }; };
+	/**/ struct R14Node { using is_reg = bool; static constexpr sv_t kw { KW::R14 }; };
+	/**/ struct R15Node { using is_reg = bool; static constexpr sv_t kw { KW::R15 }; };
 
 	struct _0Node { static constexpr sv_t kw { "0" }; static constexpr long long val { 0LL }; };
 	struct _1Node { static constexpr sv_t kw { "1" }; static constexpr long long val { 1LL }; };

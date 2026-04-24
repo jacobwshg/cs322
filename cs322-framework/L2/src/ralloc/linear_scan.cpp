@@ -52,13 +52,16 @@ LinearScan::LinearScan(
 	this->assignments.resize( var_vis.next_var_id, L2::VAR_ID_INVAL );
 
 	const std::vector< L2::Liv::VarIdSet >
-		&INs  { var_id_sets.INs };
+		&INs  { var_id_sets.INs  },
+		&OUTs { var_id_sets.OUTs };
 
 	for ( const L2::Liv::VarIdSet &instr_IN : INs )
 	{
 		++instr_id;
 
 		std::printf( "INSTR ID %0d \n", instr_id );
+
+		const L2::Liv::VarIdSet &instr_OUT { OUTs[ instr_id ] };
 
 		//
 		// housekeep for any ending hot intervals. do this in a separate loop

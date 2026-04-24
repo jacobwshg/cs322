@@ -4,6 +4,41 @@
 
 #include <cstdint>
 
+//
+// prepare to spill a number of variables
+//
+L2::Spill::
+Spiller(
+	const L2::fNode &f_n,
+	const std::vector< std::string_view > &&spill_var_names,
+	const std::string_view alias_prefix_
+) :
+	alias_prefix { alias_prefix_ }
+{
+	//
+	// initialize function node template
+	//
+	this->f_spill_n.l_n = f_n.l_n;
+	this->f_spill_n.N_n = f_n.N_n;
+	this->f_spill_n.i_ns.reserve( 16 );
+
+	//
+	// ID used internally among the collection of variables to spill,
+	// which is distinct from their variable ID in the original function
+	//
+	long long int spill_var_id { -1 };
+	for ( const std::string_view var_name : spill_var_names )
+	{
+		++spill_var_id;
+		this->spill_var_id_tbl.insert( { std::string { var_name }, spill_var_id, } );
+	}
+
+}
+
+//
+// prepare to spill a single variable, with the spill variable and alias prefix 
+// given as varNodes ( in consistency with spilling test format )
+//
 L2::Spill::
 Spiller::Spiller(
 	const L2::fNode &f_n,
@@ -15,8 +50,8 @@ Spiller::Spiller(
 	this->f_spill_n.N_n = f_n.N_n;
 	this->f_spill_n.i_ns.reserve( 16 );
 
-	this->spill_var_name = this->var_view( var_spill_n );
-	this->alias_prefix   = this->var_view( var_alias_prefix_n );
+	this->spill_var_id_tbl.insert( { std::string { this->var_view( var_spill_n ) }, 0LL, } );
+	this->alias_prefix = this->var_view( var_alias_prefix_n );
 }
 
 std::size_t

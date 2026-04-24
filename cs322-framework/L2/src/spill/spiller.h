@@ -4,23 +4,23 @@
 
 #include "../ast.h"
 #include "../var_view.h"
-#include "unparser.h"
+#include "../svutil.h"
 
 #include <string>
 #include <cstdint>
 #include <string_view>
+#include <unordered_map>
 
 namespace L2
 {
 	namespace Spill
 	{
 
+		static constexpr std::string_view _prefix { "rNXdtBCbsl2agQmbhBCctVnc0BCbsl2a" };
+
 		//
 		// spills a variable from AST nodes ( primarily iNode alternatives, but can accept fNode as well )
-		// creating temporary nodes as needed, then directly printing out the unparsed nodes.
-		//
-		// there is no effort to add the temporary nodes to a new std::vector< iNode >,
-		// as the memory cost of this step is unnecessary given the current objective.
+		// creating temporary load/store nodes as needed
 		//
 		struct Spiller
 		{
@@ -32,20 +32,19 @@ namespace L2
 			// and call spiller's overload on the fNode
 			//
 
-			std::string spill_var_name {};
+			std::unordered_map<
+				std::string, long long int,
+				SVUtil::TransparentHash, SVUtil::TransparentEq
+			> spill_var_id_tbl {};
+
 			std::string alias_prefix {}; // ex. "S"
 
 			//
-			// incase we need to spill more than one variables 
-			// in the future
-			// 
-			std::size_t spill_var_id { 0UL };
-
-			//
-			// incrementd for each instruction to spill
+			// incremented for each instruction to spill
 			// 0 -> spilled instruction(s) will use %{prefix}0
 			// 1 -> spilled instruction(s) will use %{prefix}1
 			// ...
+			// even when targeting same spill variabld
 			//
 			std::size_t next_alias_id { 0UL };
 
@@ -58,6 +57,12 @@ namespace L2
 			L2::fNode f_spill_n {};
 
 			Spiller( void );
+
+			Spiller(
+				const L2::fNode &f_n,
+				const std::vector< std::string_view > &&spill_var_names,
+				const std::string_view alias_prefix
+			);
 
 			//
 			// initialize from parser outputs
@@ -94,7 +99,7 @@ namespace L2
 			//
 			inline bool is_spill_var_name( const std::string_view var_name ) const
 			{
-				return this->spill_var_name == var_name;
+				return ( this->spill_var_id_table.count( var_name ) > 0 );
 			}
 
 			//
