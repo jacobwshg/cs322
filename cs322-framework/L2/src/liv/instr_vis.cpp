@@ -799,7 +799,7 @@ InstrVisitor::operator()( const L2::iCallUNode &i_call_u_n )
 
 	// add u
 	this->var_id_sets.GENs[ instr_id ] += u_var_id;
-	// add args regs ( at most 6 )
+	// add argument regs ( at most 6 )
 	for (
 		std::size_t arg_id { 0 };
 		arg_id < std::min( argcnt, CallConv::ARG_REG_CNT );
@@ -829,7 +829,7 @@ InstrVisitor::operator()( const L2::iCallPrintNode &i_call_print_n )
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	// add args
+	// add arguments
 	for (
 		std::size_t arg_id { 0 };
 		arg_id < builtin_argcnt::val< iCallPrintNode >;
@@ -859,7 +859,7 @@ InstrVisitor::operator()( const L2::iCallInputNode &i_call_input_n )
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	// no args to add
+	// no arguments to add
 
 	// add caller save regs
 	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
@@ -882,7 +882,7 @@ InstrVisitor::operator()( const L2::iCallAllocateNode &i_call_allocate_node )
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	// add args
+	// add arguments
 	for (
 		std::size_t arg_id { 0 };
 		arg_id < builtin_argcnt::val< iCallAllocateNode >;
@@ -912,7 +912,7 @@ InstrVisitor::operator()( const L2::iCallTupleErrorNode &i_call_tuple_error_n )
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	// add args
+	// add arguments
 	for (
 		std::size_t arg_id { 0 };
 		arg_id < builtin_argcnt::val< iCallTupleErrorNode >;
@@ -951,7 +951,7 @@ InstrVisitor::operator()( const L2::iCallTensorErrorNode &i_call_tensor_error_n 
 	const long long F_val { std::visit( FVisitor{}, i_call_tensor_error_n.F_n ) };
 	const std::size_t argcnt { static_cast< std::size_t >( F_val ) };
 
-	// add args
+	// add arguments
 	for ( std::size_t arg_id { 0 }; arg_id < argcnt; ++arg_id )
 	{
 		this->var_id_sets.GENs[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
