@@ -32,7 +32,7 @@ namespace L2
 			//
 			// smallest id for named, non-GPR variables
 			//
-			static constexpr var_id_t BASE_VAR_ID { 16 };
+			static constexpr var_id_t BASE_VAR_ID { 1 + L2::Liv::MAX_GPR_ID };
 			var_id_t next_var_id { BASE_VAR_ID };
 
 			//

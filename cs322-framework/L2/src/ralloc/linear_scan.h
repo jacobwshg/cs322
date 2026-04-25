@@ -36,7 +36,6 @@ namespace L2
 
 		static constexpr L2::var_id_t
 			MIN_GPR_ID { L2::Liv::MIN_GPR_ID },
-			//MAX_GPR_ID { L2::Liv::MAX_GPR_ID };
 			MAX_GPR_ID { 31 };
 
 		//

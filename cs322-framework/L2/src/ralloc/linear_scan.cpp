@@ -10,6 +10,8 @@ L2::var_id_t
 L2::
 LinearScan::find_lowest_free_GPR( const L2::Liv::VarIdSet &instr_IN ) const
 {
+	std::printf( "finding lowest free GPR \n " );
+
 	for (
 		var_id_t gpr_id { this->MIN_GPR_ID };
 		gpr_id <= this->MAX_GPR_ID; ++gpr_id
@@ -19,7 +21,18 @@ LinearScan::find_lowest_free_GPR( const L2::Liv::VarIdSet &instr_IN ) const
 		// don't use GPRs occupied by other live vars
 		// or already in the IN set ( args/saved )
 		//
-		if ( this->hot_GPRs.test( gpr_id ) || instr_IN.has( gpr_id ) ) { continue; }
+		if ( this->hot_GPRs.test( gpr_id ) ) { std::printf( "reg %0d in use by variable \n", gpr_id ); continue; }
+
+		//
+		// test against the real upper bound for regs, so that 
+		// we don't mistake named vars as using our higher vregs
+		//
+		if ( gpr_id <= L2::Liv::MAX_GPR_ID && instr_IN.has( gpr_id ) )
+		{
+			std::printf( "reg %0d in IN set \n", gpr_id );
+			continue;
+		}
+
 		return gpr_id;
 	}
 	return L2::VAR_ID_INVAL;
