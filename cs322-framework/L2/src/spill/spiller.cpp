@@ -33,7 +33,46 @@ void
 L2::Spill::
 Spiller::spill( const L2::fNode &f_n )
 {
-	( *this )( f_n );
+	for ( const iNode &i_n: f_n.i_ns )
+	{
+		std::visit( *this, i_n );
+	}
+}
+
+void
+L2::Spill::
+Spiller::spill_fn_for_var(
+	const L2::fNode &f_n,
+	const std::string_view var_name,
+	const bool is_new_fn
+)
+{
+	if ( is_new_fn )
+	{
+		this->spill_var_cnt = 0;
+		this->var_stk_ofs = 0;
+	}
+
+	this->next_alias_id = 0;
+
+	this->spill_var_name = var_name;
+	// 
+	// construct the alias prefix for this variable
+	//
+	this->alias_prefix = {};
+	this->alias_prefix.reserve( 32 );
+	this->alias_prefix += "__SPILL__";
+	this->alias_prefix += var_name;
+	this->alias_prefix += "__";
+
+	//
+	// run
+	//
+	this->spill( f_n );
+
+	++this->spill_var_cnt;
+	this->var_stk_ofs += 8;
+
 }
 
 //
@@ -43,10 +82,6 @@ L2::iLoadNode
 L2::Spill::
 Spiller::make_alias_iLoadNode( void ) const
 {
-	const long long stk_ofs
-	{
-		static_cast< long long >( this->spill_var_id ) * 8
-	};
 
 	return iLoadNode
 	{
@@ -55,7 +90,7 @@ Spiller::make_alias_iLoadNode( void ) const
 		.op_assign_n = {},
 		.mem_n = MemNode {},
 		.x_n = xNode { RspNode {} },
-		.M_n = MNode { .val = stk_ofs },
+		.M_n = MNode { .val = this->var_stk_ofs },
 	};
 
 }
@@ -64,21 +99,20 @@ L2::iStoreNode
 L2::Spill::
 Spiller::make_alias_iStoreNode( void ) const
 {
-	const long long stk_ofs
-	{
-		static_cast< long long >( this->spill_var_id ) * 8
-	};
 
 	return iStoreNode
 	{
 		.mem_n = MemNode {},
 		.x_n = xNode { RspNode {} },
-		.M_n = MNode { .val = stk_ofs },
+		.M_n = MNode { .val = this->var_stk_ofs },
 		.op_assign_n = {},
 		.s_n = this->make_alias_node< wNode >(),
 	};
 
 }
+
+
+
 
 void
 L2::Spill::
@@ -770,15 +804,4 @@ Spiller::operator()( const iLEANode &n )
 	this->try_advance_alias_id( spill_w1 || spill_w2 || spill_w3 );
 
 }
-
-void
-L2::Spill::
-Spiller::operator()( const fNode &f_n )
-{
-	for ( const iNode &i_n: f_n.i_ns )
-	{
-		std::visit( *this, i_n );
-	}
-}
-
 

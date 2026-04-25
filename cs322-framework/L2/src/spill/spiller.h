@@ -36,19 +36,28 @@ namespace L2
 			std::string alias_prefix {}; // ex. "S"
 
 			//
-			// incase we need to spill more than one variables 
-			// in the future
+			// if spilling more than one var in the same function,
+			// keep track of the number of vars spilled so far
+			// and compute the stk offset of the current spill var
 			// 
-			std::size_t spill_var_id { 0UL };
+			// need to be reset for each new function to spill
+			//
+			std::size_t spill_var_cnt { 0UL };
+			long long int var_stk_ofs { 0LL };
 
 			//
-			// incrementd for each instruction to spill
+			// incrementd for each instruction to spill for the same var
 			// 0 -> spilled instruction(s) will use %{prefix}0
 			// 1 -> spilled instruction(s) will use %{prefix}1
 			// ...
 			//
+			// needs to be reset for each new var in the same function to spill
+			//
 			std::size_t next_alias_id { 0UL };
 
+			//
+			// helper to extract variable name buried inside node
+			//
 			L2::VarViewer var_view {};
 
 			//
@@ -68,13 +77,30 @@ namespace L2
 				const L2::varNode &var_alias_prefix_n
 			);
 
+			//
+			// allocate new alias ID for same variable
+			//
 			std::size_t new_alias_id( void );
 
 			//
-			// spill a variable over the given function,
-			// storing spilled instructions in this->f_n.i_ns
+			// spill a single variable ( specified at initialization ) 
+			// over the given function, and cache the spilled function
+			// node with updated instructions
+			//
+			// ( interface for spilling-only tests )
 			//
 			void spill( const fNode & );
+
+			//
+			// spill the specified variable over the given function,
+			// with a flag to indicate whether this is a new function
+			// ( if so, reset not only next_alias_id but also 
+			// spill_var_cnt and var_stk_ofs )
+			//
+			void spill_fn_for_var(
+				const fNode &, const std::string_view,
+				const bool = false
+			);
 
 			//
 			// return whether spilling has occurred based on
@@ -107,6 +133,9 @@ namespace L2
 			{
 				return nameNode
 				{
+					//
+					// use the latest alias ID, which advances with each instr spilled
+					//
 					.val = this->alias_prefix + std::to_string( this->next_alias_id )
 				};
 			}
@@ -206,6 +235,10 @@ namespace L2
 				if ( spill ) { ++this->next_alias_id; }
 			}
 
+			//
+			// make spilled versions of various instructions
+			// w.r.t. the spill variable cached in this->spill_var_name
+			//
 			void operator()( const iAssignNode & );
 
 			void operator()( const iLoadNode & );
@@ -239,9 +272,6 @@ namespace L2
 			void operator()( const iIncrNode & );
 			void operator()( const iDecrNode & );
 			void operator()( const iLEANode & );
-
-			void operator()( const fNode & );
-			//void operator()( const pNode & );
 
 		};
 
