@@ -33,6 +33,12 @@ namespace L2
 
 	struct LinearScan
 	{
+
+		static constexpr L2::var_id_t
+			MIN_GPR_ID { L2::Liv::MIN_GPR_ID },
+			//MAX_GPR_ID { L2::Liv::MAX_GPR_ID };
+			MAX_GPR_ID { 31 };
+
 		//
 		// pop interval that starts soonest when iterating
 		//
@@ -91,7 +97,7 @@ namespace L2
 		// GPRs in use by named vars, which _does not_ include those
 		// in use by args or caller/callee save
 		//
-		std::bitset< 16 > hot_GPRs { 0x0UL };
+		std::bitset< MAX_GPR_ID+1 > hot_GPRs { 0x0UL };
 
 		LinearScan( const L2::Liv::InstrVisitor & );
 

@@ -11,8 +11,8 @@ L2::
 LinearScan::find_lowest_free_GPR( const L2::Liv::VarIdSet &instr_IN ) const
 {
 	for (
-		var_id_t gpr_id { L2::Liv::MIN_GPR_ID };
-		gpr_id <= L2::Liv::MAX_GPR_ID; ++gpr_id
+		var_id_t gpr_id { this->MIN_GPR_ID };
+		gpr_id <= this->MAX_GPR_ID; ++gpr_id
 	)
 	{
 		//
@@ -149,7 +149,7 @@ LinearScan::LinearScan(
 				var_id, var_vis.var_name_by_id( var_id ).data(), gpr_id
 			);
 
-			if ( gpr_id >= L2::Liv::MIN_GPR_ID )
+			if ( gpr_id >= this->MIN_GPR_ID )
 			{
 				//
 				// var has a valid GPR assignment from a previous hot interval
@@ -162,7 +162,9 @@ LinearScan::LinearScan(
 					//
 					std::printf(
 						"var #%0d `%%%s` evicted from GPR %s\n ", 
-						var_id, var_vis.var_name_by_id( var_id ).data(), L2::Liv::ID_GPR_TBL[ gpr_id ].data()
+						var_id, var_vis.var_name_by_id( var_id ).data(), 
+						//L2::Liv::ID_GPR_TBL[ gpr_id ].data()
+						std::to_string( gpr_id ).data() // testing vregs
 					);
 
 					this->assignments[ var_id ] = L2::VAR_ID_INVAL;
@@ -175,7 +177,9 @@ LinearScan::LinearScan(
 					//
 					std::printf(
 						"var #%0d `%%%s` repeating assignment to GPR %s\n ", 
-						var_id, var_vis.var_name_by_id( var_id ).data(), L2::Liv::ID_GPR_TBL[ gpr_id ].data()
+						var_id, var_vis.var_name_by_id( var_id ).data(),
+						//L2::Liv::ID_GPR_TBL[ gpr_id ].data()
+						std::to_string( gpr_id ).data() // testing vregs
 					);
 					this->use_GPR( gpr_id );
 				}
@@ -205,7 +209,9 @@ LinearScan::LinearScan(
 					//
 					std::printf(
 						"var #%0d `%%%s` assigned GPR %s\n ", 
-						var_id, var_vis.var_name_by_id( var_id ).data(), L2::Liv::ID_GPR_TBL[ gpr_id ].data()
+						var_id, var_vis.var_name_by_id( var_id ).data(),
+						//L2::Liv::ID_GPR_TBL[ gpr_id ].data()
+						std::to_string( gpr_id ).data() // testing vregs
 					);
 					this->use_GPR( gpr_id );
 					this->assignments[ var_id ] = gpr_id;
@@ -233,9 +239,13 @@ LinearScan::LinearScan(
 		{
 			std::printf( "<spill>" );
 		}
-		else if ( gpr_id >= L2::Liv::MIN_GPR_ID && !this->spill_vars.has( var_id ) )
+		else if ( gpr_id >= this->MIN_GPR_ID && !this->spill_vars.has( var_id ) )
 		{
-			std::printf( "%s", L2::Liv::ID_GPR_TBL[ gpr_id ].data() );
+			std::printf(
+				"%s",
+				//L2::Liv::ID_GPR_TBL[ gpr_id ].data()
+				std::to_string( gpr_id ).data() // testing vregs
+			);
 		}
 		else
 		{
