@@ -778,6 +778,9 @@ InstrVisitor::operator()( const L2::iReturnNode & )
 
 }
 
+// 
+// icallu ( convenience tag for case-sensitive search )
+// 
 void
 L2::Liv::
 InstrVisitor::operator()( const L2::iCallUNode &i_call_u_n )

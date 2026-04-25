@@ -66,7 +66,7 @@ namespace L2
 			//
 			L2::fNode f_spill_n {};
 
-			Spiller( void );
+			Spiller( void ) =default;
 
 			//
 			// initialize from parser outputs

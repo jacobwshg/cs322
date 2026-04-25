@@ -11,6 +11,10 @@ Spiller::Spiller(
 	const L2::varNode &var_alias_prefix_n
 )
 {
+	//
+	// copy original function's name and argcnt
+	// into own function cache
+	//
 	this->f_spill_n.l_n = f_n.l_n;
 	this->f_spill_n.N_n = f_n.N_n;
 	this->f_spill_n.i_ns.reserve( 16 );
