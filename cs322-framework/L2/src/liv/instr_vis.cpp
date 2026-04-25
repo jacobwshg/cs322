@@ -38,6 +38,35 @@ InstrVisitor::reset( void )
 	this->requests_tbl.clear();
 }
 
+void
+L2::Liv::
+InstrVisitor::process_iNode_vec( const std::vector< L2::iNode > &i_ns )
+{
+
+	this->reset();
+
+	const std::size_t instr_cnt { i_ns.size() };
+
+	this->var_id_sets = FnVarIdSets { instr_cnt + 1 };
+	this->succs_tbl.resize( instr_cnt + 1, {} );
+
+	for ( const iNode &i_n : i_ns )
+	{
+		std::visit( *this, i_n );
+	}
+
+	this->movegraph.resize( this->var_vis.next_var_id );
+
+}
+
+void
+L2::Liv::
+InstrVisitor::process_fNode( const L2::fNode &f_n )
+{
+	this->process_iNode_vec( f_n.i_ns );
+
+}
+
 //
 // display various members
 //
@@ -357,34 +386,6 @@ L2::Liv::
 InstrVisitor::run_liveness( void )
 {
 	while ( this->step_liveness() ) {}
-}
-
-void
-L2::Liv::
-InstrVisitor::process_iNode_vec( const std::vector< L2::iNode > &i_ns )
-{
-	this->reset();
-
-	const std::size_t instr_cnt { i_ns.size() };
-
-	this->var_id_sets = FnVarIdSets { instr_cnt + 1 };
-	this->succs_tbl.resize( instr_cnt + 1, {} );
-
-	for ( const iNode &i_n : i_ns )
-	{
-		std::visit( *this, i_n );
-	}
-
-	this->movegraph.resize( this->var_vis.next_var_id );
-
-}
-
-void
-L2::Liv::
-InstrVisitor::process_fNode( const L2::fNode &f_n )
-{
-	this->process_iNode_vec( f_n.i_ns );
-
 }
 
 void
@@ -761,9 +762,13 @@ InstrVisitor::operator()( const L2::iReturnNode & )
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	// add rax
+	//
+	// simulate reading rax
+	//
 	this->var_id_sets.GENs[ instr_id ] += CallConv::RETVAL_REG_ID;
-	// add callee save regs
+	//
+	// simulate reading callee save regs
+	//
 	for ( const var_id_t sav_id : CallConv::CALLEE_SAVE_REG_IDS )
 	{
 		this->var_id_sets.GENs[ instr_id ] += sav_id;
@@ -797,9 +802,9 @@ InstrVisitor::operator()( const L2::iCallUNode &i_call_u_n )
 	assert( N_val >= 0 );
 	const std::size_t argcnt { static_cast< std::size_t >( N_val ) };
 
-	// add u
+	// read u
 	this->var_id_sets.GENs[ instr_id ] += u_var_id;
-	// add argument regs ( at most 6 )
+	// simulate reading argument regs ( at most 6 )
 	for (
 		std::size_t arg_id { 0 };
 		arg_id < std::min( argcnt, CallConv::ARG_REG_CNT );
@@ -808,7 +813,7 @@ InstrVisitor::operator()( const L2::iCallUNode &i_call_u_n )
 	{
 		this->var_id_sets.GENs[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
 	}
-	// add caller save regs
+	// simulate writing caller save regs
 	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
 	{
 		this->var_id_sets.KILLs[ instr_id ] += sav_id;
@@ -829,7 +834,7 @@ InstrVisitor::operator()( const L2::iCallPrintNode &i_call_print_n )
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	// add arguments
+	// simulate reading arguments
 	for (
 		std::size_t arg_id { 0 };
 		arg_id < builtin_argcnt::val< iCallPrintNode >;
@@ -838,7 +843,7 @@ InstrVisitor::operator()( const L2::iCallPrintNode &i_call_print_n )
 	{
 		this->var_id_sets.GENs[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
 	}
-	// add caller save regs
+	// simulate writing caller save regs
 	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
 	{
 		this->var_id_sets.KILLs[ instr_id ] += sav_id;
@@ -859,9 +864,9 @@ InstrVisitor::operator()( const L2::iCallInputNode &i_call_input_n )
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	// no arguments to add
+	// no arguments to read
 
-	// add caller save regs
+	// simulate writing caller save regs
 	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
 	{
 		this->var_id_sets.KILLs[ instr_id ] += sav_id;
@@ -882,7 +887,7 @@ InstrVisitor::operator()( const L2::iCallAllocateNode &i_call_allocate_node )
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	// add arguments
+	// simulate reading arguments
 	for (
 		std::size_t arg_id { 0 };
 		arg_id < builtin_argcnt::val< iCallAllocateNode >;
@@ -891,7 +896,7 @@ InstrVisitor::operator()( const L2::iCallAllocateNode &i_call_allocate_node )
 	{
 		this->var_id_sets.GENs[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
 	}
-	// add caller save regs
+	// simulate writing caller save regs
 	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
 	{
 		this->var_id_sets.KILLs[ instr_id ] += sav_id;
@@ -912,7 +917,7 @@ InstrVisitor::operator()( const L2::iCallTupleErrorNode &i_call_tuple_error_n )
 
 	const instr_id_t instr_id { this->new_instr_id() };
 
-	// add arguments
+	// simulate reading arguments
 	for (
 		std::size_t arg_id { 0 };
 		arg_id < builtin_argcnt::val< iCallTupleErrorNode >;
@@ -921,7 +926,7 @@ InstrVisitor::operator()( const L2::iCallTupleErrorNode &i_call_tuple_error_n )
 	{
 		this->var_id_sets.GENs[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
 	}
-	// add caller save regs
+	// simulate writing caller save regs
 	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
 	{
 		this->var_id_sets.KILLs[ instr_id ] += sav_id;
@@ -951,12 +956,12 @@ InstrVisitor::operator()( const L2::iCallTensorErrorNode &i_call_tensor_error_n 
 	const long long F_val { std::visit( FVisitor{}, i_call_tensor_error_n.F_n ) };
 	const std::size_t argcnt { static_cast< std::size_t >( F_val ) };
 
-	// add arguments
+	// simulate reading arguments
 	for ( std::size_t arg_id { 0 }; arg_id < argcnt; ++arg_id )
 	{
 		this->var_id_sets.GENs[ instr_id ] += CallConv::ARG_REG_IDS[ arg_id ];
 	}
-	// add caller save regs
+	// simulate writing caller save regs
 	for ( const var_id_t sav_id: CallConv::CALLER_SAVE_REG_IDS )
 	{
 		this->var_id_sets.KILLs[ instr_id ] += sav_id;
