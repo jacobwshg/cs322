@@ -295,6 +295,67 @@ namespace L1
 
 std::string
 L1::
+pVisitor::operator()( const L1::pNode &p_n )
+{
+	std::string sbuf {}; sbuf.reserve( 8192 );
+
+	// main fn label
+	const std::string l_str { L1::lVisitor{}( p_n.l_n ) };
+
+	sbuf += L1::Instr::P_PROLOG;
+	sbuf += std::string { L1::Instr::CALL } + l_str + "\n";
+	sbuf += L1::Instr::P_EPILOG;
+
+	// emit functions
+	for ( const L1::fNode &f_n: p_n.f_ns )
+	{
+		sbuf += L1::fVisitor{}( f_n );
+	}
+
+	return std::move( sbuf );
+
+}
+
+std::string
+L1::
+fVisitor::operator()( const L1::fNode &f_n )
+{
+	std::string sbuf {}; sbuf.reserve( 1024 );
+
+	const std::string l_str { L1::lVisitor{}( f_n.l_n ) };
+	sbuf += l_str; sbuf += ":\n";
+
+	const long long
+		N_arg { std::visit( L1::NViewer{}, f_n.N1_n ) },
+		N_stk { std::visit( L1::NViewer{}, f_n.N2_n ) };
+	assert( N_arg>=0 && N_stk>=0 );
+
+	long long rsp_delta { N_stk };
+	if ( N_arg>6 ) { rsp_delta += ( N_arg-6 ); }
+	rsp_delta *= 8;
+
+	// grow stk
+	sbuf += std::string { L1::Instr::SUBQ }
+		+ "$" + std::to_string( rsp_delta ) + ",%rsp\n";
+
+	// emit instrs
+	for ( const L1::iNode &i_n : f_n.i_ns )
+	{
+		sbuf += std::visit( L1::iVisitor{}, i_n );
+	}
+
+	// shrink stk
+	sbuf += std::string { L1::Instr::ADDQ }
+		+ "$" + std::to_string( rsp_delta ) + ",%rsp\n";
+
+	// emit return
+	sbuf += std::string { L1::Instr::RETQ } + "\n";
+
+	return std::move( sbuf );
+}
+
+std::string
+L1::
 iVisitor::operator()( const L1::iCmpAssignNode &i_cmp_assign_n )
 {
 	constexpr bool use_low { true };
@@ -766,68 +827,6 @@ iVisitor::operator()( const L1::iCallTensorErrorNode &i_call_tensor_error_n )
 	std::string sbuf {}; sbuf.reserve( 32 );
 	sbuf += L1::Instr::CALL;
 	sbuf += name; sbuf += "\n";
-	return std::move( sbuf );
-
-}
-
-
-std::string
-L1::
-fVisitor::operator()( const L1::fNode &f_n )
-{
-	std::string sbuf {}; sbuf.reserve( 1024 );
-
-	const std::string l_str { L1::lVisitor{}( f_n.l_n ) };
-	sbuf += l_str; sbuf += ":\n";
-
-	const long long
-		N_arg { std::visit( L1::NViewer{}, f_n.N1_n ) },
-		N_stk { std::visit( L1::NViewer{}, f_n.N2_n ) };
-	assert( N_arg>=0 && N_stk>=0 );
-
-	long long rsp_delta { N_stk };
-	if ( N_arg>6 ) { rsp_delta += ( N_arg-6 ); }
-	rsp_delta *= 8;
-
-	// grow stk
-	sbuf += std::string { L1::Instr::SUBQ }
-		+ "$" + std::to_string( rsp_delta ) + ",%rsp\n";
-
-	// emit instrs
-	for ( const L1::iNode &i_n : f_n.i_ns )
-	{
-		sbuf += std::visit( L1::iVisitor{}, i_n );
-	}
-
-	// shrink stk
-	sbuf += std::string { L1::Instr::ADDQ }
-		+ "$" + std::to_string( rsp_delta ) + ",%rsp\n";
-
-	// emit return
-	sbuf += std::string { L1::Instr::RETQ } + "\n";
-
-	return std::move( sbuf );
-}
-
-std::string
-L1::
-pVisitor::operator()( const L1::pNode &p_n )
-{
-	std::string sbuf {}; sbuf.reserve( 8192 );
-
-	// main fn label
-	const std::string l_str { L1::lVisitor{}( p_n.l_n ) };
-
-	sbuf += L1::Instr::P_PROLOG;
-	sbuf += std::string { L1::Instr::CALL } + l_str + "\n";
-	sbuf += L1::Instr::P_EPILOG;
-
-	// emit functions
-	for ( const L1::fNode &f_n: p_n.f_ns )
-	{
-		sbuf += L1::fVisitor{}( f_n );
-	}
-
 	return std::move( sbuf );
 
 }
