@@ -65,9 +65,10 @@ Spiller::spill_fn_for_var(
 	//
 	this->alias_prefix = {};
 	this->alias_prefix.reserve( 32 );
-	this->alias_prefix += "__SPILL__";
-	this->alias_prefix += var_name;
 	this->alias_prefix += "__";
+	this->alias_prefix += var_name;
+	this->alias_prefix += "_spill_";
+	this->alias_prefix += "_";
 
 	//
 	// run
